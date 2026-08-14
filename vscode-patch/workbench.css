@@ -1,0 +1,66 @@
+/* Injectat în workbench-ul VS Code de vscode-patch/apply.sh.
+   Aici stă doar ce nu se poate face dintr-o extensie: fonturi și layout de
+   chrome. Orice se poate face oficial stă în package.json, la
+   contributes.configurationDefaults. */
+
+:root {
+  /* Inter e chiar fontul din IntelliJ New UI (instalat local din JBR-ul lui
+     IntelliJ, deci literele sunt identice, nu doar asemănătoare). */
+  --victor-ui-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* VS Code ține rândul din arbore la o înălțime fixă, calculată în JS, pe care
+     CSS-ul n-o poate schimba. Densitatea se recuperează invers: text mai mare
+     în același rând => mai puțin negru în jurul lui. IntelliJ ține raportul
+     pas/înălțime-text la 1.65; 13px dădea 1.79. */
+  --victor-tree-font-size: 14px;
+}
+
+/* ---------------------------------------------------------------- Explorer */
+
+.monaco-workbench .part.sidebar > .content .monaco-list-row {
+  font-family: var(--victor-ui-font);
+  font-size: var(--victor-tree-font-size);
+}
+
+/* Titlurile de secțiune (EXPLORER, OUTLINE, TIMELINE) pe același font. */
+.monaco-workbench .part.sidebar .pane-header > .title,
+.monaco-workbench .part.sidebar > .title .title-label {
+  font-family: var(--victor-ui-font);
+}
+
+/* ------------------------------------------- branch-ul lângă cele 3 butoane */
+
+.titlebar-container > .titlebar-left > .victor-branch {
+  order: 3;                       /* 0 = spațiul rezervat semafoarelor macOS */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  padding: 1px 8px;
+  height: 22px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  font-family: var(--victor-ui-font);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--vscode-titleBar-activeForeground);
+  background-color: var(--vscode-commandCenter-background);
+  border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+.titlebar-container > .titlebar-left > .victor-branch:hover {
+  color: var(--vscode-commandCenter-activeForeground);
+  background-color: var(--vscode-commandCenter-activeBackground);
+  border-color: var(--vscode-commandCenter-activeBorder);
+}
+
+.titlebar-container > .titlebar-left > .victor-branch.victor-empty {
+  display: none;                  /* fereastră fără repo git */
+}
+
+.titlebar-container > .titlebar-left > .victor-branch > .codicon {
+  font-size: 14px;
+  opacity: .8;
+}

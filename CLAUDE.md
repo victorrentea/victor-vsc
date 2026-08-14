@@ -37,10 +37,22 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
 
-## Ce NU poate o extensie
+## Ce NU poate o extensie — și unde se rezolvă
 
-Nu are acces la DOM-ul workbench-ului: nu poate schimba fontul/înălțimea
-rândurilor din Explorer, nu poate intercepta click-uri de mouse pe UI-ul VS
-Code. Astea cer ori o setare oficială, ori un patch de CSS/JS peste aplicație
-(extensia „Custom CSS and JS Loader"), care se rupe la fiecare update de VS Code.
-Spune-i lui Victor explicit când o cerere cade în categoria asta, nu improviza.
+O extensie n-are acces la DOM-ul workbench-ului: fontul și densitatea din
+Explorer, layout-ul title bar-ului, interceptat click-uri pe UI-ul VS Code.
+Pentru astea Victor a ridicat restricția de a modifica aplicația: patch-ul stă
+în `vscode-patch/` (`workbench.css`, `workbench.js`, `apply.sh`, `restore.sh`).
+
+Reguli pentru zona asta:
+
+- orice adaugi acolo trebuie să treacă prin `apply.sh`, ca să se reaplice după
+  update-urile de VS Code — vezi `VSCODE-UPDATE.md`;
+- dacă atingi un fișier din lista `checksums` din `product.json`, recalculează
+  checksum-ul în `apply.sh`, altfel apare bannerul „installation appears to be
+  corrupt";
+- CSP-ul din `workbench.html` acceptă doar `'self'`, deci fișierele injectate se
+  copiază în bundle, nu se linkuiesc din `~/workspace`.
+
+Ce ține de setări oficiale rămâne în `package.json` → `configurationDefaults`;
+patch-ul e ultima soluție, nu prima.
