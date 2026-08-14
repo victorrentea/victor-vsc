@@ -99,3 +99,31 @@ de rând 28.0 / 28.0.
 ⚠️ Cifrele sunt pentru fereastra cu **zoom-ul curent** (un pas de ⌘+, adică 1.2).
 Zoom-ul înmulțește și fontul, și rândul, deci un ⌘0 le micșorează pe amândouă cu
 20% și potrivirea se pierde. Dacă schimbi zoom-ul, se remăsoară.
+
+### Grosimea și culoarea, nu doar mărimea
+
+Mărimea potrivită nu ajunge — textul tot „nu arată la fel". Celelalte două axe,
+măsurate cu ambele ferestre pe **același ecran și aceeași scală** (altfel 1x vs
+2x falsifică totul):
+
+| | VS Code | IntelliJ |
+|---|---|---|
+| culoarea textului (max pe rând) | 210 | 211 |
+| acoperire de cerneală | 21.2% | 21.5% |
+| lățimi pe aceleași nume | 117 / 101 / 118 / 99 | 116 / 99 / 116 / 99 |
+
+- **Culoarea**: `sideBar.foreground: #D0D2D8` — măsurată din IntelliJ, nu luată din
+  documentația New UI, care zice `#DFE1E5` și e vizibil mai deschis decât ce
+  desenează IDE-ul de fapt.
+- **Grosimea**: greyscale-ul workbench-ului dă cu 15% mai puțină cerneală decât
+  IntelliJ, iar `subpixel-antialiased` sare cu 10% peste. Niciuna nu nimerește,
+  deci: greyscale + `-webkit-text-stroke: 0.17px`, singura pârghie continuă.
+  Rezultat: raport 1.015, sub pragul de zgomot al măsurătorii.
+
+Două capcane de măsurare, ambele m-au trimis pe piste greșite:
+- **percentila ca „vârf"**: numele lungi au mai mulți pixeli de antialias, care
+  trag percentila în jos și fac rândurile să pară mai închise. Max-ul pe rând e
+  210 peste tot — nu există nicio inconsistență. Folosește max, nu p99.
+- **acoperirea pe o casetă lată**: normalizată pe toată lățimea panoului include
+  spațiul gol din dreapta, care diferă între cele două IDE-uri. Se calculează
+  strict pe caseta strânsă a cuvântului.
