@@ -1,0 +1,19 @@
+body {
+  padding-left: 48px !important;
+}
+
+.md-line-num {
+  position: absolute;
+  color: #888;
+  font-size: 11px;
+  font-family: monospace;
+  user-select: none;
+  min-width: 32px;
+  text-align: right;
+  line-height: 1.6;
+  pointer-events: none;
+}
+
+[data-line] {
+  position: relative;
+}

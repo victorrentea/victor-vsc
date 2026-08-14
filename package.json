@@ -1,0 +1,159 @@
+{
+  "name": "victor-vsc",
+  "publisher": "victorrentea",
+  "displayName": "Victor VSC",
+  "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + cog, Markdown preview zoom, and a Claude terminal profile",
+  "version": "0.0.14",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onTerminalProfile:victor-vsc.claude"
+  ],
+  "contributes": {
+    "iconThemes": [
+      {
+        "id": "intellij-expui",
+        "label": "IntelliJ New UI (expui)",
+        "path": "./intellij-icon-theme.json"
+      }
+    ],
+    "markdown.previewScripts": [
+      "./zoom.js",
+      "./line-numbers.js"
+    ],
+    "markdown.previewStyles": [
+      "./line-numbers.css"
+    ],
+    "icons": {
+      "victor-flower": {
+        "description": "Flower",
+        "default": {
+          "fontPath": "./icons/victor-icons.woff",
+          "fontCharacter": "\\E001"
+        }
+      }
+    },
+    "terminal": {
+      "profiles": [
+        {
+          "id": "victor-vsc.claude",
+          "title": "Claude",
+          "icon": "victor-flower"
+        }
+      ]
+    },
+    "configurationDefaults": {
+      "workbench.colorCustomizations": {
+        "[IntelliJ IDEA Islands Light]": {
+          "titleBar.activeBackground": "#ECEDF0",
+          "titleBar.inactiveBackground": "#ECEDF0",
+          "activityBar.background": "#ECEDF0",
+          "activityBar.activeBackground": "#D9D9DB",
+          "activityBar.activeBorder": "#00000000",
+          "activityBar.activeFocusBorder": "#00000000",
+          "activityBar.foreground": "#6C707E",
+          "activityBar.inactiveForeground": "#6C707E",
+          "statusBar.background": "#ECEDF0",
+          "sideBarSectionHeader.background": "#ECEDF0",
+          "sideBarTitle.background": "#ECEDF0",
+          "sideBar.background": "#FFFFFF",
+          "editorGroupHeader.tabsBackground": "#FFFFFF",
+          "panel.background": "#FFFFFF",
+          "editor.background": "#FFFFFF",
+          "sideBar.border": "#C3C8D2",
+          "sideBarSectionHeader.border": "#DFE1E5",
+          "activityBar.border": "#DFE1E5",
+          "panel.border": "#DFE1E5",
+          "editorGroup.border": "#C3C8D2",
+          "editorGroupHeader.tabsBorder": "#DFE1E5",
+          "statusBar.border": "#DFE1E5",
+          "titleBar.border": "#DFE1E5",
+          "symbolIcon.classForeground": "#3574F0",
+          "symbolIcon.interfaceForeground": "#208A3C",
+          "symbolIcon.enumeratorForeground": "#834DF0",
+          "symbolIcon.enumeratorMemberForeground": "#834DF0",
+          "symbolIcon.propertyForeground": "#834DF0",
+          "symbolIcon.methodForeground": "#DB3B4B",
+          "symbolIcon.functionForeground": "#DB3B4B",
+          "symbolIcon.constructorForeground": "#DB3B4B",
+          "symbolIcon.fieldForeground": "#E66D17",
+          "symbolIcon.variableForeground": "#E66D17",
+          "symbolIcon.constantForeground": "#E66D17",
+          "symbolIcon.packageForeground": "#6C707E",
+          "symbolIcon.namespaceForeground": "#6C707E",
+          "symbolIcon.moduleForeground": "#6C707E",
+          "editor.lineHighlightBackground": "#F5F8FE",
+          "editor.lineHighlightBorder": "#00000000",
+          "editor.wordHighlightBackground": "#EDEBFB",
+          "editor.wordHighlightStrongBackground": "#EDEBFB",
+          "editor.wordHighlightTextBackground": "#EDEBFB",
+          "editor.selectionHighlightBackground": "#EDEBFB",
+          "sash.hoverBorder": "#3574F0",
+          "list.errorForeground": "#000000",
+          "list.warningForeground": "#000000",
+          "gitDecoration.modifiedResourceForeground": "#0032A0",
+          "gitDecoration.addedResourceForeground": "#0A7700",
+          "gitDecoration.untrackedResourceForeground": "#993300",
+          "gitDecoration.deletedResourceForeground": "#616161",
+          "gitDecoration.ignoredResourceForeground": "#727238",
+          "gitDecoration.renamedResourceForeground": "#007C7C",
+          "gitDecoration.conflictingResourceForeground": "#FF0000",
+          "gitDecoration.stageModifiedResourceForeground": "#0032A0",
+          "gitDecoration.stageDeletedResourceForeground": "#616161"
+        },
+        "[IntelliJ IDEA Islands Dark]": {
+          "titleBar.activeBackground": "#2B2D30",
+          "titleBar.inactiveBackground": "#2B2D30",
+          "activityBar.background": "#2B2D30",
+          "activityBar.activeBackground": "#43454A",
+          "activityBar.activeBorder": "#00000000",
+          "activityBar.activeFocusBorder": "#00000000",
+          "activityBar.foreground": "#CED0D6",
+          "activityBar.inactiveForeground": "#CED0D6",
+          "sideBar.background": "#1E1F22",
+          "sideBarSectionHeader.background": "#2B2D30",
+          "sideBarTitle.background": "#2B2D30",
+          "panel.background": "#1E1F22",
+          "terminal.background": "#1E1F22",
+          "statusBar.background": "#2B2D30",
+          "editor.background": "#1E1F22",
+          "sideBar.border": "#393B40",
+          "sideBarSectionHeader.border": "#393B40",
+          "activityBar.border": "#393B40",
+          "panel.border": "#393B40",
+          "editorGroup.border": "#393B40",
+          "editorGroupHeader.tabsBorder": "#393B40",
+          "statusBar.border": "#393B40",
+          "titleBar.border": "#393B40",
+          "list.errorForeground": "#BCBEC4",
+          "list.warningForeground": "#BCBEC4",
+          "symbolIcon.classForeground": "#548AF7",
+          "symbolIcon.interfaceForeground": "#57965C",
+          "symbolIcon.enumeratorForeground": "#A571E6",
+          "symbolIcon.enumeratorMemberForeground": "#A571E6",
+          "symbolIcon.propertyForeground": "#B589EC",
+          "symbolIcon.methodForeground": "#DB5C5C",
+          "symbolIcon.functionForeground": "#DB5C5C",
+          "symbolIcon.constructorForeground": "#DB5C5C",
+          "symbolIcon.fieldForeground": "#C77D55",
+          "symbolIcon.variableForeground": "#C77D55",
+          "symbolIcon.constantForeground": "#C77D55",
+          "symbolIcon.packageForeground": "#CED0D6",
+          "symbolIcon.namespaceForeground": "#CED0D6",
+          "symbolIcon.moduleForeground": "#CED0D6"
+        }
+      }
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/victorrentea/victor-vsc.git"
+  }
+}
