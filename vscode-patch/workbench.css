@@ -80,3 +80,27 @@
 .monaco-workbench.fullscreen .titlebar-container > .titlebar-left > .victor-branch {
   margin-left: 10px;
 }
+
+/* --------------------------------------------- rotița mutată în title bar */
+
+.titlebar-container > .titlebar-right > .victor-cog-host {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-right: 6px;
+  -webkit-app-region: no-drag;
+}
+
+/* Elementul vine din status bar cu dimensiunile de acolo; aici îi trebuie
+   înălțimea title bar-ului, nu 22px moșteniți. */
+.victor-cog-host > .statusbar-item {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  line-height: normal;
+}
+
+.victor-cog-host > .statusbar-item > .statusbar-item-label {
+  margin: 0;
+  padding: 0 4px;
+}

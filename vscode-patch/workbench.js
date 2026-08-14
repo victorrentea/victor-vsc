@@ -46,6 +46,30 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
+  // Rotița pe care extensia o pune în status bar (singurul loc în care o poate
+  // pune) e mutată sus, lângă butoanele de layout. VS Code n-are punct de
+  // extensie pentru title bar, dar elementul e același nod DOM: mutat, își
+  // păstrează handler-ul de click, deci nu trebuie simulat nimic.
+  function moveCog() {
+    const right = document.querySelector('.titlebar-container > .titlebar-right');
+    if (!right) return;
+
+    let host = right.querySelector('.victor-cog-host');
+    if (host && host.querySelector('.statusbar-item')) return;   // deja mutată
+
+    const cog = document.querySelector('.part.statusbar .statusbar-item .codicon-gear');
+    if (!cog) return;
+    const item = cog.closest('.statusbar-item');
+    if (!item) return;
+
+    if (!host) {
+      host = document.createElement('div');
+      host.className = 'victor-cog-host';
+      right.appendChild(host);      // ultimul din bandă = colțul dreapta-sus, ca în IntelliJ
+    }
+    host.appendChild(item);
+  }
+
   let lastTitle = null;
 
   function tick() {
@@ -54,6 +78,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       // atingem DOM-ul deloc.
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
+      moveCog();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();

@@ -53,8 +53,9 @@ function activate(context) {
         else if (d.severity === vscode.DiagnosticSeverity.Information) infos++;
       }
     }
-    // Matches the native item, which only spells out the info count when there is one.
-    problems.text = `$(error) ${errors} $(warning) ${warnings}` + (infos ? ` $(info) ${infos}` : '');
+    // Doar erori și warning-uri: info-urile sunt zgomot permanent în proiectele
+    // mari și mâncau lățime în bară. Contorul lor rămâne în tooltip.
+    problems.text = `$(error) ${errors} $(warning) ${warnings}`;
     problems.tooltip = `${errors} errors, ${warnings} warnings, ${infos} infos`;
     problems.show();
   }
