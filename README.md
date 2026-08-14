@@ -44,4 +44,4 @@ Then reload the window.
 
 The `icons/ft-*.svg` files and the symbol colours come from
 [intellij-community](https://github.com/JetBrains/intellij-community)
-(Apache-2.0). Everything else here is MIT.
+(Apache-2.0). Everything else here is public domain (Unlicense).
