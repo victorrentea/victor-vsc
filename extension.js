@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
+const puml = require('./puml');
 
 const SEP = '  ›  ';
 
@@ -120,6 +121,9 @@ function activate(context) {
     vscode.workspace.onDidChangeTextDocument(debounced),
     vscode.languages.onDidChangeDiagnostics(debouncedProblems),
   );
+  // PlantUML: custom editor + butonul care ciclează text / split / diagramă.
+  puml.register(context);
+
   render();
   renderProblems();
 }

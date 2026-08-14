@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + cog, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -13,7 +13,8 @@
   "main": "./extension.js",
   "activationEvents": [
     "onStartupFinished",
-    "onTerminalProfile:victor-vsc.claude"
+    "onTerminalProfile:victor-vsc.claude",
+    "onCustomEditor:victor-vsc.pumlDiagram"
   ],
   "contributes": {
     "iconThemes": [
@@ -147,6 +148,45 @@
           "symbolIcon.packageForeground": "#CED0D6",
           "symbolIcon.namespaceForeground": "#CED0D6",
           "symbolIcon.moduleForeground": "#CED0D6"
+        }
+      }
+    },
+    "customEditors": [
+      {
+        "viewType": "victor-vsc.pumlDiagram",
+        "displayName": "PlantUML Diagram",
+        "selector": [
+          {
+            "filenamePattern": "*.{puml,plantuml,iuml,wsd,pu}"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "victor-vsc.togglePumlView",
+        "title": "Toggle Text / Split / Diagram",
+        "category": "PlantUML",
+        "icon": "$(layout)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "victor-vsc.togglePumlView",
+          "group": "navigation@1",
+          "when": "resourceExtname == .puml || resourceExtname == .plantuml || resourceExtname == .iuml || resourceExtname == .wsd || resourceExtname == .pu"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Victor VSC",
+      "properties": {
+        "victorVsc.plantumlPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the plantuml binary. Empty = try /opt/homebrew/bin/plantuml, /usr/local/bin/plantuml, then PATH."
         }
       }
     }
