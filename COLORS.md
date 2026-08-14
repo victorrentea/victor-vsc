@@ -52,3 +52,19 @@ pierde și el roșul — nu se pot separa fără CSS. Culorile git rămân.
 Luate din `DefaultColorSchemesManager.xml` din intellij-community — sursa pe
 care o citește IntelliJ însuși. IntelliJ: modificat = albastru, adăugat = verde,
 netracked („Unknown") = cărămiziu, ignorat = oliv.
+
+---
+
+## Nu doar culori: `editor.stickyScroll.maxLineCount: 1`
+
+Cu sticky scroll pornit, editorul refuză să lase cursorul mai sus de
+`stickyScroll.maxLineCount` linii de marginea de sus — codul din `revealRange`:
+
+```js
+I = Math.max(cursorSurroundingLines, stickyScrollEnabled ? maxNumberStickyLines : 0)
+```
+
+Default-ul lui `maxLineCount` e **5**, deci la fiecare tastă apăsată pe o linie
+aflată sus în viewport, ecranul sare cu până la 5 rânduri ca să facă loc marginii.
+Marginea are sens — altfel cursorul ar ajunge sub widget-ul sticky — dar widget-ul
+arată o singură linie la un fișier de note, deci 1 e valoarea corectă, nu 5.
