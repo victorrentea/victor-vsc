@@ -58,8 +58,17 @@
   color: var(--vscode-titleBar-activeForeground);
   background-color: var(--vscode-commandCenter-background);
   border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  /* Title bar-ul are peste tot un strat `.titlebar-drag-region` întins pe toată
+     suprafața; elementele native urcă peste el cu z-index 2500. Fără asta, doar
+     bucățile desenate ale pastilei primeau click, nu și golurile dintre ele. */
+  z-index: 2500;
   -webkit-app-region: no-drag;
   cursor: pointer;
+}
+
+.titlebar-container > .titlebar-left > .victor-branch * {
+  -webkit-app-region: no-drag;
+  pointer-events: none;          /* click-ul aterizează mereu pe pastilă, nu pe copil */
 }
 
 .titlebar-container > .titlebar-left > .victor-branch:hover {
