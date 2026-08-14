@@ -7,11 +7,13 @@
   /* Inter e chiar fontul din IntelliJ New UI (instalat local din JBR-ul lui
      IntelliJ, deci literele sunt identice, nu doar asemănătoare). */
   --victor-ui-font: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
-  /* VS Code ține rândul din arbore la o înălțime fixă, calculată în JS, pe care
-     CSS-ul n-o poate schimba. Densitatea se recuperează invers: text mai mare
-     în același rând => mai puțin negru în jurul lui. IntelliJ ține raportul
-     pas/înălțime-text la 1.65; 13px dădea 1.79. */
-  --victor-tree-font-size: 14px;
+  /* Rândul din arbore are înălțime fixă (22px), calculată în JS — CSS-ul n-o
+     poate schimba. Singura pârghie e mărimea textului din el.
+     Măsurat 1:1, pe același ecran, raportul pas-rând / înălțime-cerneală:
+     IntelliJ 2.093, VS Code 2.000 la 15px => 14.5px cade exact pe IntelliJ.
+     (Prima măsurătoare, făcută din capturi de ecrane diferite, dăduse invers —
+     că VS Code ar avea mai mult aer; era un artefact de scalare între poze.) */
+  --victor-tree-font-size: 14.5px;
 }
 
 /* ---------------------------------------------------------------- Explorer */
@@ -30,11 +32,15 @@
 /* ------------------------------------------- branch-ul lângă cele 3 butoane */
 
 .titlebar-container > .titlebar-left > .victor-branch {
-  order: 3;                       /* 0 = spațiul rezervat semafoarelor macOS */
+  order: 3;
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-left: 10px;
+  /* Pe macOS semafoarele sunt desenate de sistem peste fereastră, iar containerul
+     care ar trebui să le rezerve loc are `width: env(titlebar-area-x, 0px)`, care
+     aici iese 0 — deci fără marginea asta pastila ajunge chiar sub cele trei
+     butoane. În fullscreen butoanele nu există, deci nici marginea. */
+  margin-left: 78px;
   padding: 1px 8px;
   height: 22px;
   box-sizing: border-box;
@@ -63,4 +69,8 @@
 .titlebar-container > .titlebar-left > .victor-branch > .codicon {
   font-size: 14px;
   opacity: .8;
+}
+
+.monaco-workbench.fullscreen .titlebar-container > .titlebar-left > .victor-branch {
+  margin-left: 10px;
 }

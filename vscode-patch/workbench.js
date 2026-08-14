@@ -46,13 +46,23 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
+  let lastTitle = null;
+
   function tick() {
-    try { ensureBranchPill(); } catch { /* un selector mutat nu strică workbench-ul */ }
+    try {
+      // Ieșire rapidă: cât timp titlul n-a mișcat și pastila e la locul ei, nu
+      // atingem DOM-ul deloc.
+      const title = document.title;
+      const left = document.querySelector('.titlebar-container > .titlebar-left');
+      if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
+      lastTitle = title;
+      ensureBranchPill();
+    } catch { /* un selector mutat nu strică workbench-ul */ }
   }
 
-  // Title bar-ul se construiește după ce scriptul ăsta rulează și se reconstruiește
-  // la schimbări de layout, deci verificăm periodic în loc să ne legăm o dată.
-  new MutationObserver(tick).observe(document.documentElement, { subtree: true, childList: true });
+  // NU pune aici un MutationObserver pe document: workbench-ul mută DOM-ul de mii
+  // de ori pe secundă când merg terminalele, iar callback-ul îneacă UI-ul.
+  // Un tick la 2s e destul — title bar-ul nu se reconstruiește mai des de-atât.
   setInterval(tick, 2000);
   tick();
 
