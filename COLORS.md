@@ -127,3 +127,16 @@ Două capcane de măsurare, ambele m-au trimis pe piste greșite:
 - **acoperirea pe o casetă lată**: normalizată pe toată lățimea panoului include
   spațiul gol din dreapta, care diferă între cele două IDE-uri. Se calculează
   strict pe caseta strânsă a cuvântului.
+
+### Footerul (status bar)
+
+`STATUS_BAR_FLOATING_PADDING = 0` în `vscode-patch/apply.sh`. Rezultat măsurat:
+**33 px la VS Code, 33 px la IntelliJ**.
+
+Înălțimea footerului nu e nici setare, nici CSS pe care să-l poți bate: în bundle,
+partea de status bar are `HEIGHT = 22` **plus** `FLOATING_BOTTOM_PADDING = 10`, o
+margine pe care layout-ul nou cu panouri „plutitoare" o adaugă dedesubt, iar
+`minimumHeight`/`maximumHeight` returnează suma. Un `height` din CSS n-ar ajuta:
+grila workbench-ului pune dimensiunea pe container din JS, deci ai obține o bară
+mică într-un spațiu rămas mare. Se patchează constanta, ancorată chiar pe numele
+ei — e destul de rar ca să nu se confunde cu altceva.

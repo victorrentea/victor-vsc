@@ -23,16 +23,28 @@ for f in ('victor-workbench.css', 'victor-workbench.js'):
     p = os.path.join(wb, f)
     if os.path.exists(p): os.remove(p)
 
-# înălțimea rândului din Explorer, înapoi la 22 (valoarea din fabrică)
+# constantele din bundle, înapoi la valorile din fabrică. Amândouă se aplică pe
+# același șir și se scriu o singură dată — altfel a doua scriere o pierde pe prima.
 bundle = os.path.join(res, 'out/vs/workbench/workbench.desktop.main.js')
 src = open(bundle, encoding='utf8').read()
+dirty = []
+
 at = src.find('"workbench.registry.explorer.fileContributions"')
 if at >= 0:
     m = re.search(r'ITEM_HEIGHT=([\d.]+)', src[at:at + 4000])
     if m and m.group(1) != '22':
         i = at + m.start(1)
-        open(bundle, 'w', encoding='utf8').write(src[:i] + '22' + src[i + len(m.group(1)):])
-        print(f'   rând Explorer: {m.group(1)} -> 22')
+        src = src[:i] + '22' + src[i + len(m.group(1)):]
+        dirty.append(f'rând Explorer: {m.group(1)} -> 22')
+
+m = re.search(r'FLOATING_BOTTOM_PADDING=([\d.]+)', src)
+if m and m.group(1) != '10':
+    src = src[:m.start(1)] + '10' + src[m.end(1):]
+    dirty.append(f'margine status bar: {m.group(1)} -> 10')
+
+if dirty:
+    open(bundle, 'w', encoding='utf8').write(src)
+    for d in dirty: print('  ', d)
 
 pj   = os.path.join(res, 'product.json')
 prod = json.load(open(pj, encoding='utf8'))

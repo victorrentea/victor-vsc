@@ -24,7 +24,12 @@ WATCH=0
 # rândul peste cel din IntelliJ. Vezi ../COLORS.md.
 TREE_ROW_HEIGHT="${TREE_ROW_HEIGHT:-23.4}"
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" python3 - <<'PY'
+# Marginea pe care layout-ul „floating panels" o adaugă sub status bar
+# (`FLOATING_BOTTOM_PADDING = 10` în bundle). Bara e 22px + marginea asta; cu 0
+# footerul ajunge la înălțimea celui din IntelliJ.
+STATUS_BAR_FLOATING_PADDING="${STATUS_BAR_FLOATING_PADDING:-0}"
+
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -78,6 +83,17 @@ else:
         src_js = src_js[:i] + row_h + src_js[i + len(m.group(1)):]
         open(bundle, 'w', encoding='utf8').write(src_js)
         print(f'   rând Explorer: {m.group(1)} -> {row_h}')
+
+# 3b. marginea de sub status bar, tot o constantă în bundle. Ancora e chiar
+#     numele ei, care e destul de rar ca să nu se confunde cu altceva.
+sb = os.environ['SB_PAD']
+m = re.search(r'FLOATING_BOTTOM_PADDING=([\d.]+)', src_js)
+if not m:
+    print('   ATENȚIE: nu găsesc FLOATING_BOTTOM_PADDING, footerul rămâne cel din fabrică')
+elif m.group(1) != sb:
+    src_js = src_js[:m.start(1)] + sb + src_js[m.end(1):]
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print(f'   margine sub status bar: {m.group(1)} -> {sb}')
 
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
