@@ -68,3 +68,34 @@ Default-ul lui `maxLineCount` e **5**, deci la fiecare tastă apăsată pe o lin
 aflată sus în viewport, ecranul sare cu până la 5 rânduri ca să facă loc marginii.
 Marginea are sens — altfel cursorul ar ajunge sub widget-ul sticky — dar widget-ul
 arată o singură linie la un fișier de note, deci 1 e valoarea corectă, nu 5.
+
+---
+
+## Lista de fișiere, potrivită peste IntelliJ
+
+Două valori, ambele măsurate, nu alese din ochi:
+
+| | valoare | unde |
+|---|---|---|
+| font | Inter **14.6px** | `vscode-patch/workbench.css` |
+| înălțime rând | **23.4px** | `vscode-patch/apply.sh`, `TREE_ROW_HEIGHT` |
+
+VS Code ține înălțimea rândului ca o constantă în JS (`ITEM_HEIGHT = 22` în
+delegatul Explorer-ului) și n-o expune ca setare — de-aia se patchează bundle-ul,
+ancorat pe string-ul `"workbench.registry.explorer.fileContributions"`, care
+supraviețuiește update-urilor, spre deosebire de numele minificate din jur.
+
+**Cum s-a măsurat**, fiindcă metoda evidentă dă răspunsuri greșite: înălțimea
+benzii de cerneală a unui rând include iconița fișierului, care e mai mare decât
+textul și diferă între cele două IDE-uri — de trei ori mi-a spus că IntelliJ are
+textul mai mare, când de fapt îl avea mai mic. Ce funcționează: **diferența de
+lățime dintre două nume din același arbore** (ex. `petclinic-observability` minus
+`openspec`). Aia e lățime de text curată — fără iconițe, fără indentare, fără
+scala ecranului. Rândurile îngroșate (modulele, în IntelliJ) se sar.
+
+Rezultat, VS Code vs IntelliJ: 102.0 / 101.5 px, 42.0 / 41.0, 60.0 / 60.5, pas
+de rând 28.0 / 28.0.
+
+⚠️ Cifrele sunt pentru fereastra cu **zoom-ul curent** (un pas de ⌘+, adică 1.2).
+Zoom-ul înmulțește și fontul, și rândul, deci un ⌘0 le micșorează pe amândouă cu
+20% și potrivirea se pierde. Dacă schimbi zoom-ul, se remăsoară.

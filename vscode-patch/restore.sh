@@ -23,11 +23,24 @@ for f in ('victor-workbench.css', 'victor-workbench.js'):
     p = os.path.join(wb, f)
     if os.path.exists(p): os.remove(p)
 
+# înălțimea rândului din Explorer, înapoi la 22 (valoarea din fabrică)
+bundle = os.path.join(res, 'out/vs/workbench/workbench.desktop.main.js')
+src = open(bundle, encoding='utf8').read()
+at = src.find('"workbench.registry.explorer.fileContributions"')
+if at >= 0:
+    m = re.search(r'ITEM_HEIGHT=([\d.]+)', src[at:at + 4000])
+    if m and m.group(1) != '22':
+        i = at + m.start(1)
+        open(bundle, 'w', encoding='utf8').write(src[:i] + '22' + src[i + len(m.group(1)):])
+        print(f'   rând Explorer: {m.group(1)} -> 22')
+
 pj   = os.path.join(res, 'product.json')
 prod = json.load(open(pj, encoding='utf8'))
-key  = 'vs/code/electron-browser/workbench/workbench.html'
-prod['checksums'][key] = base64.b64encode(
-    hashlib.sha256(open(html, 'rb').read()).digest()).decode().rstrip('=')
+for key in list(prod.get('checksums', {})):
+    f = os.path.join(res, 'out', key)
+    if os.path.isfile(f):
+        prod['checksums'][key] = base64.b64encode(
+            hashlib.sha256(open(f, 'rb').read()).digest()).decode().rstrip('=')
 json.dump(prod, open(pj, 'w', encoding='utf8'), indent='\t')
 print('   scos din', html)
 PY

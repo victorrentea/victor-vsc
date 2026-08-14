@@ -19,7 +19,12 @@ WATCH=0
 [[ -f "$RES/product.json" ]] || { echo "Nu găsesc VS Code în $APP" >&2; exit 1; }
 [[ -w "$RES/product.json" ]] || { echo "$RES nu e scriibil — rulează cu drepturi pe /Applications" >&2; exit 1; }
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" python3 - <<'PY'
+# Înălțimea rândului din Explorer, în px logici. VS Code o ține ca o constantă în
+# JS (22 din fabrică) și n-o expune ca setare; 23.4 e valoarea măsurată care pune
+# rândul peste cel din IntelliJ. Vezi ../COLORS.md.
+TREE_ROW_HEIGHT="${TREE_ROW_HEIGHT:-23.4}"
+
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -53,17 +58,46 @@ if '</html>' not in doc:
 doc = doc.replace('</html>', block + '\n</html>')
 open(html, 'w', encoding='utf8').write(doc)
 
-# 3. checksum-ul din product.json. Fără pasul ăsta VS Code arată la fiecare
-#    pornire „Your Code installation appears to be corrupt". Algoritmul e chiar
-#    cel din sursă: base64(sha256(fișier)), fără '=' la coadă.
+# 3. înălțimea rândului din Explorer, o constantă în bundle-ul minificat.
+#    Ancora e string-ul de registry dinaintea ei — numele minificate (`Bgt`) se
+#    schimbă la fiecare release, string-ul nu. Dacă ancora nu mai prinde, tace și
+#    strigă, nu modifică la întâmplare.
+row_h = os.environ['ROW_H']
+bundle = os.path.join(res, 'out/vs/workbench/workbench.desktop.main.js')
+src_js = open(bundle, encoding='utf8').read()
+anchor = '"workbench.registry.explorer.fileContributions"'
+at = src_js.find(anchor)
+if at < 0:
+    print('   ATENȚIE: nu găsesc delegatul Explorer-ului, înălțimea rândului rămâne cea din fabrică')
+else:
+    m = re.search(r'ITEM_HEIGHT=([\d.]+)', src_js[at:at + 4000])
+    if not m:
+        print('   ATENȚIE: ancora e acolo, dar ITEM_HEIGHT nu — înălțimea rândului rămâne neatinsă')
+    elif m.group(1) != row_h:
+        i = at + m.start(1)
+        src_js = src_js[:i] + row_h + src_js[i + len(m.group(1)):]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print(f'   rând Explorer: {m.group(1)} -> {row_h}')
+
+# 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
+#    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
+#    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),
+#    fără '=' la coadă. (Se aplică la pornirea aplicației, nu la reload de
+#    fereastră — deci bannerul mai apare o dată, până la următorul ⌘Q.)
 pj = os.path.join(res, 'product.json')
 prod = json.load(open(pj, encoding='utf8'))
-key = 'vs/code/electron-browser/workbench/workbench.html'
-digest = base64.b64encode(hashlib.sha256(open(html, 'rb').read()).digest()).decode().rstrip('=')
-if prod.get('checksums', {}).get(key) != digest:
-    prod['checksums'][key] = digest
+changed = []
+for key in list(prod.get('checksums', {})):
+    f = os.path.join(res, 'out', key)
+    if not os.path.isfile(f):
+        continue
+    digest = base64.b64encode(hashlib.sha256(open(f, 'rb').read()).digest()).decode().rstrip('=')
+    if prod['checksums'][key] != digest:
+        prod['checksums'][key] = digest
+        changed.append(key.split('/')[-1])
+if changed:
     json.dump(prod, open(pj, 'w', encoding='utf8'), indent='\t')
-    print('   checksum workbench.html actualizat')
+    print('   checksum actualizat:', ', '.join(changed))
 
 print(f'   injectat în {html}' + ('  [watch pornit]' if watch else ''))
 PY
