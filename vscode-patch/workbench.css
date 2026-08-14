@@ -21,6 +21,10 @@
 .monaco-workbench .part.sidebar > .content .monaco-list-row {
   font-family: var(--victor-ui-font);
   font-size: var(--victor-tree-font-size);
+  /* `workbench.fontAliasing: antialiased` subțiază tot workbench-ul; IntelliJ
+     desenează cu 18% mai multă cerneală pe același text, așa că în arbore
+     ne întoarcem la randarea groasă. */
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 /* Titlurile de secțiune (EXPLORER, OUTLINE, TIMELINE) pe același font. */
