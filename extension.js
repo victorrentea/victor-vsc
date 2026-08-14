@@ -112,11 +112,17 @@ function activate(context) {
     }),
   });
 
+  // ⌘⌥←/→ trebuie să nu facă nimic. O extensie nu poate șterge un keybinding
+  // default, dar cele contribuite de extensii au prioritate mai mare, deci le
+  // legăm de o comandă goală care înghite tasta.
+  const noop = vscode.commands.registerCommand('victor-vsc.noop', () => {});
+
   context.subscriptions.push(
     cog,
     trail,
     problems,
     claudeProfile,
+    noop,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
     vscode.workspace.onDidChangeTextDocument(debounced),
