@@ -101,6 +101,16 @@
   display: none;
 }
 
+/* Paleta de lângă numărul de tokeni e comutatorul de „highlight token
+   boundaries" al extensiei `gpt-token-counter-live` — n-are setare de ascuns și
+   își schimbă glifa după stare (paletă / bidon / cerc tăiat), deci ancora e
+   `accessibilityInformation.label`, pe care extensia îl pune o singură dată. */
+.part.statusbar .statusbar-item:has(> a.statusbar-item-label[aria-label="Toggle token highlighting"]),
+.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-symbol-color),
+.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-paintcan) {
+  display: none;
+}
+
 /* Stă în `.titlebar-center`, imediat în stânga pastilei. Banda e flex cu
    `align-items: center`, deci centrarea pe verticală o dă ea — butonul trebuie
    doar să nu-și impună înălțimea benzii.

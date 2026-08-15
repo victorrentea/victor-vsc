@@ -15,7 +15,7 @@ installed by hand.
 | **Markdown preview** | Ctrl+wheel zoom, line numbers |
 | **Claude terminal profile** | a `Claude` entry in the terminal dropdown, with a flower icon |
 | **Middle click = ⌘ click** | pressing the scroll wheel over code replays the DOM events of a real ⌘ click, i.e. Go to Definition. VS Code has no setting for the middle button and keybindings cannot bind mouse buttons; the editor reads the modifier off the event, so a replayed event with `metaKey` is enough (`vscode-patch/workbench.js`) |
-| **Token counter icon** | the `gpt-token-counter-live` status bar text is templated here, so the count leads with `$(victor-coins)` — a second glyph in the icon font |
+| **Token counter** | `gpt-token-counter-live` reads its status bar text from a template set here — `1678 tok (GPT)`, no icon. Its palette button (highlight toggle, no setting to hide it) is hidden by `vscode-patch/workbench.css`, anchored on the aria-label it sets once |
 | **No soft wrap in Markdown** | VS Code's own built-ins force `editor.wordWrap: "on"` for `[markdown]` (markdown-language-features) and for `[prompt]`/`[instructions]`/`[chatagent]`/`[skill]` (prompt-basics), so ⌃` only turns wrapping off for the current editor and every newly opened file is wrapped again. This extension contributes `"off"` for the same five language ids |
 
 ## The flower
