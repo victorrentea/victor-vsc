@@ -46,8 +46,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
-  // Butonul de unelte (Command Palette) urcă în title bar, ca o secțiune nouă
-  // în badge-ul de agent („● 117"), lipită în stânga lui.
+  // Butonul de unelte (Command Palette) urcă în title bar, în stânga pastilei
+  // de command center — în `.titlebar-center`, care e singurul rând flex de pe
+  // acolo, deci centrarea pe verticală vine de la sine.
   //
   // NU mai mutăm aici nodul din status bar, cum făceam cu rotița: în interiorul
   // badge-ului fiecare strat își oprește evenimentele (item-ul de ActionBar al
@@ -64,15 +65,8 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     (item.querySelector('a.statusbar-item-label') || item).click();
   }
 
-  function toolsSlot() {
-    // Ordinea preferințelor: în grupul de badge-uri al agentului (arată exact
-    // ca „117"), altfel în banda din centru, la dreapta pastilei.
-    return document.querySelector('.titlebar-container .agent-status-badge')
-        || document.querySelector('.titlebar-container > .titlebar-center');
-  }
-
   function ensureToolsButton() {
-    const slot = toolsSlot();
+    const slot = document.querySelector('.titlebar-container > .titlebar-center');
     if (!slot) return;
 
     let btn = document.querySelector('.victor-tools');
@@ -84,8 +78,6 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const icon = document.createElement('span');
       icon.className = 'codicon codicon-tools';
       btn.appendChild(icon);
-      // Click-ul trebuie oprit aici: badge-ul stă înăuntrul item-ului de
-      // ActionBar al pastilei, care altfel ar deschide și quick pick-ul.
       btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -94,12 +86,11 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       });
     }
 
-    // Prima secțiune din badge = colțul din stânga, exact locul cerut.
-    const first = slot.classList.contains('agent-status-badge') ? slot.firstElementChild : null;
-    if (btn.parentElement !== slot || (first && btn.nextElementSibling !== first)) {
-      slot.insertBefore(btn, first);
+    // Înaintea pastilei (`.window-title`), ca să stea în stânga ei.
+    const pill = slot.querySelector(':scope > .window-title');
+    if (btn.parentElement !== slot || btn.nextElementSibling !== pill) {
+      slot.insertBefore(btn, pill);
     }
-    btn.classList.toggle('victor-tools-badge', slot.classList.contains('agent-status-badge'));
   }
 
   let lastTitle = null;

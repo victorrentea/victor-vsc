@@ -100,53 +100,40 @@
   display: none;
 }
 
-/* Desenat ca o secțiune a badge-ului de agent („● 117"), lipită în stânga lui:
-   aceleași valori ca `.agent-status-badge-section` din workbench. */
+/* Stă în `.titlebar-center`, imediat în stânga pastilei. Banda e flex cu
+   `align-items: center`, deci centrarea pe verticală o dă ea — butonul trebuie
+   doar să nu-și impună înălțimea benzii.
+   `z-index` + `no-drag`: peste tot în title bar e întins
+   `.titlebar-drag-region`, iar elementele native urcă peste el cu 2500. Fără
+   asta butonul se vede, dar click-ul aterizează pe regiunea de tras fereastra
+   — exact simptomul „nu pot să-l apăs". */
 .victor-tools {
   display: flex;
   align-items: center;
-  height: 100%;
-  padding: 0 8px;
-  position: relative;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 22px;
+  width: 26px;
+  margin-right: 6px;
+  border-radius: 6px;
+  line-height: normal;
   cursor: pointer;
-  color: var(--vscode-commandCenter-foreground);
-  background-color: var(--vscode-agentStatusIndicator-background);
+  color: var(--vscode-titleBar-activeForeground);
+  background-color: var(--vscode-commandCenter-background);
+  border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  position: relative;
+  z-index: 2500;
   -webkit-app-region: no-drag;
 }
 
 .victor-tools > .codicon {
   font-size: 14px;
   opacity: .8;
+  pointer-events: none;      /* click-ul aterizează mereu pe buton, nu pe glif */
 }
 
 .victor-tools:hover {
-  background-color: var(--vscode-commandCenter-activeBackground);
   color: var(--vscode-commandCenter-activeForeground);
-}
-
-/* Prima secțiune din badge ia colțurile din stânga (regula lor `:first-child`
-   nu ne prinde, că n-avem clasa lor)... */
-.victor-tools.victor-tools-badge {
-  border-radius: 5px 0 0 5px;
-}
-
-/* ...și tot noi desenăm linia de separare spre secțiunea următoare, din același
-   motiv: selectorul lor cere ca vecinul din stânga să fie tot secțiune de-a lor. */
-.victor-tools.victor-tools-badge::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 1px;
-  background-color: var(--vscode-commandCenter-border, rgba(128, 128, 128, .35));
-}
-
-/* Fereastră fără badge de agent: stă singur în banda din centru, deci își
-   desenează tot conturul. */
-.victor-tools:not(.victor-tools-badge) {
-  height: 22px;
-  margin-left: 6px;
-  border-radius: 6px;
-  border: 1px solid var(--vscode-commandCenter-border, transparent);
+  background-color: var(--vscode-commandCenter-activeBackground);
+  border-color: var(--vscode-commandCenter-activeBorder);
 }
