@@ -96,7 +96,8 @@
    title bar doar îi apasă. Id-ul e cel dat în `createStatusBarItem('tools',…)`
    — VS Code îl pune pe nod ca `<extensie>.<id>`, cu litere mici. Fără patch
    regula asta nu există, deci butonul reapare jos, unde era. */
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.tools"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.tools"],
+.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-tools) {
   display: none;
 }
 

@@ -1,6 +1,7 @@
-"""Builds icons/victor-icons.woff: one glyph, a six-petal flower, drawn on the
-same grid as VS Code's codicon.ttf (upem 300, ascent 300, glyph box 0..282) so
-it lines up with the built-in icons everywhere VS Code renders a ThemeIcon."""
+"""Builds icons/victor-icons.woff: a six-petal flower (U+E001) and two coins
+(U+E002), drawn on the same grid as VS Code's codicon.ttf (upem 300, ascent 300,
+glyph box 0..282) so they line up with the built-in icons everywhere VS Code
+renders a ThemeIcon."""
 import math, sys
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -30,6 +31,11 @@ def ellipse(pen, cx, cy, a, b, rot, clockwise):
     pen.closePath()
 
 
+COIN_R_OUT = 78.0    # coin outer radius
+COIN_R_IN = 46.0     # the hole: 32 units of ink ≈ 1.5px de contur la 14px
+COIN_OFF = 48.0      # each coin's offset from the centre, on the diagonal
+
+
 def draw(pen):
     # Petals wind clockwise (filled in TrueType's non-zero rule), the heart
     # winds the other way so it punches a hole through their overlap.
@@ -40,15 +46,27 @@ def draw(pen):
     ellipse(pen, C, C, HEART_R, HEART_R, 0, clockwise=False)
 
 
-pen = TTGlyphPen(None)
-draw(pen)
-flower = pen.glyph()
+def draw_coins(pen):
+    """Two rings on the ↗ diagonal, overlapping just enough to touch: the
+    offset is picked so the outer circles cross by ~9 units, which at 16px is
+    the width of the contact point and not a merged blob."""
+    for dx, dy in ((-COIN_OFF, COIN_OFF), (COIN_OFF, -COIN_OFF)):
+        ellipse(pen, C + dx, C + dy, COIN_R_OUT, COIN_R_OUT, 0, clockwise=True)
+        ellipse(pen, C + dx, C + dy, COIN_R_IN, COIN_R_IN, 0, clockwise=False)
+
+
+def glyph(fn):
+    pen = TTGlyphPen(None)
+    fn(pen)
+    return pen.glyph()
+
 
 fb = FontBuilder(UPEM, isTTF=True)
-order = [".notdef", "flower"]
+order = [".notdef", "flower", "coins"]
 fb.setupGlyphOrder(order)
-fb.setupCharacterMap({0xE001: "flower"})
-fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(), "flower": flower})
+fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins"})
+fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(),
+              "flower": glyph(draw), "coins": glyph(draw_coins)})
 fb.setupHorizontalMetrics({g: (UPEM, 0) for g in order})
 fb.setupHorizontalHeader(ascent=UPEM, descent=0)
 fb.setupNameTable({"familyName": "victor-icons", "styleName": "Regular",
@@ -60,9 +78,12 @@ fb.save(sys.argv[1])
 print("wrote", sys.argv[1])
 
 if len(sys.argv) > 2:      # proof sheet: the very contours that went into the font
-    svg = SVGPathPen(None)
-    draw(svg)
+    paths = []
+    for i, fn in enumerate((draw, draw_coins)):
+        svg = SVGPathPen(None)
+        fn(svg)
+        paths.append(f'<g transform="translate({i * UPEM},{UPEM}) scale(1,-1)">'
+                     f'<path fill="#D97757" fill-rule="nonzero" d="{svg.getCommands()}"/></g>')
     open(sys.argv[2], "w").write(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {UPEM} {UPEM}">'
-        f'<g transform="translate(0,{UPEM}) scale(1,-1)">'
-        f'<path fill="#D97757" fill-rule="nonzero" d="{svg.getCommands()}"/></g></svg>')
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {2 * UPEM} {UPEM}">'
+        + "".join(paths) + '</svg>')
