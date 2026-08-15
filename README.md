@@ -14,6 +14,8 @@ installed by hand.
 | **Title bar** | 20% shorter (35 → 28px, patched in the bundle), the ← → navigation buttons are off (`workbench.navigationControl.enabled: false`), and a tools button is drawn as the leftmost section of the agent badge by `vscode-patch/workbench.js`. It is a proxy: the click is forwarded to the hidden `victorrentea.victor-vsc.tools` status bar entry, because a node moved into the command center loses its clicks to the action bar around it |
 | **Markdown preview** | Ctrl+wheel zoom, line numbers |
 | **Claude terminal profile** | a `Claude` entry in the terminal dropdown, with a flower icon |
+| **Middle click = ⌘ click** | pressing the scroll wheel over code replays the DOM events of a real ⌘ click, i.e. Go to Definition. VS Code has no setting for the middle button and keybindings cannot bind mouse buttons; the editor reads the modifier off the event, so a replayed event with `metaKey` is enough (`vscode-patch/workbench.js`) |
+| **Token counter icon** | the `gpt-token-counter-live` status bar text is templated here, so the count leads with `$(victor-coins)` — a second glyph in the icon font |
 | **No soft wrap in Markdown** | VS Code's own built-ins force `editor.wordWrap: "on"` for `[markdown]` (markdown-language-features) and for `[prompt]`/`[instructions]`/`[chatagent]`/`[skill]` (prompt-basics), so ⌃` only turns wrapping off for the current editor and every newly opened file is wrapped again. This extension contributes `"off"` for the same five language ids |
 
 ## The flower

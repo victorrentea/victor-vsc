@@ -57,10 +57,15 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // intrarea din status bar — aceeași manevră ca la pastila de branch. Intrarea
   // rămâne în status bar (ascunsă din CSS), deci handler-ul ei e mereu cel viu:
   // dacă patch-ul nu e aplicat, butonul se vede pur și simplu jos, ca înainte.
-  const TOOLS_ITEM = '.part.statusbar .statusbar-item[id^="victorrentea.victor-vsc"]';
+  // Id-ul EXACT, nu un prefix: VS Code numerotează intrările fără id explicit
+  // tot sub numele extensiei (`victorrentea.victor-vsc.0` e breadcrumb-ul), iar
+  // un `[id^=…]` prindea prima intrare din bară, adică Go to Symbol — de-aia se
+  // deschidea lista de simboluri în loc de Command Palette.
+  const TOOLS_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.tools"]';
+  const TOOLS_FALLBACK = '.part.statusbar .statusbar-item:has(> a.statusbar-item-label .codicon-tools)';
 
   function clickToolsItem() {
-    const item = document.querySelector(TOOLS_ITEM);
+    const item = document.querySelector(TOOLS_ITEM) || document.querySelector(TOOLS_FALLBACK);
     if (!item) return;
     (item.querySelector('a.statusbar-item-label') || item).click();
   }
