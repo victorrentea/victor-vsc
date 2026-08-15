@@ -47,39 +47,52 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   }
 
   // Rotița pe care extensia o pune în status bar (singurul loc în care o poate
-  // pune) e mutată sus, lipită la dreapta pastilei de command center — exact
-  // locul lăsat liber de săgeata „→" (Go Forward), stinsă din
-  // `workbench.navigationControl.enabled`. VS Code n-are punct de extensie
-  // pentru title bar, dar elementul e același nod DOM: mutat, își păstrează
-  // handler-ul de click, deci nu trebuie simulat nimic.
+  // pune) urcă în banda command center-ului, imediat în STÂNGA badge-ului de
+  // agent („● 117"), desenată ca un badge la fel. VS Code n-are punct de
+  // extensie pentru title bar, dar elementul e același nod DOM: mutat, își
+  // păstrează handler-ul de click, deci nu trebuie simulat nimic.
   //
-  // Gazda se agață de `.command-center`, NU de bara lui de acțiuni: aceea e un
-  // ActionBar, iar `clear()` îi golește nodul la fiecare re-randare de meniu și
-  // ne-ar rupe rotița din DOM definitiv (elementul de status bar e creat o
-  // singură dată, nu se mai întoarce).
-  function cogSlot() {
-    return document.querySelector('.titlebar-container > .titlebar-center > .window-title > .command-center')
-        || document.querySelector('.titlebar-container > .titlebar-right');
+  // Ca să stea pe rând cu badge-ul, gazda intră chiar în `.actions-container`
+  // al command center-ului — care e un ActionBar. `clear()`-ul lui ne scoate
+  // nodul din DOM la re-randările de meniu, iar elementul de status bar nu se
+  // mai regăsește în status bar după aceea; de-aia ținem referința în
+  // `cogItem` și îl reatașăm la următorul tick.
+  let cogItem = null;
+
+  function commandCenterBar() {
+    return document.querySelector(
+      '.titlebar-container > .titlebar-center > .window-title > .command-center'
+      + ' > .monaco-toolbar > .monaco-action-bar > .actions-container');
   }
 
   function moveCog() {
-    const slot = cogSlot();
-    if (!slot) return;
+    const bar = commandCenterBar();
+    if (!bar) return;
+
+    if (!cogItem) {
+      const cog = document.querySelector('.part.statusbar .statusbar-item .codicon-gear');
+      if (!cog) return;
+      cogItem = cog.closest('.statusbar-item');
+      if (!cogItem) return;
+    }
 
     let host = document.querySelector('.victor-cog-host');
-    if (host && host.parentElement === slot && host.querySelector('.statusbar-item')) return;   // deja mutată
-
-    const cog = document.querySelector('.part.statusbar .statusbar-item .codicon-gear');
-    if (!cog && !(host && host.querySelector('.statusbar-item'))) return;
-
     if (!host) {
       host = document.createElement('div');
       host.className = 'victor-cog-host';
     }
-    if (host.parentElement !== slot) slot.appendChild(host);
-    if (cog) {
-      const item = cog.closest('.statusbar-item');
-      if (item) host.appendChild(item);
+    if (!host.contains(cogItem)) host.appendChild(cogItem);
+
+    // Badge-ul de agent e un action item ca oricare altul din bandă; ne punem
+    // exact înaintea lui. Dacă lipsește (fereastră fără agent), stăm la coadă.
+    let before = bar.querySelector(':scope > .action-item.agent-status-container');
+    if (!before) {
+      const badge = bar.querySelector('[class*="agent-status"]');
+      before = badge ? badge.closest('.action-item') : null;
+    }
+    if (before && before.parentElement !== bar) before = null;   // e în alt toolbar, nu în bandă
+    if (host.parentElement !== bar || host.nextElementSibling !== before) {
+      bar.insertBefore(host, before);
     }
   }
 

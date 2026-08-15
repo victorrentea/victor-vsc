@@ -92,34 +92,45 @@
 
 /* --------------------------------------------- rotița mutată în title bar */
 
-/* Rotița stă acum lipită de pastila din centru, pe locul rămas liber după ce
-   săgețile ← → au fost stinse (`workbench.navigationControl.enabled: false`,
-   în package.json). `.command-center` e block din fabrică — îl facem flex ca
-   gazda rotiței să stea pe rând cu toolbar-ul pastilei, nu sub el. */
-.titlebar-container > .titlebar-center > .window-title > .command-center {
-  display: flex;
-  align-items: center;
-}
-
+/* Rotița stă în banda command center-ului, în stânga badge-ului de agent
+   („● 117"), și arată ca el: aceleași valori ca `.agent-status-badge` din
+   workbench (22px, rază 6px, fundalul de indicator, bordura de command
+   center), ca să se citească drept unul și același rând de badge-uri. */
 .victor-cog-host {
   display: flex;
   align-items: center;
-  /* Cât pastila: așa rotița iese centrată pe ea fără compensări în px. */
   height: 22px;
-  margin-left: 2px;
+  padding: 0 6px;
+  margin-right: 4px;
+  border-radius: 6px;
+  background-color: var(--vscode-agentStatusIndicator-background);
+  border: 1px solid var(--vscode-commandCenter-border, transparent);
+  color: var(--vscode-commandCenter-foreground);
   -webkit-app-region: no-drag;
+  cursor: pointer;
 }
 
-/* Elementul vine din status bar cu dimensiunile de acolo; aici îi trebuie
-   înălțimea title bar-ului, nu 22px moșteniți. */
+.victor-cog-host:hover {
+  background-color: var(--vscode-commandCenter-activeBackground);
+  border-color: var(--vscode-commandCenter-activeBorder, transparent);
+  color: var(--vscode-commandCenter-activeForeground);
+}
+
+/* Elementul vine din status bar cu dimensiunile de acolo; aici umple badge-ul
+   și își lasă culoarea și hover-ul pe seama lui, altfel s-ar vedea două
+   dreptunghiuri de hover unul în altul. */
 .victor-cog-host > .statusbar-item {
   display: flex;
   align-items: center;
   height: 100%;
   line-height: normal;
+  color: inherit;
 }
 
-.victor-cog-host > .statusbar-item > .statusbar-item-label {
+.victor-cog-host > .statusbar-item > .statusbar-item-label,
+.victor-cog-host > .statusbar-item > a.statusbar-item-label:hover {
   margin: 0;
-  padding: 0 2px;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
 }
