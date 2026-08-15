@@ -92,16 +92,21 @@
 
 /* --------------------------------------------- rotița mutată în title bar */
 
-.titlebar-container > .titlebar-right > .victor-cog-host {
+/* Rotița stă acum lipită de pastila din centru, pe locul rămas liber după ce
+   săgețile ← → au fost stinse (`workbench.navigationControl.enabled: false`,
+   în package.json). `.command-center` e block din fabrică — îl facem flex ca
+   gazda rotiței să stea pe rând cu toolbar-ul pastilei, nu sub el. */
+.titlebar-container > .titlebar-center > .window-title > .command-center {
   display: flex;
   align-items: center;
-  height: 100%;
-  /* Măsurat: iconițele de layout au centrul la y=22, rotița ieșea la y=20 —
-     containerul lor are alt padding vertical decât banda. Compensat aici. */
-  position: relative;
-  top: 1.5px;
-  margin-left: -7px;
-  padding-right: 8px;
+}
+
+.victor-cog-host {
+  display: flex;
+  align-items: center;
+  /* Cât pastila: așa rotița iese centrată pe ea fără compensări în px. */
+  height: 22px;
+  margin-left: 2px;
   -webkit-app-region: no-drag;
 }
 

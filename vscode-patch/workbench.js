@@ -47,27 +47,40 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   }
 
   // Rotița pe care extensia o pune în status bar (singurul loc în care o poate
-  // pune) e mutată sus, lângă butoanele de layout. VS Code n-are punct de
-  // extensie pentru title bar, dar elementul e același nod DOM: mutat, își
-  // păstrează handler-ul de click, deci nu trebuie simulat nimic.
-  function moveCog() {
-    const right = document.querySelector('.titlebar-container > .titlebar-right');
-    if (!right) return;
+  // pune) e mutată sus, lipită la dreapta pastilei de command center — exact
+  // locul lăsat liber de săgeata „→" (Go Forward), stinsă din
+  // `workbench.navigationControl.enabled`. VS Code n-are punct de extensie
+  // pentru title bar, dar elementul e același nod DOM: mutat, își păstrează
+  // handler-ul de click, deci nu trebuie simulat nimic.
+  //
+  // Gazda se agață de `.command-center`, NU de bara lui de acțiuni: aceea e un
+  // ActionBar, iar `clear()` îi golește nodul la fiecare re-randare de meniu și
+  // ne-ar rupe rotița din DOM definitiv (elementul de status bar e creat o
+  // singură dată, nu se mai întoarce).
+  function cogSlot() {
+    return document.querySelector('.titlebar-container > .titlebar-center > .window-title > .command-center')
+        || document.querySelector('.titlebar-container > .titlebar-right');
+  }
 
-    let host = right.querySelector('.victor-cog-host');
-    if (host && host.querySelector('.statusbar-item')) return;   // deja mutată
+  function moveCog() {
+    const slot = cogSlot();
+    if (!slot) return;
+
+    let host = document.querySelector('.victor-cog-host');
+    if (host && host.parentElement === slot && host.querySelector('.statusbar-item')) return;   // deja mutată
 
     const cog = document.querySelector('.part.statusbar .statusbar-item .codicon-gear');
-    if (!cog) return;
-    const item = cog.closest('.statusbar-item');
-    if (!item) return;
+    if (!cog && !(host && host.querySelector('.statusbar-item'))) return;
 
     if (!host) {
       host = document.createElement('div');
       host.className = 'victor-cog-host';
-      right.appendChild(host);      // ultimul din bandă = colțul dreapta-sus, ca în IntelliJ
     }
-    host.appendChild(item);
+    if (host.parentElement !== slot) slot.appendChild(host);
+    if (cog) {
+      const item = cog.closest('.statusbar-item');
+      if (item) host.appendChild(item);
+    }
   }
 
   let lastTitle = null;
