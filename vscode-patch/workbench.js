@@ -93,6 +93,40 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // Click pe rotița mouse-ului în cod = ⌘-click (Go to Definition). VS Code
+  // n-are nicio setare pentru butonul din mijloc și nici keybindings-urile nu
+  // primesc butoane de mouse — dar editorul își ia deciziile din evenimentele
+  // DOM, iar `hasTriggerModifier` se uită la `metaKey`-ul evenimentului. Deci
+  // retrimitem exact secvența pe care ar fi produs-o un ⌘-click adevărat:
+  // mousemove (ca să apară link-ul sub cursor), apoi down / up / click.
+  function replayAsCmdClick(e) {
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (!target) return;
+    const base = {
+      bubbles: true, cancelable: true, composed: true, view: window, detail: 1,
+      clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY,
+      button: 0, metaKey: true, ctrlKey: false, altKey: false, shiftKey: false
+    };
+    target.dispatchEvent(new MouseEvent('mousemove', { ...base, buttons: 0 }));
+    target.dispatchEvent(new MouseEvent('mousedown', { ...base, buttons: 1 }));
+    target.dispatchEvent(new MouseEvent('mouseup', { ...base, buttons: 0 }));
+    target.dispatchEvent(new MouseEvent('click', { ...base, buttons: 0 }));
+  }
+
+  // Capture, ca să ajungem înaintea editorului, care altfel ar trata butonul
+  // din mijloc ca pe o selecție/paste (X11) sau l-ar înghiți în tăcere.
+  document.addEventListener('mousedown', (e) => {
+    if (e.button !== 1) return;
+    if (!e.target?.closest?.('.monaco-editor .view-lines')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    replayAsCmdClick(e);
+  }, true);
+
+  document.addEventListener('auxclick', (e) => {
+    if (e.button === 1 && e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
+  }, true);
+
   let lastTitle = null;
 
   function tick() {

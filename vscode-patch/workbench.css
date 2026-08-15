@@ -131,6 +131,7 @@
   font-size: 14px;
   opacity: .8;
   pointer-events: none;      /* click-ul aterizează mereu pe buton, nu pe glif */
+  -webkit-app-region: no-drag;   /* proprietatea nu se moștenește; fără ea zona glifei rămâne „drag" */
 }
 
 .victor-tools:hover {
