@@ -11,7 +11,7 @@ installed by hand.
 | **expui icon theme** | `intellij-icon-theme.json` + `icons/*.svg`, the file icons from IntelliJ's New UI |
 | **IntelliJ colours** | `contributes.configurationDefaults` for the *IntelliJ IDEA Islands Light/Dark* themes — chrome grey stays on the frame, content (tree, editor, terminal) shares one background. Rationale: [COLORS.md](COLORS.md) |
 | **Status bar** | breadcrumb moved to the footer like IntelliJ, own problems counter on the right, cog that opens the Command Palette |
-| **Title bar** | the ← → navigation buttons are off (`workbench.navigationControl.enabled: false`) and the cog sits in the freed slot, right of the command center pill — moved there by `vscode-patch/workbench.js` |
+| **Title bar** | 20% shorter (35 → 28px, patched in the bundle), the ← → navigation buttons are off (`workbench.navigationControl.enabled: false`), and a tools button is drawn as the leftmost section of the agent badge by `vscode-patch/workbench.js`. It is a proxy: the click is forwarded to the hidden `victorrentea.victor-vsc.tools` status bar entry, because a node moved into the command center loses its clicks to the action bar around it |
 | **Markdown preview** | Ctrl+wheel zoom, line numbers |
 | **Claude terminal profile** | a `Claude` entry in the terminal dropdown, with a flower icon |
 | **No soft wrap in Markdown** | VS Code's own built-ins force `editor.wordWrap: "on"` for `[markdown]` (markdown-language-features) and for `[prompt]`/`[instructions]`/`[chatagent]`/`[skill]` (prompt-basics), so ⌃` only turns wrapping off for the current editor and every newly opened file is wrapped again. This extension contributes `"off"` for the same five language ids |

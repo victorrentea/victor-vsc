@@ -29,7 +29,11 @@ TREE_ROW_HEIGHT="${TREE_ROW_HEIGHT:-23.4}"
 # footerul ajunge la înălțimea celui din IntelliJ.
 STATUS_BAR_FLOATING_PADDING="${STATUS_BAR_FLOATING_PADDING:-0}"
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" python3 - <<'PY'
+# Înălțimea title bar-ului cu command center pornit — 35px din fabrică, tot o
+# constantă în bundle. 28 = -20%, cât încape fix pastila de 22px cu aer.
+TITLE_BAR_HEIGHT="${TITLE_BAR_HEIGHT:-28}"
+
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" TITLE_H="$TITLE_BAR_HEIGHT" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -94,6 +98,23 @@ elif m.group(1) != sb:
     src_js = src_js[:m.start(1)] + sb + src_js[m.end(1):]
     open(bundle, 'w', encoding='utf8').write(src_js)
     print(f'   margine sub status bar: {m.group(1)} -> {sb}')
+
+# 3c. înălțimea title bar-ului. În bundle e o variabilă minificată (`mte=35`),
+#     al cărei nume se schimbă la fiecare release — o găsim prin locul în care e
+#     folosită, care e stabil: `this.isCommandCenterVisible||…?<nume>:30`.
+title_h = os.environ['TITLE_H']
+m = re.search(r'this\.isCommandCenterVisible\|\|\w+\?(\w+):30', src_js)
+if not m:
+    print('   ATENȚIE: nu găsesc înălțimea title bar-ului, rămâne cea din fabrică')
+else:
+    name = m.group(1)
+    m2 = re.search(rf'\b{name}=(\d+(?:\.\d+)?)\b', src_js)
+    if not m2:
+        print(f'   ATENȚIE: {name} e folosit, dar nu găsesc unde e definit — title bar neatins')
+    elif m2.group(1) != title_h:
+        src_js = src_js[:m2.start(1)] + title_h + src_js[m2.end(1):]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print(f'   înălțime title bar: {m2.group(1)} -> {title_h}')
 
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation

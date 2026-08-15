@@ -90,47 +90,63 @@
   margin-left: 10px;
 }
 
-/* --------------------------------------------- rotița mutată în title bar */
+/* ------------------------------- butonul de unelte, urcat în title bar */
 
-/* Rotița stă în banda command center-ului, în stânga badge-ului de agent
-   („● 117"), și arată ca el: aceleași valori ca `.agent-status-badge` din
-   workbench (22px, rază 6px, fundalul de indicator, bordura de command
-   center), ca să se citească drept unul și același rând de badge-uri. */
-.victor-cog-host {
-  display: flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 6px;
-  margin-right: 4px;
-  border-radius: 6px;
-  background-color: var(--vscode-agentStatusIndicator-background);
-  border: 1px solid var(--vscode-commandCenter-border, transparent);
-  color: var(--vscode-commandCenter-foreground);
-  -webkit-app-region: no-drag;
-  cursor: pointer;
+/* Intrarea din status bar rămâne sursa comenzii, dar se ascunde: butonul din
+   title bar doar îi apasă. Id-ul e cel dat în `createStatusBarItem('tools',…)`
+   — VS Code îl pune pe nod ca `<extensie>.<id>`, cu litere mici. Fără patch
+   regula asta nu există, deci butonul reapare jos, unde era. */
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.tools"] {
+  display: none;
 }
 
-.victor-cog-host:hover {
-  background-color: var(--vscode-commandCenter-activeBackground);
-  border-color: var(--vscode-commandCenter-activeBorder, transparent);
-  color: var(--vscode-commandCenter-activeForeground);
-}
-
-/* Elementul vine din status bar cu dimensiunile de acolo; aici umple badge-ul
-   și își lasă culoarea și hover-ul pe seama lui, altfel s-ar vedea două
-   dreptunghiuri de hover unul în altul. */
-.victor-cog-host > .statusbar-item {
+/* Desenat ca o secțiune a badge-ului de agent („● 117"), lipită în stânga lui:
+   aceleași valori ca `.agent-status-badge-section` din workbench. */
+.victor-tools {
   display: flex;
   align-items: center;
   height: 100%;
-  line-height: normal;
-  color: inherit;
+  padding: 0 8px;
+  position: relative;
+  cursor: pointer;
+  color: var(--vscode-commandCenter-foreground);
+  background-color: var(--vscode-agentStatusIndicator-background);
+  -webkit-app-region: no-drag;
 }
 
-.victor-cog-host > .statusbar-item > .statusbar-item-label,
-.victor-cog-host > .statusbar-item > a.statusbar-item-label:hover {
-  margin: 0;
-  padding: 0;
-  color: inherit;
-  background-color: transparent;
+.victor-tools > .codicon {
+  font-size: 14px;
+  opacity: .8;
+}
+
+.victor-tools:hover {
+  background-color: var(--vscode-commandCenter-activeBackground);
+  color: var(--vscode-commandCenter-activeForeground);
+}
+
+/* Prima secțiune din badge ia colțurile din stânga (regula lor `:first-child`
+   nu ne prinde, că n-avem clasa lor)... */
+.victor-tools.victor-tools-badge {
+  border-radius: 5px 0 0 5px;
+}
+
+/* ...și tot noi desenăm linia de separare spre secțiunea următoare, din același
+   motiv: selectorul lor cere ca vecinul din stânga să fie tot secțiune de-a lor. */
+.victor-tools.victor-tools-badge::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background-color: var(--vscode-commandCenter-border, rgba(128, 128, 128, .35));
+}
+
+/* Fereastră fără badge de agent: stă singur în banda din centru, deci își
+   desenează tot conturul. */
+.victor-tools:not(.victor-tools-badge) {
+  height: 22px;
+  margin-left: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--vscode-commandCenter-border, transparent);
 }

@@ -46,54 +46,60 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
-  // Rotița pe care extensia o pune în status bar (singurul loc în care o poate
-  // pune) urcă în banda command center-ului, imediat în STÂNGA badge-ului de
-  // agent („● 117"), desenată ca un badge la fel. VS Code n-are punct de
-  // extensie pentru title bar, dar elementul e același nod DOM: mutat, își
-  // păstrează handler-ul de click, deci nu trebuie simulat nimic.
+  // Butonul de unelte (Command Palette) urcă în title bar, ca o secțiune nouă
+  // în badge-ul de agent („● 117"), lipită în stânga lui.
   //
-  // Ca să stea pe rând cu badge-ul, gazda intră chiar în `.actions-container`
-  // al command center-ului — care e un ActionBar. `clear()`-ul lui ne scoate
-  // nodul din DOM la re-randările de meniu, iar elementul de status bar nu se
-  // mai regăsește în status bar după aceea; de-aia ținem referința în
-  // `cogItem` și îl reatașăm la următorul tick.
-  let cogItem = null;
+  // NU mai mutăm aici nodul din status bar, cum făceam cu rotița: în interiorul
+  // badge-ului fiecare strat își oprește evenimentele (item-ul de ActionBar al
+  // pastilei face `EventHelper.stop` pe click), iar nodul mutat rămâne fără
+  // click. Desenăm propriul element și, la click, apăsăm în locul nostru
+  // intrarea din status bar — aceeași manevră ca la pastila de branch. Intrarea
+  // rămâne în status bar (ascunsă din CSS), deci handler-ul ei e mereu cel viu:
+  // dacă patch-ul nu e aplicat, butonul se vede pur și simplu jos, ca înainte.
+  const TOOLS_ITEM = '.part.statusbar .statusbar-item[id^="victorrentea.victor-vsc"]';
 
-  function commandCenterBar() {
-    return document.querySelector(
-      '.titlebar-container > .titlebar-center > .window-title > .command-center'
-      + ' > .monaco-toolbar > .monaco-action-bar > .actions-container');
+  function clickToolsItem() {
+    const item = document.querySelector(TOOLS_ITEM);
+    if (!item) return;
+    (item.querySelector('a.statusbar-item-label') || item).click();
   }
 
-  function moveCog() {
-    const bar = commandCenterBar();
-    if (!bar) return;
+  function toolsSlot() {
+    // Ordinea preferințelor: în grupul de badge-uri al agentului (arată exact
+    // ca „117"), altfel în banda din centru, la dreapta pastilei.
+    return document.querySelector('.titlebar-container .agent-status-badge')
+        || document.querySelector('.titlebar-container > .titlebar-center');
+  }
 
-    if (!cogItem) {
-      const cog = document.querySelector('.part.statusbar .statusbar-item .codicon-gear');
-      if (!cog) return;
-      cogItem = cog.closest('.statusbar-item');
-      if (!cogItem) return;
+  function ensureToolsButton() {
+    const slot = toolsSlot();
+    if (!slot) return;
+
+    let btn = document.querySelector('.victor-tools');
+    if (!btn) {
+      btn = document.createElement('div');
+      btn.className = 'victor-tools';
+      btn.title = 'Command Palette (⇧⌘A)';
+      btn.setAttribute('role', 'button');
+      const icon = document.createElement('span');
+      icon.className = 'codicon codicon-tools';
+      btn.appendChild(icon);
+      // Click-ul trebuie oprit aici: badge-ul stă înăuntrul item-ului de
+      // ActionBar al pastilei, care altfel ar deschide și quick pick-ul.
+      btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        clickToolsItem();
+      });
     }
 
-    let host = document.querySelector('.victor-cog-host');
-    if (!host) {
-      host = document.createElement('div');
-      host.className = 'victor-cog-host';
+    // Prima secțiune din badge = colțul din stânga, exact locul cerut.
+    const first = slot.classList.contains('agent-status-badge') ? slot.firstElementChild : null;
+    if (btn.parentElement !== slot || (first && btn.nextElementSibling !== first)) {
+      slot.insertBefore(btn, first);
     }
-    if (!host.contains(cogItem)) host.appendChild(cogItem);
-
-    // Badge-ul de agent e un action item ca oricare altul din bandă; ne punem
-    // exact înaintea lui. Dacă lipsește (fereastră fără agent), stăm la coadă.
-    let before = bar.querySelector(':scope > .action-item.agent-status-container');
-    if (!before) {
-      const badge = bar.querySelector('[class*="agent-status"]');
-      before = badge ? badge.closest('.action-item') : null;
-    }
-    if (before && before.parentElement !== bar) before = null;   // e în alt toolbar, nu în bandă
-    if (host.parentElement !== bar || host.nextElementSibling !== before) {
-      bar.insertBefore(host, before);
-    }
+    btn.classList.toggle('victor-tools-badge', slot.classList.contains('agent-status-badge'));
   }
 
   let lastTitle = null;
@@ -104,7 +110,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       // atingem DOM-ul deloc.
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
-      moveCog();
+      ensureToolsButton();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();

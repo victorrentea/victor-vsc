@@ -15,17 +15,20 @@ function symbolChain(symbols, pos) {
 }
 
 function activate(context) {
-  // A cog that opens the Command Palette on click. It lives in the status bar
-  // rather than up next to the four layout controls because that strip is part
-  // of the title bar, which VS Code keeps for itself — there is no contribution
-  // point an extension can reach it through.
+  // A tools button that opens the Command Palette on click. It lives in the
+  // status bar rather than up next to the four layout controls because that
+  // strip is part of the title bar, which VS Code keeps for itself — there is
+  // no contribution point an extension can reach it through.
   // Below the problem counter's priority but above the bell's NEGATIVE_INFINITY,
   // so it sits between the two.
-  const cog = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, -2000000);
-  cog.text = '$(gear)';
-  cog.tooltip = 'Command Palette (⇧⌘A — Find Action, din keymap-ul IntelliJ)';
-  cog.command = 'workbench.action.showCommands';
-  cog.show();
+  // The explicit id makes the DOM node addressable (`victorrentea.victor-vsc.tools`):
+  // vscode-patch/workbench.js hides this entry and proxies clicks to it from the
+  // badge it draws in the title bar.
+  const tools = vscode.window.createStatusBarItem('tools', vscode.StatusBarAlignment.Right, -2000000);
+  tools.text = '$(tools)';
+  tools.tooltip = 'Command Palette (⇧⌘A — Find Action, din keymap-ul IntelliJ)';
+  tools.command = 'workbench.action.showCommands';
+  tools.show();
 
   // IntelliJ puts the breadcrumb in the footer; VS Code puts it under the tabs.
   // `breadcrumbs.enabled` turns the top one off and this redraws it at the
@@ -118,7 +121,7 @@ function activate(context) {
   const noop = vscode.commands.registerCommand('victor-vsc.noop', () => {});
 
   context.subscriptions.push(
-    cog,
+    tools,
     trail,
     problems,
     claudeProfile,
