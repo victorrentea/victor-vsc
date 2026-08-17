@@ -34,6 +34,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `COLORS.md` | de ce sunt culorile alea — `package.json` e JSON strict, n-are comentarii |
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
 | `puml.js` | randare PlantUML + comanda text / split / diagramă |
+| `relay-terminal.js` | listener pe loopback prin care Wispr Relay livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
 
