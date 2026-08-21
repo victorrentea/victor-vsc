@@ -66,12 +66,19 @@ pgrep -f "Visual Studio Code.app/Contents/MacOS/Code"
 osascript -e 'tell application "System Events" to (name of processes) contains "Code"'
 ```
 
-### Capcana 3 — ⌘R trimis din System Events nu reîncarcă fereastra
+### Capcana 3 — ⌘R **nu** e Reload Window într-un build stable
 
 `keystroke "r" using command down` peste fiecare fereastră n-a produs **nicio**
-linie nouă în `renderer.log` — se pierde (focus în terminalul integrat, sau
-binding-ul nu e cel presupus; paleta de comenzi e remapată pe `ctrl+p` în
-`keybindings.json`). Nu te lua după faptul că fereastra „clipește".
+linie nouă în `renderer.log`. Motivul nu e focusul, ci comanda însăși: în bundle
+`workbench.action.reloadWindow` e declarată cu
+
+```js
+keybinding: { weight: 250, when: SD, primary: 2096 }   // SD = new Z("isDevelopment"), 2096 = ⌘R
+```
+
+adică ⌘R e legat **doar** în build-urile de development. În VS Code stable
+scurtătura nu există — Reload Window se dă din paleta de comenzi (remapată aici
+pe `ctrl+p`). Documentația din repo scria „⌘R"; era greșită și e corectată.
 
 Verificarea care chiar spune dacă s-a reîncărcat:
 
@@ -105,19 +112,30 @@ Cele de mai sus spun doar că *fișierele* sunt corecte. Că `workbench.js` chia
 de unelte din stânga pastilei de titlu. Dacă fișierele sunt bune și butoanele
 lipsesc, e capcana 1 sau 3 — nu s-a reîncărcat renderer-ul.
 
-### Rămas de rezolvat, descoperit cu ocazia asta (nu ține de update)
+### Descoperit cu ocazia asta, reparat pe loc (nu ținea de update)
 
 `gpt-token-counter-live` 1.5.2 a **unit** paleta de highlight cu numărul de
 tokeni într-o singură intrare de status bar (`statusBar.text =
-"$(symbol-color) 228 tok (GPT)"`, un singur `createStatusBarItem`). Regula din
-`workbench.css` scrisă pe 15 aug ascundea o intrare separată:
+"$(symbol-color) 228 tok (GPT)"`, un singur `createStatusBarItem`, fiindcă
+prioritățile din jurul lui 100 sunt ocupate de item-ele native). Regula scrisă
+pe 15 aug ascundea o intrare separată, deci ascundea acum tot item-ul —
+**„N tok (GPT)" dispăruse din status bar** cât timp patch-ul era aplicat.
+
+Nu era o regresie din 1.134: era așa de la update-ul extensiei, doar că
+patch-ul lipsea de la update-ul de VS Code încoace, așa că nu se văzuse.
+
+Regula ascunde acum doar glifa, nu item-ul părinte, și prinde toate cele trei
+stări (`symbol-color` / `paintcan` / `circle-slash`) printr-un `> .codicon`
+delimitat de aria-label — cu prefix, fiindcă din 1.5.2 label-ul e „Toggle token
+highlighting **and select a model family**", nu mai e egal cu cel vechi:
 
 ```css
-.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-symbol-color) { display: none; }
+.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon {
+  display: none;
+}
 ```
 
-Acum ea ascunde tot item-ul, deci **„N tok (GPT)" nu se mai vede deloc** cât timp
-patch-ul e aplicat. Nu e o regresie din 1.134 — era așa și înainte, doar că
-patch-ul lipsea de la update încoace. Fixul e în CSS: ascunde doar glifa
-(`.statusbar-item[…] > a.statusbar-item-label > .codicon-symbol-color { display: none }`),
-nu item-ul părinte.
+Morala mai largă: o regulă care ascunde `.statusbar-item` întreg e o bombă cu
+ceas — extensia poate să-și fuzioneze item-ele oricând, iar CSS-ul continuă să
+„funcționeze", doar că ascunde altceva decât credeai. Când ținta e o glifă,
+selectorul trebuie să se oprească la glifă.

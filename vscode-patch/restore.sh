@@ -57,4 +57,4 @@ json.dump(prod, open(pj, 'w', encoding='utf8'), indent='\t')
 print('   scos din', html)
 PY
 
-echo "Gata. Reload Window (⌘R)."
+echo "Gata. Reload Window din paleta de comenzi (⌘R e legat doar în build-urile de development)."

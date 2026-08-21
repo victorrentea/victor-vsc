@@ -101,13 +101,18 @@
   display: none;
 }
 
-/* Paleta de lângă numărul de tokeni e comutatorul de „highlight token
+/* Paleta din fața numărului de tokeni e comutatorul de „highlight token
    boundaries" al extensiei `gpt-token-counter-live` — n-are setare de ascuns și
    își schimbă glifa după stare (paletă / bidon / cerc tăiat), deci ancora e
-   `accessibilityInformation.label`, pe care extensia îl pune o singură dată. */
-.part.statusbar .statusbar-item:has(> a.statusbar-item-label[aria-label="Toggle token highlighting"]),
-.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-symbol-color),
-.part.statusbar .statusbar-item:has(> a.statusbar-item-label > .codicon-paintcan) {
+   `accessibilityInformation.label`, pe care extensia îl pune o singură dată.
+   Prefix, nu egalitate: de la 1.5.2 label-ul e „…and select a model family".
+
+   Se ascunde DOAR glifa, nu item-ul. Din 1.5.2 extensia n-a mai făcut două
+   intrări de status bar, ci una singură (`$(symbol-color) 228 tok (GPT)`),
+   fiindcă prioritățile din jurul lui 100 sunt ocupate de item-ele native — deci
+   o regulă pe item-ul părinte ascundea și numărul, adică exact ce vrem să
+   rămână. */
+.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon {
   display: none;
 }
 

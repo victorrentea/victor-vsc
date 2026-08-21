@@ -152,4 +152,4 @@ if [[ -x "$LETTERPRESS" ]]; then
   "$LETTERPRESS" >/dev/null && echo "   letterpress reaplicat"
 fi
 
-echo "Gata. Reload Window (⌘R) ca să se vadă."
+echo "Gata. Reload Window din paleta de comenzi ca să se vadă (⌘R e legat doar în build-urile de development)."

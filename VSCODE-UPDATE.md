@@ -78,7 +78,7 @@ același lucru.
 ```
 
 Pune în pagină un mic poller care reîncarcă CSS-ul la 1.5s, ca să nu fie nevoie
-de ⌘R după fiecare modificare de `workbench.css`. Rulează `apply.sh` fără flag
+de Reload Window după fiecare modificare de `workbench.css`. Rulează `apply.sh` fără flag
 când s-a terminat reglajul — pollerul n-are ce căuta în starea finală.
 
 ## De ce nu o extensie de pe Marketplace
