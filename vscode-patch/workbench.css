@@ -12,8 +12,17 @@
      Măsurat 1:1, pe același ecran, raportul pas-rând / înălțime-cerneală:
      IntelliJ 2.093, VS Code 2.000 la 15px => 14.5px cade exact pe IntelliJ.
      (Prima măsurătoare, făcută din capturi de ecrane diferite, dăduse invers —
-     că VS Code ar avea mai mult aer; era un artefact de scalare între poze.) */
-  --victor-tree-font-size: 14.6px;
+     că VS Code ar avea mai mult aer; era un artefact de scalare între poze.)
+
+     14.3px, nu 14.6, de la a doua măsurătoare (21 aug 2026), care de data asta
+     nu e o potrivire din ochi: am randat „Scratches and Consoles" în Inter la
+     mărime variabilă și am căutat mărimea la care lățimea de cerneală cade
+     peste cea din captura Project view-ului — a ieșit 14.28px. Și se explică
+     exact: IntelliJ ține `fontSize = 13.0` cu `ideScale = 1.1`, iar 13 × 1.1 =
+     14.3. Numărul depinde deci de zoom-ul IDE-ului (⌘+/⌘− îl schimbă), nu e o
+     constantă a lui IntelliJ — dacă Victor mărește UI-ul acolo, ăsta se
+     recalculează. */
+  --victor-tree-font-size: 14.3px;
 }
 
 /* ---------------------------------------------------------------- Explorer */
