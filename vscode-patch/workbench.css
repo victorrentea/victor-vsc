@@ -190,17 +190,3 @@
   background-color: var(--vscode-commandCenter-activeBackground);
   border-color: var(--vscode-commandCenter-activeBorder);
 }
-
-/* ---- inlay hints: mai mici (setare) + cursive (numai de aici) ----------------
-   `editor.inlayHints` are fontSize/fontFamily, dar n-are fontStyle — VS Code
-   compune stilul hint-ului în JS (`_getLayoutInfo` + obiectul de proprietăți din
-   InlayHintsController) și nu pune `font-style` nicăieri, deci nu există setare
-   pentru cursiv.
-   Regulile alea ajung în DOM prin `DynamicCssRules`, care generează clase
-   `dyn-rule-<editor>-<n>` — singurul selector stabil pe care-l avem. Prefixul e
-   folosit de exact trei locuri în bundle: hint-urile, pătrățelele de culoare ale
-   color decorator-ului și fundalul de edit-tracking. Ultimele două n-au text,
-   așa că `font-style` nu le atinge. */
-.monaco-editor [class*="dyn-rule-"] {
-  font-style: italic;
-}
