@@ -29,6 +29,33 @@
   -webkit-text-stroke: 0.17px;
 }
 
+/* Ca în IntelliJ: rândul se evidențiază la click (selecție), nu când treci cu
+   mouse-ul peste el. VS Code n-are setare pentru asta — `list.hoverBackground`
+   e o culoare globală, iar dacă o faci transparentă stingi hover-ul și în
+   paleta de comenzi, în Quick Open, în Settings, peste tot. De-aia se stinge
+   din CSS și doar în sidebar.
+
+   Regula pe care o combatem e generată la runtime de tema activă, nu e în CSS-ul
+   din bundle, și arată exact așa:
+     `.monaco-list<sufix>:not(.drop-target):not(.dragging)
+        .monaco-list-row:hover:not(.selected):not(.focused)`
+   O repetăm identic, prefixată cu sidebar-ul: patru clase în plus înseamnă
+   specificitate mai mare, deci nu e nevoie de `!important`. `:not(.selected)`
+   și `:not(.focused)` rămân în selector ca să fie clar că rândul selectat sau
+   focusat își păstrează fundalul — ăla e tot rostul manevrei. */
+.monaco-workbench .part.sidebar > .content .monaco-list:not(.drop-target):not(.dragging) .monaco-list-row:hover:not(.selected):not(.focused) {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Tot ca în IntelliJ: peste arborele de fișiere cursorul rămâne săgeată, nu
+   devine mânuță. VS Code pune `cursor: pointer` pe orice rând de listă
+   (`.monaco-list.mouse-support .monaco-list-row`), ca și cum ar fi link-uri;
+   în sidebar îl punem înapoi pe `default`. */
+.monaco-workbench .part.sidebar > .content .monaco-list.mouse-support .monaco-list-row {
+  cursor: default;
+}
+
 /* Titlurile de secțiune (EXPLORER, OUTLINE, TIMELINE) pe același font. */
 .monaco-workbench .part.sidebar .pane-header > .title,
 .monaco-workbench .part.sidebar > .title .title-label {
