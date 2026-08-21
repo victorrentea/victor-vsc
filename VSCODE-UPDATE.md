@@ -13,8 +13,9 @@ fontul de sistem cu rânduri mai strânse.
 ~/workspace/victor-vsc/vscode-patch/apply.sh
 ```
 
-Apoi **Reload Window** (⌘R). Atât. Scriptul e idempotent — poate fi rulat de
-oricâte ori, nu se dublează nimic.
+Apoi **repornește aplicația** (⌘Q + relansare, nu doar Reload Window — vezi
+capcanele din [`UPDATE-LESSONS.md`](UPDATE-LESSONS.md)). Scriptul e idempotent —
+poate fi rulat de oricâte ori, nu se dublează nimic.
 
 Ca să verifici că a prins, fără să te uiți la UI:
 
