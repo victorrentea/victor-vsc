@@ -128,8 +128,18 @@ function handle(req, res) {
   // Point me at the terminal that is active **right now** — the one he is
   // looking at as he presses the key.
   if (req.method === 'POST' && url.pathname === '/bind') {
-    const term = vscode.window.activeTerminal;
-    if (!term) return send(res, 409, { ok: false, error: 'no active terminal in this window' });
+    // **`activeTerminal`, and the newest terminal behind it.** That property is
+    // only set once a terminal has actually held focus in this window, and it
+    // is empty in the case the feature exists for: Victor clicks `+`, gets a
+    // fresh shell, and presses ⌘⌃D looking straight at it — measured null here,
+    // in a window whose terminal panel was open with a live zsh in it. The relay
+    // then has no handle to take, falls back to pasting at whatever holds the
+    // caret, and the dictation lands in the editor. The last terminal in
+    // `terminals` is the one most recently created, which is exactly the one `+`
+    // just made; IntelliJ's side of this bridge has always had the same fallback.
+    const term = vscode.window.activeTerminal
+      || vscode.window.terminals[vscode.window.terminals.length - 1];
+    if (!term) return send(res, 409, { ok: false, error: 'no terminal open in this window' });
     const id = nextId++;
     bound.set(id, term);
     // `processId` is the **shell's** pid, and it is the whole reason the shell
