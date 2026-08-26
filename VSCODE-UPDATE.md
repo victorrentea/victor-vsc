@@ -40,12 +40,16 @@ grep -c victor-vsc "/Applications/Visual Studio Code.app/Contents/Resources/app/
    era cel nou, dar pagina rula cu regulile vechi, și părea că „nu se aplică
    selectorul". Amprenta se schimbă la fiecare modificare, deci cache-ul pică
    singur.
-3. Rescrie trei constante din `workbench.desktop.main.js`, pe care VS Code nu le
+3. Rescrie patru constante din `workbench.desktop.main.js`, pe care VS Code nu le
    expune ca setări. Numele minificate se schimbă la fiecare release, deci
    ancora e de fiecare dată ceva stabil din jur, nu numele:
-   - **înălțimea rândului din Explorer** (`ITEM_HEIGHT`, 22 → 23.4), găsită după
-     string-ul `"workbench.registry.explorer.fileContributions"`;
+   - **înălțimea rândului din Explorer** (`ITEM_HEIGHT`, 23.4 din fabrică → 22,
+     cât are IntelliJ), găsită după string-ul
+     `"workbench.registry.explorer.fileContributions"`;
    - **marginea de sub status bar** (`FLOATING_BOTTOM_PADDING`, 10 → 0);
+   - **lățimea barei de activități** (`FLOATING_COMPACT_ACTIVITYBAR_WIDTH` — cea
+     compactă, fiindcă `workbench.activityBar.compact` e pornit; lăsată pe 28,
+     valoarea din fabrică, dar reglabilă din `ACTIVITY_BAR_WIDTH`);
    - **înălțimea title bar-ului cu command center** (35 → 28, adică −20%),
      găsită după `this.isCommandCenterVisible||…?<nume>:30`.
 

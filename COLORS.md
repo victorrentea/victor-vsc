@@ -77,10 +77,13 @@ Două valori, ambele măsurate, nu alese din ochi:
 
 | | valoare | unde |
 |---|---|---|
-| font | Inter **14.6px** | `vscode-patch/workbench.css` |
-| înălțime rând | **23.4px** | `vscode-patch/apply.sh`, `TREE_ROW_HEIGHT` |
+| font | Inter **14.3px**, `-webkit-text-stroke: 0.40px` | `vscode-patch/workbench.css` |
+| înălțime rând | **22px** | `vscode-patch/apply.sh`, `TREE_ROW_HEIGHT` |
+| spațiu iconiță → nume | `padding-right: 4px` | `vscode-patch/workbench.css` |
 
-VS Code ține înălțimea rândului ca o constantă în JS (`ITEM_HEIGHT = 22` în
+VS Code ține înălțimea rândului ca o constantă în JS (`ITEM_HEIGHT`, între timp
+urcată din fabrică la **23.4**, nu 22 ca în versiunile vechi — de-aia rândurile
+începuseră să pară mai aerisite decât în IntelliJ fără să fi schimbat nimic; în
 delegatul Explorer-ului) și n-o expune ca setare — de-aia se patchează bundle-ul,
 ancorat pe string-ul `"workbench.registry.explorer.fileContributions"`, care
 supraviețuiește update-urilor, spre deosebire de numele minificate din jur.
@@ -100,6 +103,14 @@ de rând 28.0 / 28.0.
 Zoom-ul înmulțește și fontul, și rândul, deci un ⌘0 le micșorează pe amândouă cu
 20% și potrivirea se pierde. Dacă schimbi zoom-ul, se remăsoară.
 
+**Remăsurat pe 26 aug 2026**, de data asta cu ambele ferestre pe același monitor
+extern de 1x și cu VS Code la zoom 1 — singura configurație în care cifrele se
+compară direct, fără scalări de mijloc. Pasul rândului: IntelliJ (508−243)/12 =
+**22.08**, VS Code (537−279)/11 = **23.45**. De-aia `TREE_ROW_HEIGHT` a coborât de
+la 23.4 la 22. Pe ecranul Retina al laptopului IntelliJ desenează rândul altfel
+(acolo ieșise 23.4), deci potrivirea e ținută pentru monitorul extern, cel pe care
+stau ferestrele una lângă alta.
+
 ### Grosimea și culoarea, nu doar mărimea
 
 Mărimea potrivită nu ajunge — textul tot „nu arată la fel". Celelalte două axe,
@@ -110,6 +121,14 @@ măsurate cu ambele ferestre pe **același ecran și aceeași scală** (altfel 1
 |---|---|---|
 | culoarea textului (max pe rând) | 210 | 211 |
 | acoperire de cerneală | 21.2% | 21.5% |
+
+Reluat pe 26 aug 2026 pe monitorul extern, pe același cuvânt („docs") în ambii
+arbori: culoare identică (209,211,217 vs 208,210,216), lățime 32 vs 33px — dar
+**masa de cerneală a IntelliJ-ului era cu 26% mai mare** (24256 vs 19190). Adică
+nu mărimea era problema, ci grosimea. Randând Inter 14.3px în Chrome headless cu
+`-webkit-text-stroke: 0.17px` iese exact cerneala VS Code-ului de atunci (19248),
+deci se poate calibra offline, fără reload-uri: 0.40px urcă la 23613, la 3% de
+IntelliJ. Peste 0.45 literele se îngroașă vizibil în loc să se umple.
 | lățimi pe aceleași nume | 117 / 101 / 118 / 99 | 116 / 99 / 116 / 99 |
 
 - **Culoarea**: `sideBar.foreground: #D0D2D8` — măsurată din IntelliJ, nu luată din

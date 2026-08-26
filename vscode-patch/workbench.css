@@ -35,7 +35,23 @@
      peste. Nici una nu nimerește, deci rămânem pe greyscale și îngroșăm continuu
      cu un contur, care e singura pârghie reglabilă fin. */
   -webkit-font-smoothing: antialiased;
-  -webkit-text-stroke: 0.17px;
+  /* 0.40, nu 0.17, de la măsurătoarea din 26 aug 2026, făcută pe cele două ferestre
+     puse una lângă alta pe același monitor de 1x: același cuvânt („docs", „docs"),
+     aceeași culoare de text (209,211,217), lățimi egale (32 vs 33px) — dar masa de
+     cerneală a IntelliJ-ului era cu 26% mai mare. Randat în Chrome headless, Inter
+     14.3px cu stroke 0.17 dă exact cerneala VS Code-ului de acum (19248 vs 19190
+     măsurat), deci pipeline-ul e calibrat; 0.40 urcă la 23613, adică la 3% de
+     IntelliJ (24256). Peste 0.45 literele încep să se îngroașe vizibil, nu doar să
+     se umple. */
+  -webkit-text-stroke: 0.40px;
+}
+
+/* Spațiul dintre iconiță și prima literă a numelui. VS Code lasă `padding-right: 6px`
+   pe iconiță (`.monaco-icon-label:before`), plus 1px de margine în desenul iconiței,
+   deci 7px de la cerneală la cerneală; în IntelliJ sunt 5. Doar în sidebar — în tab-uri,
+   breadcrumbs sau Quick Open spațiul din fabrică e cel bun. */
+.monaco-workbench .part.sidebar > .content .monaco-icon-label:before {
+  padding-right: 4px;
 }
 
 /* Ca în IntelliJ: rândul se evidențiază la click (selecție), nu când treci cu
@@ -69,6 +85,21 @@
 .monaco-workbench .part.sidebar .pane-header > .title,
 .monaco-workbench .part.sidebar > .title .title-label {
   font-family: var(--victor-ui-font);
+}
+
+/* --------------------------------------------------------------- status bar */
+
+/* Layout-ul „floating panels" pune pe bară `padding: 4px` sus și jos
+   (`--vscode-spacing-size40`), peste `height: 22px` cu `box-sizing: border-box`.
+   Rămân 14px de conținut, dar item-ele au `line-height: 22px` și `min-height: auto`,
+   deci nu încap: se sprijină de marginea de sus a conținutului (adică la 4px de
+   marginea barei) și ies în jos, unde `overflow: hidden` le taie. De-aia deasupra
+   textului era spațiu dublu față de dedesubt — nu era centrare greșită, era padding
+   într-o cutie care nu-l avea de unde da. Cu 0 sus și jos textul se centrează singur
+   în cei 22px. */
+.monaco-workbench.floating-panels .part.statusbar {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* ------------------------------------------- branch-ul lângă cele 3 butoane */

@@ -20,20 +20,33 @@ WATCH=0
 [[ -w "$RES/product.json" ]] || { echo "$RES nu e scriibil — rulează cu drepturi pe /Applications" >&2; exit 1; }
 
 # Înălțimea rândului din Explorer, în px logici. VS Code o ține ca o constantă în
-# JS (22 din fabrică) și n-o expune ca setare; 23.4 e valoarea măsurată care pune
-# rândul peste cel din IntelliJ. Vezi ../COLORS.md.
-TREE_ROW_HEIGHT="${TREE_ROW_HEIGHT:-23.4}"
+# JS și n-o expune ca setare; din fabrică e 23.4 (nu 22, cum era în versiunile mai
+# vechi — de-aia rândurile păreau mai aerisite decât în IntelliJ). 22 e pasul măsurat
+# în IntelliJ pe 26 aug 2026, cu cele două ferestre una lângă alta pe același monitor:
+# 13 rânduri consecutive, (508-243)/12 = 22.08 la IntelliJ față de (537-279)/11 = 23.45
+# la VS Code. Vezi ../COLORS.md.
+TREE_ROW_HEIGHT="${TREE_ROW_HEIGHT:-22}"
 
 # Marginea pe care layout-ul „floating panels" o adaugă sub status bar
 # (`FLOATING_BOTTOM_PADDING = 10` în bundle). Bara e 22px + marginea asta; cu 0
 # footerul ajunge la înălțimea celui din IntelliJ.
 STATUS_BAR_FLOATING_PADDING="${STATUS_BAR_FLOATING_PADDING:-0}"
 
+# Lățimea barei de activități (Explorer, Search, …) — doar cutia iconițelor; peste ea
+# layout-ul „floating panels" mai adaugă un gutter de 8px, deci pe ecran banda are
+# ACTIVITY_BAR_WIDTH + 8. Cu `workbench.activityBar.compact` pornit (cazul lui Victor)
+# constanta citită e FLOATING_COMPACT_ACTIVITYBAR_WIDTH, nu cea normală.
+# 28 e din fabrică: bandă de 36px cu iconiță de 16 => 10px de o parte și de alta.
+# Măsurat pe 26 aug 2026, strip-ul de tool windows din IntelliJ are 34px cu aceleași
+# iconițe de 16 => 9px, adică practic la fel; de-aia rămâne pe 28. Dacă vrei spațiul
+# chiar la jumătate: ACTIVITY_BAR_WIDTH=18 ./apply.sh (bandă 26px, 5px de fiecare parte).
+ACTIVITY_BAR_WIDTH="${ACTIVITY_BAR_WIDTH:-28}"
+
 # Înălțimea title bar-ului cu command center pornit — 35px din fabrică, tot o
 # constantă în bundle. 28 = -20%, cât încape fix pastila de 22px cu aer.
 TITLE_BAR_HEIGHT="${TITLE_BAR_HEIGHT:-28}"
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" TITLE_H="$TITLE_BAR_HEIGHT" python3 - <<'PY'
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" TITLE_H="$TITLE_BAR_HEIGHT" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -105,6 +118,19 @@ elif m.group(1) != sb:
     src_js = src_js[:m.start(1)] + sb + src_js[m.end(1):]
     open(bundle, 'w', encoding='utf8').write(src_js)
     print(f'   margine sub status bar: {m.group(1)} -> {sb}')
+
+# 3b-bis. lățimea barei de activități. Cu „floating panels" pornit layout-ul citește
+#     FLOATING_*_ACTIVITYBAR_WIDTH, nu ACTIVITYBAR_WIDTH (ăla rămâne pentru layout-ul
+#     clasic, deci nu-l atingem), iar cu bara compactă pornită pe cea COMPACT.
+#     Numele constantei e destul de rar ca să fie ancoră.
+act_w = os.environ['ACT_W']
+m = re.search(r'FLOATING_COMPACT_ACTIVITYBAR_WIDTH=([\d.]+)', src_js)
+if not m:
+    print('   ATENȚIE: nu găsesc FLOATING_COMPACT_ACTIVITYBAR_WIDTH, bara de activități rămâne cea din fabrică')
+elif m.group(1) != act_w:
+    src_js = src_js[:m.start(1)] + act_w + src_js[m.end(1):]
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print(f'   lățime bară de activități: {m.group(1)} -> {act_w}')
 
 # 3c. înălțimea title bar-ului. În bundle e o variabilă minificată (`mte=35`),
 #     al cărei nume se schimbă la fiecare release — o găsim prin locul în care e
