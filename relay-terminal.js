@@ -168,10 +168,24 @@ function handle(req, res) {
       // **`sendText` and not the clipboard.** It writes straight to that
       // terminal's pty: no window is activated, no focus moves, the caret stays
       // exactly where Victor left it, and the clipboard he was carrying is his
-      // own. `true` appends the newline that submits — the same single Return
-      // every other delivery path ends with, which is also why the relay
-      // flattens the message to one line before it gets here.
-      term.sendText(line, true);
+      // own.
+      //
+      // **The Return is written by hand, as `\r`, and `shouldExecute` is not
+      // used.** That flag appends `\n` on macOS — and in a TUI in raw mode `\n`
+      // is not Enter, it is *insert a newline*, which is the very convention
+      // Claude Code uses for a multi-line prompt. So the dictation landed in the
+      // prompt and sat there until Victor pressed Return himself. The tty paths
+      // never had this: tmux's `send-keys Enter` and Terminal.app's `do script`
+      // both press a real Return, which is `\r`.
+      //
+      // **Sent as a second write, a beat later**, for the other half of the same
+      // problem: a TUI that reads `text\r` in one chunk treats it as a paste and
+      // keeps the Return as text. A separate write is a keypress — which is
+      // exactly why the tmux path has always been two calls.
+      term.sendText(line, false);
+      setTimeout(() => {
+        try { term.sendText('\r', false); } catch (_) { /* the tab went away mid-flight */ }
+      }, 120);
       send(res, 200, { ok: true, name: term.name });
     });
     return;
