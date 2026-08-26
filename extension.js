@@ -135,7 +135,7 @@ function activate(context) {
   // PlantUML: custom editor + butonul care ciclează text / split / diagramă.
   puml.register(context);
 
-  // Wispr Relay: un listener pe loopback prin care relay-ul livrează dictarea
+  // Walkie Talkie: un listener pe loopback prin care relay-ul livrează dictarea
   // în EXACT terminalul pe care l-a legat. Din afară, o extensie de terminal
   // n-are adresă — relay-ul cădea pe clipboard + ⌘V, iar ⌘V se duce unde e
   // cursorul, deci ateriza în editor sau în alt tab. Vezi relay-terminal.js.

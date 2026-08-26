@@ -1,4 +1,4 @@
-// Deliver Wispr Relay dictations into *one specific* integrated terminal.
+// Deliver Walkie Talkie dictations into *one specific* integrated terminal.
 //
 // The relay can point itself at a terminal and type every later dictation into
 // it. For Terminal.app it addresses the **tty** and for tmux the **pane**, and
@@ -37,7 +37,7 @@ const vscode = require('vscode');
 /** Where the relay looks for us. Fixed, and deliberately not under the relay's
  *  `--home`: that flag moves the outbox for testing, and an extension has no
  *  way to learn it was passed. */
-const REGISTRY = path.join(os.homedir(), '.wispr-relay', 'ide');
+const REGISTRY = path.join(os.homedir(), '.walkie-talkie', 'ide');
 
 /** Terminals handed out to the relay, by the id it was given.
  *  A `Terminal` is not serialisable and its `name` is not unique — two panels
@@ -53,7 +53,7 @@ function activate(context) {
   // to be negotiated with every other VS Code window on the machine, and each
   // window runs its own extension host.
   server = http.createServer(handle);
-  server.on('error', (e) => console.error('[wispr-relay] listener failed:', e.message));
+  server.on('error', (e) => console.error('[walkie-talkie] listener failed:', e.message));
 
   server.listen(0, '127.0.0.1', () => {
     const port = server.address().port;
@@ -80,7 +80,7 @@ function activate(context) {
         ppid: process.ppid,
       }), { mode: 0o600 });
     } catch (e) {
-      console.error('[wispr-relay] could not publish registry entry:', e.message);
+      console.error('[walkie-talkie] could not publish registry entry:', e.message);
     }
   });
 
