@@ -55,14 +55,25 @@ grep -c victor-vsc "/Applications/Visual Studio Code.app/Contents/Resources/app/
 
    Dacă o ancoră nu mai prinde, scriptul **spune „ATENȚIE" și nu modifică
    nimic** — citește ce scrie în terminal după update, acolo apare.
-4. Recalculează checksum-urile fișierelor atinse (`workbench.html` și
+4. Rescrie grupurile din `editor/title` ale extensiei built-in
+   **markdown-language-features** (`navigation@1/@2` → `@8/@9`). VS Code sortează
+   acțiunile dintr-un grup după `order` și, la egalitate, **alfabetic după titlu**
+   — iar butonul de git „Open Changes" e tot pe `navigation@2`, deci cădea între
+   „Open as Preview" (sursă) și „Reopen as Source File" (randare) doar într-una
+   din stări, iar toggle-ul sărea cu o lățime de icon la fiecare click. Cu ordinul
+   urcat, toggle-ul e ultimul buton dinaintea celor trei puncte în ambele stări.
+   Manifestele extensiilor built-in sunt citite dintr-un **cache validat pe mtime-ul
+   folderului**, iar pe APFS o scriere în fișier nu-l atinge — de-aia scriptul face
+   și `os.utime()` pe folder și șterge `CachedExtensions/builtin`. Fără pașii ăia
+   pare că patch-ul n-a făcut nimic.
+5. Recalculează checksum-urile fișierelor atinse (`workbench.html` și
    `workbench.desktop.main.js`) și le scrie în `product.json`.
    **Ăsta e pasul care ține departe bannerul „Your Code installation appears to
    be corrupt"** — fișierele sunt în lista de checksums din `product.json`, iar
    VS Code o verifică la pornirea aplicației (nu la Reload Window, deci bannerul
    mai poate apărea o dată, până la următorul ⌘Q). Algoritmul e cel din sursă:
    `base64(sha256(fișier))` fără `=` la coadă.
-5. Reaplică `~/.vscode/letterpress-patch/apply.sh` (golește logo-ul din editorul
+6. Reaplică `~/.vscode/letterpress-patch/apply.sh` (golește logo-ul din editorul
    gol), dacă mai există. Acela golește SVG-uri din `out/media/`, care **nu**
    sunt în lista de checksums.
 

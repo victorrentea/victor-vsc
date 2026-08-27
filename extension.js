@@ -121,31 +121,12 @@ function activate(context) {
   // legăm de o comandă goală care înghite tasta.
   const noop = vscode.commands.registerCommand('victor-vsc.noop', () => {});
 
-  // În editorul de text, „Open as Preview" e al DOILEA buton din bara de titlu:
-  // înaintea lui stă „Open Preview to the Side" al extensiei markdown. În
-  // randarea de markdown ăla dispare (are nevoie de un editor de text activ),
-  // deci „Reopen as source file" — contribuit tot pe `navigation@2` — urcă pe
-  // prima poziție, iar butonul de toggle sare cu o lățime de icon la fiecare
-  // click. Punem la loc primul buton, cu aceeași iconiță și cu același efect
-  // final ca din sursă (sursa în tab-ul curent + preview lateral), ca cele două
-  // butoane de toggle să rămână unul peste altul.
-  const previewToSide = vscode.commands.registerCommand('victor-vsc.markdownPreviewToSide', async () => {
-    await vscode.commands.executeCommand('markdown.reopenAsSource');
-    // `showPreviewToSide` lucrează pe editorul de text activ, iar reîncărcarea
-    // tab-ului nu e neapărat gata când comanda de mai sus se rezolvă.
-    for (let i = 0; i < 40 && !vscode.window.activeTextEditor; i++) {
-      await new Promise(r => setTimeout(r, 25));
-    }
-    await vscode.commands.executeCommand('markdown.showPreviewToSide');
-  });
-
   context.subscriptions.push(
     tools,
     trail,
     problems,
     claudeProfile,
     noop,
-    previewToSide,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
     vscode.workspace.onDidChangeTextDocument(debounced),

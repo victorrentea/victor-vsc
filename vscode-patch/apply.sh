@@ -168,6 +168,47 @@ else:
     open(bundle, 'w', encoding='utf8').write(src_js)
     print('   margine sticky scroll: maxLineCount -> numărul real de rânduri lipite')
 
+# 3e. poziția butoanelor de markdown din bara de titlu. VS Code sortează acțiunile
+#     dintr-un grup după `order` și, la egalitate, ALFABETIC după titlu — iar
+#     „Open as Preview", „Reopen as Source File" și „Open Changes" (git) sunt toate
+#     pe `navigation@2`. De-aia butonul de toggle stă înaintea lui „Open Changes" în
+#     sursă („Open as…" < „Open Ch…") și după el în randare („Open Ch…" < „Reopen…"),
+#     deci sare cu o lățime de icon la fiecare click — și își schimbă poziția și
+#     după cum fișierul are sau nu modificări în git, fiindcă butonul de git apare
+#     doar atunci. Le urcăm ordinul peste tot ce mai contribuie cineva în bara de
+#     titlu (restul extensiilor instalate sunt pe `navigation` simplu, adică 0), ca
+#     toggle-ul să fie ULTIMUL buton dinaintea celor trei puncte în ambele stări.
+md_manifest = os.path.join(res, 'extensions/markdown-language-features/package.json')
+MD_NAV = {
+    'markdown.showPreviewToSide': 'navigation@8',
+    'markdown.reopenAsPreview':   'navigation@9',
+    'markdown.showSource':        'navigation@9',
+    'markdown.reopenAsSource':    'navigation@9',
+}
+if not os.path.isfile(md_manifest):
+    print('   ATENȚIE: nu găsesc extensia markdown, butonul de preview rămâne unde e')
+else:
+    man = json.load(open(md_manifest, encoding='utf8'))
+    items = man.get('contributes', {}).get('menus', {}).get('editor/title', [])
+    moved = [it['command'] for it in items
+             if MD_NAV.get(it.get('command')) and it.get('group') != MD_NAV[it['command']]]
+    for it in items:
+        if it.get('command') in MD_NAV:
+            it['group'] = MD_NAV[it['command']]
+    if moved:
+        json.dump(man, open(md_manifest, 'w', encoding='utf8'), indent='\t')
+        # Manifestele extensiilor built-in sunt citite dintr-un cache validat pe
+        # mtime-ul FOLDERULUI extensiei; pe APFS o scriere în fișier nu-l atinge,
+        # deci fără cele două linii de mai jos VS Code ar servi mai departe
+        # varianta veche și patch-ul ar părea că n-a făcut nimic.
+        os.utime(os.path.dirname(md_manifest))
+        import glob as _glob
+        for c in _glob.glob(os.path.expanduser(
+                '~/Library/Application Support/Code*/Cached*/**/builtin'), recursive=True):
+            os.remove(c)
+        print('   butoane markdown mutate la coada barei de titlu:',
+              ', '.join(c.split('.')[-1] for c in moved))
+
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
 #    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),

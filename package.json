@@ -218,12 +218,6 @@
         "command": "victor-vsc.noop",
         "title": "Do Nothing",
         "category": "victor-vsc"
-      },
-      {
-        "command": "victor-vsc.markdownPreviewToSide",
-        "title": "Open Preview to the Side",
-        "category": "victor-vsc",
-        "icon": "$(open-preview)"
       }
     ],
     "keybindings": [
@@ -246,18 +240,9 @@
         {
           "command": "victor-vsc.noop",
           "when": "false"
-        },
-        {
-          "command": "victor-vsc.markdownPreviewToSide",
-          "when": "false"
         }
       ],
       "editor/title": [
-        {
-          "command": "victor-vsc.markdownPreviewToSide",
-          "group": "navigation@1",
-          "when": "activeCustomEditorId == 'vscode.markdown.preview.editor' && !activeCustomEditorTextDiff"
-        },
         {
           "command": "victor-vsc.togglePumlView",
           "group": "navigation@1",
