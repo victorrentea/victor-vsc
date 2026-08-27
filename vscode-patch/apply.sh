@@ -149,6 +149,25 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print(f'   înălțime title bar: {m2.group(1)} -> {title_h}')
 
+# 3d. marginea pe care editorul o ține deasupra cursorului cât timp sticky scroll
+#     e pornit. Din fabrică e `maxLineCount` — PLAFONUL configurat — nu numărul de
+#     rânduri lipite chiar acum, deci cu plafonul urcat la 8 (nivelurile de ## din
+#     .md, clasa + nested + metoda din .java) fiecare tastă apăsată sus în viewport
+#     ar scrola 8 rânduri. Îl întrebăm întâi pe `__victorStickyLines` din
+#     victor-workbench.js, care numără ce se vede; dacă lipsește, `??` cade înapoi
+#     pe valoarea din fabrică, deci patch-ul e inofensiv fără scriptul injectat.
+STICKY_OLD = 'this._stickyScrollEnabled?this._maxNumberStickyLines:0'
+STICKY_NEW = 'this._stickyScrollEnabled?(globalThis.__victorStickyLines?.(this)??this._maxNumberStickyLines):0'
+if '__victorStickyLines' in src_js:
+    pass                       # deja aplicat (bundle nerescris de un update)
+elif src_js.count(STICKY_OLD) != 1:
+    print('   ATENȚIE: nu găsesc marginea de reveal a sticky scroll-ului — '
+          'lasă editor.stickyScroll.maxLineCount pe 1, altfel sare ecranul la tastat')
+else:
+    src_js = src_js.replace(STICKY_OLD, STICKY_NEW)
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print('   margine sticky scroll: maxLineCount -> numărul real de rânduri lipite')
+
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
 #    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),

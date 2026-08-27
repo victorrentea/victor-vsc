@@ -98,6 +98,41 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // Sticky scroll pe mai multe niveluri, fără ca ecranul să sară la tastat.
+  //
+  // `_computeScrollTopToRevealRange` din editor ține cursorul la o margine de
+  //     max(cursorSurroundingLines, stickyScrollEnabled ? maxNumberStickyLines : 0)
+  // rânduri de marginea de sus. Marginea are sens — altfel cursorul ar ajunge sub
+  // widget-ul sticky — dar se calculează din `maxLineCount`, adică din PLAFONUL
+  // configurat, nu din câte rânduri arată widget-ul chiar acum. Cu plafonul urcat
+  // la 8 (ca să încapă # / ## / ### sau clasa + clasa nested + metoda, ca-n
+  // IntelliJ), fiecare tastă apăsată sus în viewport ar fi scrolat 8 rânduri —
+  // exact motivul pentru care plafonul fusese coborât la 1.
+  //
+  // apply.sh rescrie expresia aia din bundle ca să întrebe întâi funcția de aici,
+  // care numără rândurile chiar afișate. Într-un fișier plat răspunsul e 0 sau 1,
+  // deci ecranul stă la fel de fix ca înainte; adâncimea o plătim doar acolo unde
+  // widget-ul chiar e adânc. `undefined` = n-am putut afla, iar bundle-ul cade
+  // înapoi pe `maxLineCount`, adică pe comportamentul din fabrică.
+  globalThis.__victorStickyLines = function (viewLines) {
+    try {
+      // `domNode` e un FastDomNode în editor, dar poate fi direct elementul.
+      const node = viewLines?.domNode?.domNode || viewLines?.domNode;
+      const editor = node?.closest?.('.monaco-editor');
+      if (!editor) return undefined;
+      let lines = 0;
+      for (const widget of editor.querySelectorAll('.sticky-widget')) {
+        // Editoarele imbricate (diff inline, zone widgets) au widget-ul lor.
+        if (widget.closest('.monaco-editor') !== editor) continue;
+        if (widget.offsetHeight === 0) continue;
+        lines = Math.max(lines, widget.querySelectorAll('.sticky-line-content').length);
+      }
+      return lines;
+    } catch {
+      return undefined;
+    }
+  };
+
   // Click pe rotița mouse-ului în cod = ⌘-click (Go to Definition). VS Code
   // n-are nicio setare pentru butonul din mijloc și nici keybindings-urile nu
   // primesc butoane de mouse — dar editorul își ia deciziile din evenimentele

@@ -55,19 +55,36 @@ netracked („Unknown") = cărămiziu, ignorat = oliv.
 
 ---
 
-## Nu doar culori: `editor.stickyScroll.maxLineCount: 1`
+## Nu doar culori: sticky scroll pe mai multe niveluri, ca-n IntelliJ
 
-Cu sticky scroll pornit, editorul refuză să lase cursorul mai sus de
-`stickyScroll.maxLineCount` linii de marginea de sus — codul din `revealRange`:
+`editor.stickyScroll.maxLineCount` e **8**, nu 1 și nici 5 din fabrică: în `.md`
+vrem lipite `#` + `##` + `###`, în `.java` clasa + clasa nested + metoda. Nu e un
+număr fix de rânduri, ci un plafon — widget-ul arată doar câte niveluri are
+contextul curent, exact ca panoul din IntelliJ. Modelul e `outlineModel`, singurul
+care dă ierarhia asta (cel de indentare ar lipi rânduri, nu simboluri).
+
+Plafonul nu putea fi urcat direct, și de-aia stătuse pe 1: cu sticky scroll pornit
+editorul refuză să lase cursorul mai sus de o margine calculată în `revealRange`
 
 ```js
 I = Math.max(cursorSurroundingLines, stickyScrollEnabled ? maxNumberStickyLines : 0)
 ```
 
-Default-ul lui `maxLineCount` e **5**, deci la fiecare tastă apăsată pe o linie
-aflată sus în viewport, ecranul sare cu până la 5 rânduri ca să facă loc marginii.
-Marginea are sens — altfel cursorul ar ajunge sub widget-ul sticky — dar widget-ul
-arată o singură linie la un fișier de note, deci 1 e valoarea corectă, nu 5.
+adică din **plafonul configurat**, nu din câte rânduri se văd chiar atunci. Cu 5
+din fabrică, orice tastă apăsată pe o linie aflată sus în viewport scrola până la
+5 rânduri; cu 8 ar fi fost și mai rău.
+
+Marginea în sine e corectă — fără ea cursorul ajunge sub widget. Greșit e doar de
+unde își ia numărul. `vscode-patch/apply.sh` (pasul 3d) rescrie expresia din
+bundle în `globalThis.__victorStickyLines?.(this) ?? this._maxNumberStickyLines`,
+iar funcția, definită în `vscode-patch/workbench.js`, numără `.sticky-line-content`
+din widget-ul editorului respectiv. Într-un fișier plat răspunsul e 0 sau 1, deci
+ecranul stă la fel de fix ca pe vremea lui `maxLineCount: 1`; adâncimea o plătim
+doar unde widget-ul chiar e adânc.
+
+Dacă un update de VS Code strică ancora, `apply.sh` strigă și `??` cade înapoi pe
+comportamentul din fabrică — nu se rupe nimic, doar revine săritura, iar leacul de
+urgență e `editor.stickyScroll.maxLineCount: 1`.
 
 ---
 

@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -185,7 +185,10 @@
       "zenMode.hideActivityBar": false,
       "zenMode.hideLineNumbers": false,
       "zenMode.centerLayout": false,
-      "editor.stickyScroll.maxLineCount": 1,
+      "editor.stickyScroll.enabled": true,
+      "editor.stickyScroll.maxLineCount": 8,
+      "editor.stickyScroll.defaultModel": "outlineModel",
+      "editor.stickyScroll.scrollWithEditor": true,
       "gpt-token-counter-live.statusBarDisplayTemplate": "{count} tok ({family})"
     },
     "customEditors": [
