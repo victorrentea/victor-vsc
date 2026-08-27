@@ -22,7 +22,23 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
    ```sh
    git add -A && git commit -m "..." && git push
    ```
-5. Spune-i lui Victor să dea *Developer: Reload Window* — nimic nu se aplică fără.
+5. **Dă tu reload window** — nimic nu se aplică fără, iar Victor nu vrea să fie
+   el pasul manual de la finalul fiecărui task:
+   ```sh
+   ./reload-window.py
+   ```
+   Scriptul vorbește cu listener-ul din `relay-terminal.js` (endpoint `/reload`,
+   autentificat cu token-ul din `~/.walkie-talkie/ide/`) și reîncarcă **toate**
+   ferestrele VS Code deschise. Toate, nu doar cea din față: rulând dintr-un
+   terminal, nicio fereastră VS Code nu e focusată, deci „cea activă" nu se poate
+   observa de aici — și oricum build-ul nou trebuie să ajungă în fiecare extension
+   host. Filtrele `--folder NAME` / `--focused` există dacă vrei totuși să țintești.
+
+   Reload-ul nu pierde nimic: editoarele nesalvate revin prin hot exit, iar
+   terminalele integrate se reconectează (`terminal.integrated.enablePersistentSessions`).
+   Singura excepție reală: dacă sesiunea **ta** de Claude rulează chiar în
+   terminalul integrat al ferestrei pe care o reîncarci, o tai sub tine — atunci
+   întreabă-l pe Victor în loc să dai reload.
 
 `*.vsix` e în `.gitignore`, deci artefactele de build nu ajung în repo.
 
@@ -34,6 +50,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `COLORS.md` | de ce sunt culorile alea — `package.json` e JSON strict, n-are comentarii |
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
 | `puml.js` | randare PlantUML + comanda text / split / diagramă |
+| `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |

@@ -156,6 +156,22 @@ function handle(req, res) {
     return;
   }
 
+  // Reload this window. Installing a new build of this very extension does
+  // nothing until the extension host restarts, and the only way to ask for that
+  // used to be Victor pressing ⌘⇧P himself — so every change ended with a "give
+  // it a Reload Window" that he had to act on. The listener is already here and
+  // already authenticated; the command is one line.
+  //
+  // The response is written **before** the command runs: `reloadWindow` tears
+  // down this extension host, and a reply written after it is a reply written by
+  // a process that is already gone. The caller gets `ok` meaning *accepted*, not
+  // *finished* — there is nothing left alive here to report *finished*.
+  if (req.method === 'POST' && url.pathname === '/reload') {
+    send(res, 200, { ok: true, folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null });
+    setTimeout(() => vscode.commands.executeCommand('workbench.action.reloadWindow'), 100);
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/unbind') {
     const id = Number(url.searchParams.get('id'));
     bound.delete(id);
