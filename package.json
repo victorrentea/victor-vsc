@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -211,6 +211,12 @@
         "command": "victor-vsc.noop",
         "title": "Do Nothing",
         "category": "victor-vsc"
+      },
+      {
+        "command": "victor-vsc.markdownPreviewToSide",
+        "title": "Open Preview to the Side",
+        "category": "victor-vsc",
+        "icon": "$(open-preview)"
       }
     ],
     "keybindings": [
@@ -233,9 +239,18 @@
         {
           "command": "victor-vsc.noop",
           "when": "false"
+        },
+        {
+          "command": "victor-vsc.markdownPreviewToSide",
+          "when": "false"
         }
       ],
       "editor/title": [
+        {
+          "command": "victor-vsc.markdownPreviewToSide",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'vscode.markdown.preview.editor' && !activeCustomEditorTextDiff"
+        },
         {
           "command": "victor-vsc.togglePumlView",
           "group": "navigation@1",
