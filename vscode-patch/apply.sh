@@ -232,7 +232,27 @@ if changed:
 print(f'   injectat în {html}' + ('  [watch pornit]' if watch else ''))
 PY
 
-# 4. Patch-ul mai vechi care golește logo-ul din editorul gol, dacă mai există.
+# 5. Iconița aplicației: pătrat negru cu margine subțire colorată (vezi
+#    ../app-icon/build-icon.py). Update-ul de VS Code rescrie Code.icns, deci
+#    pasul ăsta trebuie să treacă pe aici, nu făcut o dată de mână.
+ICON_SRC="$HERE/../app-icon/Code.icns"
+ICON_DST="$APP/Contents/Resources/Code.icns"
+if [[ -f "$ICON_SRC" ]]; then
+  if [[ ! -f "$ICON_DST.orig" ]]; then
+    cp "$ICON_DST" "$ICON_DST.orig"
+  fi
+  if ! cmp -s "$ICON_SRC" "$ICON_DST"; then
+    cp "$ICON_SRC" "$ICON_DST"
+    # LaunchServices ține iconițele într-un cache legat de mtime-ul bundle-ului;
+    # fără touch + repornirea Dock-ului, în Dock rămâne cea veche la nesfârșit.
+    touch "$APP"
+    rm -rf "$HOME/Library/Caches/com.apple.iconservices.store" 2>/dev/null || true
+    killall Dock 2>/dev/null || true
+    echo "   iconița aplicației înlocuită (original în Code.icns.orig)"
+  fi
+fi
+
+# 6. Patch-ul mai vechi care golește logo-ul din editorul gol, dacă mai există.
 LETTERPRESS="$HOME/.vscode/letterpress-patch/apply.sh"
 if [[ -x "$LETTERPRESS" ]]; then
   "$LETTERPRESS" >/dev/null && echo "   letterpress reaplicat"

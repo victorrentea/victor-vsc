@@ -54,6 +54,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
+| `app-icon/` | iconița aplicației (negru + margine subțire colorată, în cheia IntelliJ); o instalează `vscode-patch/apply.sh` |
 
 ## Ce NU poate o extensie — și unde se rezolvă
 

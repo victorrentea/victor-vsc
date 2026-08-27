@@ -80,4 +80,14 @@ json.dump(prod, open(pj, 'w', encoding='utf8'), indent='\t')
 print('   scos din', html)
 PY
 
+# Iconița aplicației, înapoi pe cea din fabrică (salvată de apply.sh).
+ICON_DST="$APP/Contents/Resources/Code.icns"
+if [[ -f "$ICON_DST.orig" ]]; then
+  mv "$ICON_DST.orig" "$ICON_DST"
+  touch "$APP"
+  rm -rf "$HOME/Library/Caches/com.apple.iconservices.store" 2>/dev/null || true
+  killall Dock 2>/dev/null || true
+  echo "   iconița aplicației: înapoi pe cea originală"
+fi
+
 echo "Gata. Reload Window din paleta de comenzi (⌘R e legat doar în build-urile de development)."
