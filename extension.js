@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const puml = require('./puml');
 const relayTerminal = require('./relay-terminal');
+const githubLink = require('./github-link');
 
 const SEP = '  ›  ';
 
@@ -171,6 +172,10 @@ function activate(context) {
   // n-are adresă — relay-ul cădea pe clipboard + ⌘V, iar ⌘V se duce unde e
   // cursorul, deci ateriza în editor sau în alt tab. Vezi relay-terminal.js.
   relayTerminal.activate(context);
+
+  // „Copy GitHub Link" în meniul de click-dreapta din Explorer: linkul către
+  // fișier pe branșa curentă, cea din bara de stare — nu pe main.
+  githubLink.register(context);
 
   render();
   renderProblems();
