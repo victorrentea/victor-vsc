@@ -4,6 +4,7 @@ const puml = require('./puml');
 const relayTerminal = require('./relay-terminal');
 const githubLink = require('./github-link');
 const openFileReporter = require('./open-file-reporter');
+const cucumberRunner = require('./cucumber-runner');
 
 const SEP = '  ›  ';
 
@@ -182,6 +183,10 @@ function activate(context) {
   // același protocol ca plugin-ul de IntelliJ, ca sala să vadă la fel din
   // ambele IDE-uri. Vezi open-file-reporter.js.
   openFileReporter.register(context);
+
+  // Săgeata verde de run în dreptul fiecărui Scenario dintr-un .feature —
+  // cucumber-js n-are runner în VS Code. Vezi cucumber-runner.js.
+  cucumberRunner.register(context);
 
   render();
   renderProblems();
