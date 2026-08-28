@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -281,6 +281,16 @@
           "type": "string",
           "default": "",
           "description": "Path to the plantuml binary. Empty = try /opt/homebrew/bin/plantuml, /usr/local/bin/plantuml, then PATH."
+        },
+        "victorVsc.reportOpenFileToAddon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Report the file you dwell on (5s, focused window) to Victor Addons, like the live-coding IntelliJ plugin does. Only ever posts to the configured localhost URL; goes quiet if nothing answers."
+        },
+        "victorVsc.addonReportUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:55123/intellij/file-opened",
+          "description": "Where to report the actively open file. Same endpoint as the IntelliJ plugin: the payload is identical and the add-on does not care which IDE sent it."
         }
       }
     }

@@ -3,6 +3,7 @@ const path = require('path');
 const puml = require('./puml');
 const relayTerminal = require('./relay-terminal');
 const githubLink = require('./github-link');
+const openFileReporter = require('./open-file-reporter');
 
 const SEP = '  ›  ';
 
@@ -176,6 +177,11 @@ function activate(context) {
   // „Copy GitHub Link" în meniul de click-dreapta din Explorer: linkul către
   // fișier pe branșa curentă, cea din bara de stare — nu pe main.
   githubLink.register(context);
+
+  // Fișierul la care Victor se uită efectiv, raportat către Victor Addons —
+  // același protocol ca plugin-ul de IntelliJ, ca sala să vadă la fel din
+  // ambele IDE-uri. Vezi open-file-reporter.js.
+  openFileReporter.register(context);
 
   render();
   renderProblems();

@@ -1,61 +1,13 @@
 const vscode = require('vscode');
 const path = require('path');
-const { execFile } = require('child_process');
-
-// VS Code pornit din Finder moștenește PATH-ul de la launchd, care n-are
-// Homebrew; git-ul din Command Line Tools e însă mereu la calea absolută.
-const GIT = ['git', '/usr/bin/git'];
-
-async function git(cwd, args) {
-  let lastError;
-  for (const bin of GIT) {
-    try {
-      return await new Promise((resolve, reject) => {
-        execFile(bin, args, { cwd }, (err, stdout) => {
-          if (err) reject(err);
-          else resolve(stdout.trim());
-        });
-      });
-    } catch (err) {
-      if (err.code !== 'ENOENT') throw err;
-      lastError = err;
-    }
-  }
-  throw lastError;
-}
+const { repoRoot, remoteUrl, currentRef, relativeToRoot } = require('./git');
 
 // git@github.com:victorrentea/petclinic.git
 // https://github.com/victorrentea/petclinic.git
 // ssh://git@github.com/victorrentea/petclinic
-function githubSlug(remoteUrl) {
-  const match = remoteUrl.match(/github\.com[:/]+(.+?)(?:\.git)?$/);
+function githubSlug(url) {
+  const match = url.match(/github\.com[:/]+(.+?)(?:\.git)?$/);
   return match ? match[1] : undefined;
-}
-
-// Remote-ul pe care urmărește branșa curentă, dacă are unul; altfel `origin`,
-// altfel primul remote existent — un fork clonat cu alt nume tot trebuie să dea
-// un link, nu o eroare.
-async function remoteUrl(cwd) {
-  const candidates = [];
-  try {
-    const upstream = await git(cwd, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
-    candidates.push(upstream.split('/')[0]);
-  } catch { /* branșă fără upstream */ }
-  candidates.push('origin');
-  const all = (await git(cwd, ['remote'])).split('\n').filter(Boolean);
-  candidates.push(...all);
-  for (const name of candidates) {
-    if (!all.includes(name)) continue;
-    return git(cwd, ['remote', 'get-url', name]);
-  }
-  return undefined;
-}
-
-// Branșa curentă, ca în bara de stare. Pe HEAD detașat `--abbrev-ref` întoarce
-// literal "HEAD", care n-ar duce nicăieri pe GitHub — acolo cade pe SHA.
-async function ref(cwd) {
-  const branch = await git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  return branch === 'HEAD' ? git(cwd, ['rev-parse', 'HEAD']) : branch;
 }
 
 // Ancora de linii, doar când fișierul e chiar cel din editorul activ și are o
@@ -75,16 +27,16 @@ async function linkFor(uri) {
   // Pentru un folder, git-ul se interoghează chiar din el: pe rădăcina unui
   // repo clonat direct în ~/workspace, părintele nu mai e sub versionare.
   const cwd = isDirectory ? uri.fsPath : path.dirname(uri.fsPath);
-  const root = await git(cwd, ['rev-parse', '--show-toplevel']);
+  const root = await repoRoot(cwd);
   const remote = await remoteUrl(root);
   if (!remote) throw new Error('repo-ul nu are niciun remote');
   const slug = githubSlug(remote);
   if (!slug) throw new Error(`remote-ul nu e pe GitHub: ${remote}`);
 
-  const relative = path.relative(root, uri.fsPath).split(path.sep).filter(Boolean);
   const kind = isDirectory ? 'tree' : 'blob';
-  const encodedRef = encodeURIComponent(await ref(root));
-  const encodedPath = relative.map(encodeURIComponent).join('/');
+  const encodedRef = encodeURIComponent(await currentRef(root));
+  const encodedPath = relativeToRoot(root, uri.fsPath).split('/').filter(Boolean)
+    .map(encodeURIComponent).join('/');
 
   // Rădăcina repo-ului n-are cale — /tree/<branch> e forma corectă acolo.
   const suffix = encodedPath ? `/${encodedPath}` : '';

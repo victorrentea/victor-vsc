@@ -51,6 +51,9 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
 | `puml.js` | randare PlantUML + comanda text / split / diagramă |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
+| `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
+| `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
+| `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
 | `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
