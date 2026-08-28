@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.46",
+  "version": "0.0.47",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -208,9 +208,9 @@
     "commands": [
       {
         "command": "victor-vsc.togglePumlView",
-        "title": "Toggle Text / Split / Diagram",
+        "title": "Preview Diagram",
         "category": "PlantUML",
-        "icon": "$(layout)"
+        "icon": "$(open-preview)"
       },
       {
         "command": "victor-vsc.noop",

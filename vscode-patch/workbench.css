@@ -221,3 +221,20 @@
   background-color: var(--vscode-commandCenter-activeBackground);
   border-color: var(--vscode-commandCenter-activeBorder);
 }
+
+/* jebbs.plantuml pune în bara de titlu un „Preview Current Diagram" care
+   deschide diagrama ÎN SPLIT, lângă text. Butonul nostru (`Preview Diagram`,
+   aceeași iconiță `$(open-preview)`) face în schimb toggle în același tab, ca
+   preview-ul de Markdown — deci al lor e un dublur care încurcă.
+   O extensie nu poate șterge intrarea de meniu a alteia, iar comanda lor nu
+   poate fi re-înregistrată; singurul loc de unde dispare butonul e aici.
+   Cârligul e `aria-label`-ul: `ActionViewItem.updateAriaLabel()` îl pune pe
+   `<a.action-label>`, NU pe `<li.action-item>` — de-aia `:has()`, altfel ar
+   rămâne pe bară cutia goală a butonului. Valoarea e textul comenzii cu
+   keybinding-ul (⌥D) lipit la coadă, deci `^=`, nu `=`. Al nostru scrie
+   „Preview Diagram" și nu prinde pe prefixul ăsta.
+   Dacă jebbs redenumește vreodată comanda, butonul reapare — se vede imediat.
+   Alternativa fără patch: click-dreapta pe bara de titlu > debifează intrarea. */
+.editor-actions .action-item:has(> .action-label[aria-label^="Preview Current Diagram"]) {
+  display: none !important;
+}

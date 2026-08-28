@@ -243,10 +243,15 @@ function targetUri() {
 }
 
 /**
- * One button, three states, like IntelliJ's editor/split/preview toggle:
- *   text  ->  text + diagram side by side  ->  diagram only  ->  text
- * The current state is read back off the open tabs rather than remembered, so
- * closing a pane by hand never desynchronises the cycle.
+ * Un singur buton, două stări — exact preview-ul de Markdown: textul e ÎNLOCUIT
+ * în același tab de randarea grafică, iar butonul apăsat din nou aduce textul
+ * înapoi. Fără split: `vscode.openWith` pe același grup schimbă editorul pe loc,
+ * cum face „Reopen Editor With…".
+ *
+ * Starea se citește din tab-urile deschise, nu se ține minte, ca închiderea unui
+ * panou cu mâna să nu desincronizeze butonul. Tab-urile de tipul greșit rămase
+ * pe undeva (dintr-un split vechi) se închid, ca fișierul să rămână într-o
+ * singură reprezentare.
  */
 async function toggle() {
   const uri = targetUri();
@@ -255,20 +260,14 @@ async function toggle() {
     return;
   }
   const tabs = tabsFor(uri);
-  const text = tabs.find(t => t.kind === 'text');
   const diagram = tabs.find(t => t.kind === 'diagram');
+  const showDiagram = !diagram;   // dacă nu e nicio diagramă deschisă, o arătăm
+  const column = (diagram || tabs.find(t => t.kind === 'text'))?.group.viewColumn;
 
-  if (text && !diagram) {
-    await vscode.commands.executeCommand('vscode.openWith', uri, VIEW_TYPE, vscode.ViewColumn.Beside);
-  } else if (text && diagram) {
-    await vscode.window.tabGroups.close(text.tab);          // empty group collapses on its own
-  } else if (diagram) {
-    const column = diagram.group.viewColumn;
-    await vscode.commands.executeCommand('vscode.openWith', uri, 'default', column);
-    const stale = tabsFor(uri).find(t => t.kind === 'diagram');
-    if (stale) await vscode.window.tabGroups.close(stale.tab);
-  } else {
-    await vscode.commands.executeCommand('vscode.openWith', uri, VIEW_TYPE);
+  await vscode.commands.executeCommand('vscode.openWith', uri, showDiagram ? VIEW_TYPE : 'default', column);
+
+  for (const t of tabsFor(uri)) {
+    if ((t.kind === 'diagram') !== showDiagram) await vscode.window.tabGroups.close(t.tab);
   }
 }
 
