@@ -75,3 +75,10 @@ Reguli pentru zona asta:
 
 Ce ține de setări oficiale rămâne în `package.json` → `configurationDefaults`;
 patch-ul e ultima soluție, nu prima.
+
+Excepție: setările citite de **procesul main** al Electron (`window.*` de
+deschidere de ferestre — `openFoldersInNewWindow`, `openFilesInNewWindow`, …).
+Main-ul parsează doar `settings.json`-ul utilizatorului, deci un
+`configurationDefaults` acolo arată corect în UI și nu face nimic. Pentru ele,
+`enforceMainProcessSettings()` din `extension.js` scrie valoarea în setările
+globale la activare — sursa rămâne versionată aici.
