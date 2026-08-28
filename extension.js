@@ -155,12 +155,23 @@ function activate(context) {
   // legăm de o comandă goală care înghite tasta.
   const noop = vscode.commands.registerCommand('victor-vsc.noop', () => {});
 
+  // Butonul de run din colțul din dreapta sus, ca la testele Java. Deleagă la
+  // comenzile native de Testing, deci rulează ce furnizează oricine pentru
+  // fișierul din față: scenariile noastre de cucumber, testele Playwright ale
+  // extensiei oficiale, orice altceva bazat pe Testing API.
+  const runFile = vscode.commands.registerCommand('victor-vsc.runFileTests',
+    () => vscode.commands.executeCommand('testing.runCurrentFile'));
+  const debugFile = vscode.commands.registerCommand('victor-vsc.debugFileTests',
+    () => vscode.commands.executeCommand('testing.debugCurrentFile'));
+
   context.subscriptions.push(
     tools,
     trail,
     problems,
     claudeProfile,
     noop,
+    runFile,
+    debugFile,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
     vscode.workspace.onDidChangeTextDocument(debounced),

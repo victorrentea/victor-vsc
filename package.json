@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -223,6 +223,18 @@
         "command": "victor-vsc.copyGitHubLink",
         "title": "Copy GitHub Link",
         "category": "victor-vsc"
+      },
+      {
+        "command": "victor-vsc.runFileTests",
+        "title": "Run Tests in Current File",
+        "category": "victor-vsc",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "victor-vsc.debugFileTests",
+        "title": "Debug Tests in Current File",
+        "category": "victor-vsc",
+        "icon": "$(debug-alt)"
       }
     ],
     "keybindings": [
@@ -274,6 +286,16 @@
         }
       ],
       "editor/title": [
+        {
+          "command": "victor-vsc.runFileTests",
+          "group": "navigation@0",
+          "when": "resourceExtname == .feature || resourceFilename =~ /\\.(spec|test)\\.[jt]sx?$/"
+        },
+        {
+          "command": "victor-vsc.debugFileTests",
+          "group": "navigation@0",
+          "when": "resourceFilename =~ /\\.(spec|test)\\.[jt]sx?$/"
+        },
         {
           "command": "victor-vsc.togglePumlView",
           "group": "navigation@1",

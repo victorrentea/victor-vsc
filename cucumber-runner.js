@@ -56,7 +56,12 @@ function parse(controller, uri, items) {
   const children = [];
   for (const [i, line] of lines.entries()) {
     const feature = FEATURE.exec(line);
-    if (feature && feature[1].trim()) file.label = feature[1].trim();
+    if (feature) {
+      if (feature[1].trim()) file.label = feature[1].trim();
+      // Range-ul pe linia `Feature:` desenează săgeata și în capul fișierului,
+      // nu doar în dreptul scenariilor: un click acolo rulează tot fișierul.
+      file.range = new vscode.Range(i, 0, i, line.length);
+    }
     const scenario = SCENARIO.exec(line);
     if (!scenario) continue;
     const label = scenario[2].trim() || scenario[1];
