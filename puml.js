@@ -128,6 +128,24 @@ function reachable(port) {
   });
 }
 
+/* ----------------------------------------------------------------- sidecar */
+
+// Diagramele generate din trace-uri (`X.genseq.puml`) își poartă detaliile
+// într-un frate `X.genseq.json`: pentru fiecare săgeată marcată ⊕, SQL-ul sau
+// payload-ul JSON din spatele apelului. Generatorul leagă cele două prin
+// `[[genseq://<id>]]`, un identificator stabil pus la generare — de-aia nimic
+// de aici nu depinde de textul etichetei.
+const detailsPath = fsPath => fsPath.replace(/\.[^.]+$/, '.json');
+
+async function readDetails(fsPath) {
+  try {
+    const parsed = JSON.parse(await fs.promises.readFile(detailsPath(fsPath), 'utf8'));
+    return parsed && parsed.details ? parsed.details : undefined;
+  } catch {
+    return undefined;   // diagramă fără sidecar — cazul normal
+  }
+}
+
 /* ------------------------------------------------------------------ webview */
 
 function nonce() {
@@ -150,11 +168,49 @@ function html(webview) {
          color: var(--vscode-errorForeground); font-family: var(--vscode-editor-font-family); }
   #err.on { display: block; }
   #hint { position: fixed; right: 10px; bottom: 8px; opacity: .45; font-size: 11px; }
+
+  /* Săgețile cu detalii: aceeași afordanță ca în review.html — banda se aprinde
+     la hover, iar clicul prinde pe toată lățimea ei, nu doar pe glifa pe care
+     PlantUML a făcut-o link. */
+  .genseq-hot { cursor: pointer; }
+  .genseq-hit { fill: transparent; }
+  .genseq-hot:hover .genseq-hit { fill: currentColor; fill-opacity: .07; }
+  .genseq-hot.genseq-open .genseq-hit { fill: currentColor; fill-opacity: .14; }
+  .genseq-hot.genseq-open a[href^="genseq:"] text { font-weight: 700; }
+
+  #genseq { position: fixed; z-index: 40; max-width: min(38rem, 92vw); min-width: 18rem;
+            padding: .55rem .7rem; border-radius: 6px;
+            background: var(--vscode-editorWidget-background);
+            color: var(--vscode-editorWidget-foreground);
+            border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+            box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+  #genseq[hidden] { display: none; }
+  #genseq .head { display: flex; align-items: baseline; gap: .6rem; }
+  #genseq .title { font: 600 12.5px/1.5 var(--vscode-editor-font-family); flex: 1;
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #genseq .step { opacity: .7; font-size: .76rem; white-space: nowrap; }
+  #genseq button { border: 1px solid var(--vscode-editorWidget-border, transparent);
+                   background: var(--vscode-button-secondaryBackground, transparent);
+                   color: inherit; cursor: pointer; border-radius: 4px;
+                   font-size: .76rem; padding: 1px 6px; }
+  #genseq button:hover { border-color: var(--vscode-focusBorder); }
+  #genseq .close { border: 0; background: none; font-size: 1rem; line-height: 1; opacity: .7; }
+  #genseq [hidden] { display: none; }
+  #genseq .label { color: var(--vscode-textLink-foreground); font-size: .8rem; margin: .15rem 0 0; }
+  #genseq pre { margin: .35rem 0 0; max-height: 24rem; overflow: auto;
+                background: var(--vscode-textCodeBlock-background);
+                padding: .45rem .55rem; border-radius: 4px; white-space: pre-wrap;
+                font: 12px/1.5 var(--vscode-editor-font-family); }
 </style></head>
 <body>
   <pre id="err"></pre>
   <div id="pane"><div id="svg"></div></div>
   <div id="hint">⌘/Ctrl + scroll = zoom · dublu-click = 100%</div>
+  <div id="genseq" hidden>
+    <div class="head"><span class="title"></span><button type="button" class="toggle" hidden></button>
+    <span class="step"></span><button type="button" class="close" title="închide (Esc)" aria-label="închide">&times;</button></div>
+    <div class="label"></div><pre></pre>
+  </div>
   <script nonce="${n}">
     const pane = document.getElementById('pane');
     const host = document.getElementById('svg');
@@ -170,6 +226,7 @@ function html(webview) {
         host.innerHTML = m.svg;
         err.classList.remove('on');
         pane.scrollTo(x, y);
+        wireDetails(m.details);
       } else if (m.type === 'error') {
         err.textContent = m.message;
         err.classList.add('on');
@@ -184,6 +241,116 @@ function html(webview) {
     }, { passive: false });
 
     pane.addEventListener('dblclick', () => { zoom = 1; apply(); });
+
+    /* ----------------------------------------------------------- genseq ----
+       Portat din .human-review/review.html, ca aceeași diagramă să se citească
+       la fel din review și din IDE. Un clic pe o săgeată marcată ⊕ deschide
+       panoul cu SQL-ul / payload-ul apelului; încă unul îl închide.
+
+       Unde un pas are două randări ale aceluiași fapt — statement-ul cum a fost
+       trimis vs. același statement cu valorile puse la loc — panoul le oferă ca
+       buton. „?" sau valorile e un fel de a citi, nu o proprietate a unei
+       săgeți: cine a cerut valorile o dată citește toată diagrama în valori,
+       deci alegerea e a paginii și o moștenesc toate panourile deschise după. */
+    const box = document.getElementById('genseq');
+    const ui = {
+      title: box.querySelector('.title'),
+      step: box.querySelector('.step'),
+      label: box.querySelector('.label'),
+      toggle: box.querySelector('.toggle'),
+      body: box.querySelector('pre'),
+    };
+    let current = null, step = null, showValues = false;
+
+    function closePanel() {
+      if (current) current.reset();
+      current = null;
+      box.hidden = true;
+    }
+
+    // Butonul numește mereu CEALALTĂ randare, ca să se citească drept ce obții
+    // dacă apeși. Un pas fără alternativă — un payload JSON — n-are buton.
+    function render() {
+      const on = showValues && !!step.alternate;
+      const view = on ? step.alternate : step;
+      ui.label.textContent = view.label || '';
+      ui.label.hidden = !view.label;
+      ui.body.textContent = view.text;
+      ui.toggle.hidden = !step.alternate;
+      if (step.alternate) {
+        ui.toggle.textContent = on ? 'arată ?' : 'arată valorile';
+        ui.toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+    }
+
+    // Ancorat de săgeată, nu de cursor: panoul trebuie să rămână lângă ce explică.
+    function place(target) {
+      const r = target.getBoundingClientRect();
+      box.hidden = false;
+      const left = Math.min(r.left, document.documentElement.clientWidth - box.offsetWidth - 12);
+      box.style.left = Math.max(8, left) + 'px';
+      const below = r.bottom + 8;
+      box.style.top = (below + box.offsetHeight > document.documentElement.clientHeight
+        ? Math.max(8, r.top - box.offsetHeight - 8) : below) + 'px';
+    }
+
+    // Un dreptunghi transparent sub săgeată, ca să prindă clicul pe toată banda.
+    function addHitArea(group) {
+      let b;
+      try { b = group.getBBox(); } catch (e) { return; }
+      if (!b || !b.width) return;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('class', 'genseq-hit');
+      rect.setAttribute('x', b.x - 4);
+      rect.setAttribute('y', b.y - 1);
+      rect.setAttribute('width', b.width + 8);
+      rect.setAttribute('height', Math.max(b.height - 2, 6));
+      rect.setAttribute('rx', '3');
+      group.insertBefore(rect, group.firstChild);
+    }
+
+    function wireDetails(details) {
+      closePanel();
+      const map = details || {};
+      host.querySelectorAll('svg a[href^="genseq://"]').forEach(link => {
+        const entry = map[(link.getAttribute('href') || '').slice('genseq://'.length)];
+        const group = link.closest('g.message') || link.parentNode;
+        // O săgeată fără detaliu înregistrat: îi scoatem mânerul desfăcând
+        // link-ul, nu ștergându-l — eticheta e înăuntrul lui.
+        if (!entry || !entry.steps || !entry.steps.length) {
+          while (link.firstChild) link.parentNode.insertBefore(link.firstChild, link);
+          link.remove();
+          return;
+        }
+        let index = -1;
+        const state = { reset() { index = -1; group.classList.remove('genseq-open'); } };
+        group.classList.add('genseq-hot');
+        addHitArea(group);
+        group.addEventListener('click', ev => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (current && current !== state) current.reset();
+          index++;
+          if (index >= entry.steps.length) { closePanel(); return; }
+          current = state;
+          group.classList.add('genseq-open');
+          step = entry.steps[index];
+          ui.title.textContent = entry.title;
+          ui.step.textContent = entry.steps.length > 1 ? (index + 1) + ' / ' + entry.steps.length : '';
+          render();
+          place(link);
+        });
+      });
+    }
+
+    box.querySelector('.close').addEventListener('click', closePanel);
+    ui.toggle.addEventListener('click', () => { showValues = !showValues; render(); });
+    box.addEventListener('click', ev => ev.stopPropagation());
+    // Panoul e poziționat în coordonate de viewport, deci o diagramă mutată sub
+    // el l-ar lăsa arătând spre altă săgeată.
+    pane.addEventListener('scroll', closePanel);
+    document.addEventListener('click', closePanel);
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closePanel(); });
   </script>
 </body></html>`;
 }
@@ -201,7 +368,7 @@ class PumlEditorProvider {
     const draw = async () => {
       const res = await this.renderer.render(document.getText(), path.dirname(document.uri.fsPath));
       panel.webview.postMessage(res.ok
-        ? { type: 'svg', svg: res.svg }
+        ? { type: 'svg', svg: res.svg, details: await readDetails(document.uri.fsPath) }
         : { type: 'error', message: res.error });
     };
     const schedule = () => { clearTimeout(timer); timer = setTimeout(draw, 300); };
