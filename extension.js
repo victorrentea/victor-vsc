@@ -15,7 +15,38 @@ function symbolChain(symbols, pos) {
   return [];
 }
 
+// Setări pe care extensia NU le poate livra prin `configurationDefaults`.
+//
+// `window.openFoldersInNewWindow` e citită exclusiv de procesul **main** al
+// Electron (`shouldOpenNewWindow` din windowsMainService), iar acela parsează
+// doar `settings.json`-ul utilizatorului — default-urile contribuite de
+// extensii trăiesc în renderer/extension host și nu ajung niciodată la el.
+// Declarată în `configurationDefaults`, setarea arăta corect în UI-ul de
+// settings și nu făcea absolut nimic: ⇧⌘O (Open Recent) refolosea fereastra
+// curentă. Se vedea doar în ferestrele „goale" (pornite fără folder), unde
+// refolosirea cere întâi închiderea editoarelor deschise; într-o fereastră cu
+// folder refolosirea trecea neobservată, arăta ca o fereastră nouă.
+//
+// Deci o scriem noi, o singură dată, chiar în settings.json — sursa rămâne
+// versionată aici, iar fișierul de setări e doar locul unde main-ul o poate
+// citi. `inspect().globalValue` (nu `get()`) ca să vedem valoarea scrisă
+// efectiv de utilizator, nu default-ul.
+const MAIN_PROCESS_SETTINGS = {
+  'window.openFoldersInNewWindow': 'on',
+};
+
+function enforceMainProcessSettings() {
+  const config = vscode.workspace.getConfiguration();
+  for (const [key, value] of Object.entries(MAIN_PROCESS_SETTINGS)) {
+    if (config.inspect(key)?.globalValue !== value) {
+      config.update(key, value, vscode.ConfigurationTarget.Global);
+    }
+  }
+}
+
 function activate(context) {
+  enforceMainProcessSettings();
+
   // A tools button that opens the Command Palette on click. It lives in the
   // status bar rather than up next to the four layout controls because that
   // strip is part of the title bar, which VS Code keeps for itself — there is
