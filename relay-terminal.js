@@ -212,14 +212,23 @@ function handle(req, res) {
         return send(res, 400, { ok: false, error: 'http(s) only — an embedded browser cannot load file:// URLs; serve the folder' });
       }
       const folder = (vscode.workspace.workspaceFolders || [])[0]?.name || null;
-      try {
-        await vscode.commands.executeCommand('simpleBrowser.api.open', vscode.Uri.parse(target), {
+      const show = (u) => vscode.commands.executeCommand(
+        'simpleBrowser.api.open', vscode.Uri.parse(u), {
           viewColumn: parsed.beside === false ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside,
           // The caller is a script running in a terminal in this window, and
           // stealing the caret from it would land the next thing Victor types in
           // a browser's URL bar.
           preserveFocus: parsed.preserveFocus !== false,
         });
+      try {
+        // Re-opening the URL the panel is already on **does** reload it — measured
+        // with a hit counter on the server, three opens, three GETs. It looked like
+        // a no-op for an afternoon, and that was the test server's fault: a plain
+        // `http.server` answers with `Last-Modified` and no `Cache-Control`, so
+        // Electron served the page out of its own cache and the socket stayed
+        // quiet. The caller sends `Cache-Control: no-store`, which is what makes
+        // "rebuild the report, show it again" actually show the new build.
+        await show(target);
         send(res, 200, { ok: true, url: target, folder, view: 'simple-browser' });
       } catch (e) {
         send(res, 500, { ok: false, error: e.message, folder });
