@@ -51,6 +51,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
 | `puml.js` | randare PlantUML + comanda text / split / diagramă |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
+| `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
@@ -85,3 +86,27 @@ Main-ul parsează doar `settings.json`-ul utilizatorului, deci un
 `configurationDefaults` acolo arată corect în UI și nu face nimic. Pentru ele,
 `enforceMainProcessSettings()` din `extension.js` scrie valoarea în setările
 globale la activare — sursa rămâne versionată aici.
+
+## Deschiderea unui URL în fereastra „asta"
+
+`./open-in-browser.py <url>` arată o pagină în browserul embedded al ferestrei VS Code
+care are deschis folderul git curent (`--folder NAME` ca să țintești altul). Există
+pentru rapoartele HTML pe care le produc skill-urile: `open` le dă pe mâna Chrome, pe
+alt desktop, în timp ce terminalul care le-a construit e chiar în editor.
+
+Trei lucruri măsurate, care arată de ce e scris exact așa:
+
+- **ținta se alege după folder, nu după focus.** Cât timp lucrează un agent, fereastra
+  focusată e de obicei alta (Victor se uită în altă parte). Din terminal fereastra
+  proprie nu e observabilă — de-aia treaba asta trebuie făcută din interiorul editorului.
+- **`env.openExternal` deschide Chrome, nu Browser View-ul nativ.** 1.134 are un browser
+  intern, iar `workbench.browser.openLocalhostLinks` (pornit din `configurationDefaults`)
+  trimite acolo orice link localhost **click-uit în workbench**. Dar acela e un opener
+  contribuit în workbench; `openExternal` dintr-o extensie îl ocolește și ajunge în
+  procesul main. Nativul se atinge doar prin API propus (`$openBrowserTab`), interzis unei
+  extensii instalate. Deci endpoint-ul folosește `simpleBrowser.api.open` cu
+  `ViewColumn.Beside`. Consecință: auto-open → Simple Browser, ⌘-click pe același URL în
+  terminal → Browser View. Două browsere embedded pentru aceeași pagină.
+- **`file://` nu merge în niciunul.** Iframe-ul Simple Browser e legat de un CSP
+  `frame-src *`, iar wildcard-ul nu acoperă schemele non-network: iese panou alb, fără
+  nicio eroare. Cine cheamă servește folderul și dă URL-ul de localhost.

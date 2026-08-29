@@ -172,6 +172,62 @@ function handle(req, res) {
     return;
   }
 
+  // Show a URL in **this** window's embedded browser, beside the code.
+  //
+  // A skill that builds an HTML report ends by handing it over, and `open` hands
+  // it to Chrome — another app, on whatever desktop Chrome happens to live on,
+  // while the terminal that built it is right here. From a terminal you cannot
+  // aim at a VS Code window: there is no window handle in the environment, so
+  // "the one I ran it from" is unobservable from outside. From in here it is not
+  // a guess at all — the caller picked the window by workspace folder, the same
+  // way `reload-window.py` does.
+  //
+  // **The Simple Browser, and not `env.openExternal`.** 1.134 ships a native
+  // Browser View, and `workbench.browser.openLocalhostLinks` (on by default in
+  // this extension) sends every localhost link *clicked in the workbench* into
+  // it — so reaching it from here looked like one line. Measured: it opens
+  // Chrome. That opener is a workbench contribution consulted on the workbench's
+  // own open path, and an extension's `openExternal` goes straight to the main
+  // process past it. The native view is only reachable over a proposed API
+  // (`$openBrowserTab`), which an installed extension cannot use.
+  //
+  // So: auto-open lands in the Simple Browser, ⌘-clicking the same URL in the
+  // terminal lands in the Browser View. Two different embedded browsers for the
+  // same page, and both beat the page opening in another application.
+  //
+  // **http(s) only.** The Simple Browser is a webview whose iframe is bound by
+  // `frame-src *`, and a CSP wildcard does not cover non-network schemes: a
+  // `file://` URL renders as a blank panel with no error anywhere. The caller
+  // serves the directory and passes the localhost URL.
+  if (req.method === 'POST' && url.pathname === '/open-url') {
+    let body = '';
+    req.on('data', (c) => { body += c; if (body.length > 100_000) req.destroy(); });
+    req.on('end', async () => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch (_) {
+        return send(res, 400, { ok: false, error: 'expected JSON' });
+      }
+      const target = String(parsed.url || '');
+      if (!/^https?:\/\//i.test(target)) {
+        return send(res, 400, { ok: false, error: 'http(s) only — an embedded browser cannot load file:// URLs; serve the folder' });
+      }
+      const folder = (vscode.workspace.workspaceFolders || [])[0]?.name || null;
+      try {
+        await vscode.commands.executeCommand('simpleBrowser.api.open', vscode.Uri.parse(target), {
+          viewColumn: parsed.beside === false ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside,
+          // The caller is a script running in a terminal in this window, and
+          // stealing the caret from it would land the next thing Victor types in
+          // a browser's URL bar.
+          preserveFocus: parsed.preserveFocus !== false,
+        });
+        send(res, 200, { ok: true, url: target, folder, view: 'simple-browser' });
+      } catch (e) {
+        send(res, 500, { ok: false, error: e.message, folder });
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/unbind') {
     const id = Number(url.searchParams.get('id'));
     bound.delete(id);
