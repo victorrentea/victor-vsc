@@ -237,6 +237,48 @@ function handle(req, res) {
     return;
   }
 
+  // Open a file at a line, in this window. The companion of /open-url: a report
+  // shown in the embedded browser is full of `path:line` references, and a
+  // reviewer reading it wants to land in the class.
+  //
+  // The page cannot do it itself. Those references are `vscode://file/…` links,
+  // and the Simple Browser's iframe is sandboxed without `allow-top-navigation`
+  // under a `frame-src *` CSP — a webview cannot hand a custom scheme to the OS,
+  // so the click does nothing whatever the anchor says. What the page *can* do is
+  // fetch its own origin, so the server it was loaded from calls this.
+  //
+  // Not `open vscode://file/…` from a shell either: macOS routes that to the
+  // last-active window, which is not necessarily the one holding the report. Here
+  // the window is the one the caller picked.
+  if (req.method === 'POST' && url.pathname === '/open-file') {
+    let body = '';
+    req.on('data', (c) => { body += c; if (body.length > 100_000) req.destroy(); });
+    req.on('end', async () => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch (_) {
+        return send(res, 400, { ok: false, error: 'expected JSON' });
+      }
+      const file = String(parsed.path || '');
+      if (!file.startsWith('/')) return send(res, 400, { ok: false, error: 'absolute path required' });
+      const line = Math.max(1, Number(parsed.line) || 1) - 1;
+      try {
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+        const at = new vscode.Range(line, 0, line, 0);
+        await vscode.window.showTextDocument(doc, {
+          selection: at,
+          // The reader clicked a reference *because* they want to be in the file:
+          // unlike /open-url, taking the caret here is the point.
+          preserveFocus: false,
+          viewColumn: vscode.ViewColumn.One,
+        });
+        send(res, 200, { ok: true, path: doc.uri.fsPath, line: line + 1 });
+      } catch (e) {
+        send(res, 404, { ok: false, error: e.message, path: file });
+      }
+    });
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/unbind') {
     const id = Number(url.searchParams.get('id'));
     bound.delete(id);
