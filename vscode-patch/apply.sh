@@ -34,13 +34,32 @@ STATUS_BAR_FLOATING_PADDING="${STATUS_BAR_FLOATING_PADDING:-0}"
 
 # Lățimea barei de activități (Explorer, Search, …) — doar cutia iconițelor; peste ea
 # layout-ul „floating panels" mai adaugă un gutter de 8px, deci pe ecran banda are
-# ACTIVITY_BAR_WIDTH + 8. Cu `workbench.activityBar.compact` pornit (cazul lui Victor)
-# constanta citită e FLOATING_COMPACT_ACTIVITYBAR_WIDTH, nu cea normală.
-# 28 e din fabrică: bandă de 36px cu iconiță de 16 => 10px de o parte și de alta.
-# Măsurat pe 26 aug 2026, strip-ul de tool windows din IntelliJ are 34px cu aceleași
-# iconițe de 16 => 9px, adică practic la fel; de-aia rămâne pe 28. Dacă vrei spațiul
-# chiar la jumătate: ACTIVITY_BAR_WIDTH=18 ./apply.sh (bandă 26px, 5px de fiecare parte).
+# lățimea de aici + 8. Bundle-ul ține patru constante și alege una după două comutatoare
+# (`workbench.experimental.modernUI` și `workbench.activityBar.compact`):
+#
+#              compact oprit               compact pornit            iconița
+#   modernUI   FLOATING_ACTIVITYBAR=36     FLOATING_COMPACT=28       24 / 16
+#   clasic     ACTIVITYBAR_WIDTH=48        COMPACT_ACTIVITYBAR=36    24 / 16
+#
+# Golul de o parte și de alta e (bandă − iconiță) / 2.
+#
+# ⚠️ Comentariul de aici zicea până pe 1 sep 2026 că bara compactă e „cazul lui Victor".
+# Nu e: `workbench.activityBar.compact` nu apare nici în settings.json, nici în
+# configurationDefaults din package.json, deci `_isCompact` e false și knob-ul ăsta —
+# care patchează constanta COMPACT — nu schimbă nimic pe ecran. Rămâne setat, ca să fie
+# corect dacă se pornește compact vreodată; ce contează acum sunt cele două de sub el.
+# 28 e oricum valoarea din fabrică: bandă de 36px cu iconiță de 16 => 10px de fiecare
+# parte, cât are și strip-ul de tool windows din IntelliJ (34px, 9px — măsurat 26 aug 2026).
 ACTIVITY_BAR_WIDTH="${ACTIVITY_BAR_WIDTH:-28}"
+
+# Cazul real: compact oprit, deci iconiță de 24px. Cerut pe 1 sep 2026 — golul la jumătate.
+#   modernUI pornit: 36 din fabrică => 6px de fiecare parte, deci 30 pentru 3px.
+#   modernUI oprit:  48 din fabrică => 12px de fiecare parte, deci 36 pentru 6px.
+# Se patchează amândouă fiindcă `workbench.experimental.modernUI` e declarat cu
+# `experiment:{mode:"auto"}` — se poate aprinde și stinge de la distanță, fără să apară
+# în settings, așa că nu se poate ști din afară care dintre ele e cea citită.
+ACTIVITY_BAR_WIDTH_FLOATING="${ACTIVITY_BAR_WIDTH_FLOATING:-30}"
+ACTIVITY_BAR_WIDTH_CLASSIC="${ACTIVITY_BAR_WIDTH_CLASSIC:-36}"
 
 # Înălțimea title bar-ului cu command center pornit — 35px din fabrică, tot o
 # constantă în bundle. 28 = -20%, cât încape fix pastila de 22px cu aer.
@@ -53,7 +72,7 @@ TITLE_BAR_HEIGHT="${TITLE_BAR_HEIGHT:-28}"
 # singurul lucru codat în bundle e pasul.
 TERMINAL_ZOOM_STEP="${TERMINAL_ZOOM_STEP:-0.5}"
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" TITLE_H="$TITLE_BAR_HEIGHT" ZOOM_STEP="$TERMINAL_ZOOM_STEP" python3 - <<'PY'
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" ACT_W_FLOAT="$ACTIVITY_BAR_WIDTH_FLOATING" ACT_W_CLASSIC="$ACTIVITY_BAR_WIDTH_CLASSIC" TITLE_H="$TITLE_BAR_HEIGHT" ZOOM_STEP="$TERMINAL_ZOOM_STEP" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -137,7 +156,22 @@ if not m:
 elif m.group(1) != act_w:
     src_js = src_js[:m.start(1)] + act_w + src_js[m.end(1):]
     open(bundle, 'w', encoding='utf8').write(src_js)
-    print(f'   lățime bară de activități: {m.group(1)} -> {act_w}')
+    print(f'   lățime bară de activități (compact): {m.group(1)} -> {act_w}')
+
+# 3b-ter. aceleași două constante, dar pentru bara necompactă — cazul de acum. Prefixul
+#     `this.` din `static{this.X=…}` e ce le separă: fără el, ancora ACTIVITYBAR_WIDTH
+#     ar nimeri și în numele celorlalte trei.
+for env_key, const, what in (
+        ('ACT_W_FLOAT', 'FLOATING_ACTIVITYBAR_WIDTH', 'bară de activități (modernUI)'),
+        ('ACT_W_CLASSIC', 'ACTIVITYBAR_WIDTH', 'bară de activități (clasic)')):
+    want = os.environ[env_key]
+    m = re.search(r'this\.' + const + r'=([\d.]+)', src_js)
+    if not m:
+        print(f'   ATENȚIE: nu găsesc {const}, {what} rămâne cea din fabrică')
+    elif m.group(1) != want:
+        src_js = src_js[:m.start(1)] + want + src_js[m.end(1):]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print(f'   {what}: {m.group(1)} -> {want}')
 
 # 3c. înălțimea title bar-ului. În bundle e o variabilă minificată (`mte=35`),
 #     al cărei nume se schimbă la fiecare release — o găsim prin locul în care e
