@@ -43,6 +43,12 @@
   "_text_d": {
    "iconPath": "./icons/ft-text_dark.svg"
   },
+  "_cucumber": {
+   "iconPath": "./icons/ft-cucumber.svg"
+  },
+  "_cucumber_d": {
+   "iconPath": "./icons/ft-cucumber_dark.svg"
+  },
   "_css": {
    "iconPath": "./icons/ft-css.svg"
   },
@@ -294,7 +300,7 @@
   "cc": "_cpp_d",
   "hpp": "_cpp_d",
   "iml": "_module_d",
-  "feature": "_text_d"
+  "feature": "_cucumber_d"
  },
  "fileNames": {
   ".gitignore": "_gitignore",
@@ -331,6 +337,8 @@
   "sql": "_sql_d",
   "properties": "_properties_d",
   "markdown": "_markdown_d",
+  "feature": "_cucumber_d",
+  "gherkin": "_cucumber_d",
   "plaintext": "_text_d",
   "csv": "_csv_d",
   "shellscript": "_shell_d",
@@ -423,7 +431,7 @@
    "cc": "_cpp",
    "hpp": "_cpp",
    "iml": "_module",
-   "feature": "_text"
+   "feature": "_cucumber"
   },
   "fileNames": {
    ".gitignore": "_gitignore",
@@ -460,6 +468,8 @@
    "sql": "_sql",
    "properties": "_properties",
    "markdown": "_markdown",
+   "feature": "_cucumber",
+   "gherkin": "_cucumber",
    "plaintext": "_text",
    "csv": "_csv",
    "shellscript": "_shell",
