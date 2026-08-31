@@ -40,7 +40,7 @@ grep -c victor-vsc "/Applications/Visual Studio Code.app/Contents/Resources/app/
    era cel nou, dar pagina rula cu regulile vechi, și părea că „nu se aplică
    selectorul". Amprenta se schimbă la fiecare modificare, deci cache-ul pică
    singur.
-3. Rescrie patru constante din `workbench.desktop.main.js`, pe care VS Code nu le
+3. Rescrie cinci constante din `workbench.desktop.main.js`, pe care VS Code nu le
    expune ca setări. Numele minificate se schimbă la fiecare release, deci
    ancora e de fiecare dată ceva stabil din jur, nu numele:
    - **înălțimea rândului din Explorer** (`ITEM_HEIGHT`, 23.4 din fabrică → 22,
@@ -52,6 +52,14 @@ grep -c victor-vsc "/Applications/Visual Studio Code.app/Contents/Resources/app/
      valoarea din fabrică, dar reglabilă din `ACTIVITY_BAR_WIDTH`);
    - **înălțimea title bar-ului cu command center** (35 → 28, adică −20%),
      găsită după `this.isCommandCenterVisible||…?<nume>:30`.
+   - **pasul de zoom al terminalului** (1px → 0.5, reglabil din
+     `TERMINAL_ZOOM_STEP`): ⌘+scroll peste terminal și comenzile Increase/Decrease
+     Font Size mutau `terminal.integrated.fontSize` cu 1px, adică ~9% dintr-un corp
+     de 11 — prea gros ca să nimerești mărimea potrivită. Se ating trei locuri
+     (wheel pe mouse fizic, wheel pe trackpad — unde notch-urile se acumulează
+     înainte, deci se înmulțește rezultatul — și cele două comenzi), ancorate pe
+     forma expresiei și pe `"terminal.integrated.fontSize"`. Fracțiile sunt legale:
+     setarea e `type:"number"` în schemă, nu `integer`.
 
    Dacă o ancoră nu mai prinde, scriptul **spune „ATENȚIE" și nu modifică
    nimic** — citește ce scrie în terminal după update, acolo apare.

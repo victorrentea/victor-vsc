@@ -46,7 +46,14 @@ ACTIVITY_BAR_WIDTH="${ACTIVITY_BAR_WIDTH:-28}"
 # constantă în bundle. 28 = -20%, cât încape fix pastila de 22px cu aer.
 TITLE_BAR_HEIGHT="${TITLE_BAR_HEIGHT:-28}"
 
-VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" TITLE_H="$TITLE_BAR_HEIGHT" python3 - <<'PY'
+# Pasul cu care se schimbă `terminal.integrated.fontSize` la zoom (⌘+scroll în
+# terminal, plus comenzile Increase/Decrease Font Size). Din fabrică e 1px, adică
+# ~9% dintr-un corp de 11px — prea gros ca să nimerești mărimea potrivită la
+# proiector. Setarea e `type:"number"` în schema VS Code, deci acceptă și fracții;
+# singurul lucru codat în bundle e pasul.
+TERMINAL_ZOOM_STEP="${TERMINAL_ZOOM_STEP:-0.5}"
+
+VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" TITLE_H="$TITLE_BAR_HEIGHT" ZOOM_STEP="$TERMINAL_ZOOM_STEP" python3 - <<'PY'
 import base64, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
@@ -208,6 +215,50 @@ else:
             os.remove(c)
         print('   butoane markdown mutate la coada barei de titlu:',
               ', '.join(c.split('.')[-1] for c in moved))
+
+# 3f. pasul de zoom al terminalului, tot o constantă din bundle. Din fabrică VS Code
+#     sare cu 1px de `terminal.integrated.fontSize` la fiecare notch de ⌘+scroll și
+#     la fiecare Increase/Decrease Font Size; cu TERMINAL_ZOOM_STEP=0.5 pasul se
+#     înjumătățește. Setarea e `type:"number"` în schemă, deci fracțiile sunt legale.
+#     Trei locuri, toate în jurul contribuției `terminal.mouseWheelZoom`:
+#       - mouse fizic: fontSize + (±1) la fiecare notch;
+#       - trackpad: notch-urile se acumulează întâi (`Math.ceil(|Δ|/5)`), deci se
+#         înmulțește rezultatul acumulat, nu incrementul;
+#       - comenzile `fontZoomIn` / `fontZoomOut`: fontSize ± 1.
+#     Numele minificate se schimbă la fiecare release, deci ancora e forma expresiei
+#     plus string-urile din jur, nu numele. Regexurile prind și varianta deja
+#     patch-uită, ca să poți schimba pasul rulând scriptul din nou.
+zoom_step = os.environ['ZOOM_STEP']
+zoom_hits = []
+
+def patch_zoom(pattern, repl, label):
+    global src_js
+    m = re.search(pattern, src_js, re.S)
+    if not m:
+        print(f'   ATENȚIE: nu găsesc {label} — pasul de zoom rămâne cel din fabrică')
+        return
+    new = m.expand(repl)
+    if new != m.group(0):
+        src_js = src_js[:m.start()] + new + src_js[m.end():]
+        zoom_hits.append(label)
+
+patch_zoom(r'(\w+)=(\w+)\.deltaY>0\?-1:1,(\w+)=this\._clampFontSize\(this\._getConfigFontSize\(\)\+\1(?:\*[\d.]+)?\)',
+           r'\1=\2.deltaY>0?-1:1,\3=this._clampFontSize(this._getConfigFontSize()+\1*' + zoom_step + ')',
+           'zoom-ul de wheel cu mouse fizic')
+
+patch_zoom(r'(\w+)=Math\.ceil\(Math\.abs\((\w+)/5\)\),(\w+)=\2>0\?-1:1,(\w+)=\1\*\3(?:\*[\d.]+)?,',
+           r'\1=Math.ceil(Math.abs(\2/5)),\3=\2>0?-1:1,\4=\1*\3*' + zoom_step + ',',
+           'zoom-ul de wheel cu trackpad')
+
+for _cmd, _sign in (('fontZoomIn', '+'), ('fontZoomOut', '-')):
+    patch_zoom(r'("workbench\.action\.terminal\.' + _cmd + r'".{0,400}?getValue\("terminal\.integrated\.fontSize"\).{0,200}?\(\w+'
+               + re.escape(_sign) + r')[\d.]+\)',
+               r'\g<1>' + zoom_step + ')',
+               f'comanda {_cmd}')
+
+if zoom_hits:
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print(f'   pas de zoom la terminal -> {zoom_step}px:', ', '.join(zoom_hits))
 
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
