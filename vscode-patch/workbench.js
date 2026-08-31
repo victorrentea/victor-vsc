@@ -133,6 +133,149 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   };
 
+  // Rezultatele testelor, ierarhic — ca în IntelliJ.
+  //
+  // Panoul „Test Results" din VS Code (`getTaskChildren` din testResultsTree.ts)
+  // trece o singură dată prin `result.tests`, filtrează ce a apucat să ruleze și
+  // scoate câte un rând PLAT pentru fiecare. Cu @Nested de JUnit 5 ies toate
+  // metodele una sub alta, iar singurul indiciu că o metodă ține de o clasă e
+  // breadcrumb-ul gri din dreapta („FailsIf ‹ CreateVisitShould"). IntelliJ, pe
+  // același test, desenează exact invers: clasa e un nod, metodele îi sunt copii.
+  //
+  // Ierarhia există deja în date: `extId` e calea TestId a itemului, adică
+  // id-urile de la rădăcină până la el, lipite cu \0. Deci un item e copilul
+  // altuia când extId-ul lui începe cu extId-ul celuilalt + \0.
+  //
+  // Două lucruri nu se pot face doar din lista primită:
+  //
+  // 1. Rândurile de clasă LIPSESC de obicei. Extensia Test Runner for Java
+  //    raportează stare pentru suite doar când pică (`setTestState` e chemat
+  //    pentru suite numai la failed/errored/skipped), deci la o rulare verde
+  //    clasa are `state` 0 și filtrul din panou o taie. Ca să existe nodul
+  //    părinte îl luăm din `results.getStateById(<extId de strămoș>)` — obiectul
+  //    e acolo, VS Code adaugă tot lanțul până la rădăcină în rezultat.
+  //    `results` și `taskIndex` le citim de pe primul element construit, fiindcă
+  //    `makeNode` le are în closure iar noi nu.
+  //
+  // 2. Ne oprim la CLASE, nu urcăm până la pachet și proiect. Distincția e
+  //    `item.range`: clasele și metodele au o poziție într-un fișier, pachetul
+  //    și proiectul n-au. Așa iese exact arborele din IntelliJ — clasa e
+  //    rădăcina rândului, nu al treilea nivel de indentare.
+  //
+  // Nodul de clasă adus așa are `state` 0, adică s-ar desena cu iconița „unset"
+  // lângă copii verzi. Îi umbrim getter-ul cu `computedState`-ul pe care VS Code
+  // îl calculează oricum din copii, deci clasa se colorează ca în IntelliJ: roșu
+  // dacă a picat ceva sub ea. Umbrirea stă pe instanța de element (cache-uită),
+  // nu pe rezultat, ca să nu stricăm numărătoarea „X passed" din antet.
+  //
+  // apply.sh rescrie expresia din bundle ca să întrebe funcția asta; dacă
+  // lipsește sau crapă, `?.()` + `??` cad înapoi pe `Iterable.map`, adică pe
+  // lista plată din fabrică — patch-ul e inofensiv fără scriptul injectat.
+  const TEST_ID_SEP = '\0';
+
+  // Breadcrumb-ul e text simplu, nu label cu iconițe, așa că `$(symbol-class)`
+  // pus de Test Runner for Java în label-uri ajunge ACOLO ca atare, vizibil.
+  // Îl scoatem — pe nodurile devenite copii îl scoatem cu totul, fiindcă
+  // părintele pe care-l numea e chiar rândul de deasupra.
+  function stripCodicons(text) {
+    return typeof text === 'string' ? text.replace(/\$\([^)]*\)\s*/g, '').trim() : text;
+  }
+
+  globalThis.__victorNestTestResults = function (items, makeNode) {
+    try {
+      const list = Array.from(items);
+      if (!list.length) return undefined;   // nimic de aranjat, lasă fabrica
+
+      const idOf = (item) => item && item.item && item.item.extId;
+      const listed = new Set(list.map(idOf));
+
+      const nodes = new Map();      // extId -> nodul de arbore
+      const kids = new Map();       // extId de părinte -> [extId de copii], în ordinea rulării
+      const roots = [];
+      let results;                  // ITestResult, citit de pe primul element
+      let taskIndex = 0;
+
+      const nodeFor = (item) => {
+        const id = idOf(item);
+        let node = nodes.get(id);
+        if (!node) {
+          nodes.set(id, node = makeNode(item));
+          if (results === undefined && node.element && node.element.results) {
+            results = node.element.results;
+            taskIndex = node.element.taskIndex || 0;
+          }
+        }
+        return node;
+      };
+
+      // Cel mai apropiat strămoș care merită un rând: unul care e deja în listă,
+      // sau unul pe care rezultatul îl cunoaște și care e localizat într-un
+      // fișier (clasă / clasă @Nested). Pachetul și proiectul n-au `range`, deci
+      // bucla trece peste ele și itemul rămâne rădăcină.
+      const parentOf = (id) => {
+        const parts = String(id).split(TEST_ID_SEP);
+        for (let n = parts.length - 1; n > 0; n--) {
+          const candidate = parts.slice(0, n).join(TEST_ID_SEP);
+          const found = results && results.getStateById && results.getStateById(candidate);
+          if (!found) continue;
+          if (listed.has(candidate) || (found.item && found.item.range)) return found;
+        }
+        return undefined;
+      };
+
+      // Coadă, nu buclă simplă: un strămoș adus din rezultat intră și el la rând,
+      // ca să-și caute la rândul lui părintele (metodă -> clasă @Nested -> clasă).
+      const queue = list.slice();
+      const linked = new Set();
+      const materialized = new Set();
+      while (queue.length) {
+        const item = queue.shift();
+        const id = idOf(item);
+        if (id === undefined || linked.has(id)) continue;
+        linked.add(id);
+        nodeFor(item);
+
+        const parent = parentOf(id);
+        if (!parent) { roots.push(id); continue; }
+        const parentId = idOf(parent);
+        if (kids.has(parentId)) kids.get(parentId).push(id);
+        else kids.set(parentId, [id]);
+        if (!listed.has(parentId)) materialized.add(parentId);
+        queue.push(parent);
+      }
+
+      for (const [parentId, childIds] of kids) {
+        const node = nodes.get(parentId);
+        node.children = [...(node.children || []), ...childIds.map((id) => nodes.get(id))];
+        node.collapsible = true;
+        for (const id of childIds) {
+          const el = nodes.get(id).element;
+          if (el) el.description = '';   // breadcrumb-ul e acum rândul de deasupra
+        }
+      }
+
+      // Nodurile de clasă aduse din rezultat n-au stare proprie; le dăm starea
+      // agregată, ca să nu stea cu iconița „unset" peste copii verzi sau roșii.
+      for (const id of materialized) {
+        const el = nodes.get(id).element;
+        const state = results && results.getStateById && results.getStateById(id);
+        const computed = state && state.computedState;
+        if (el && typeof computed === 'number') {
+          Object.defineProperty(el, 'state', { configurable: true, get: () => computed });
+        }
+      }
+
+      for (const id of roots) {
+        const el = nodes.get(id).element;
+        if (el) el.description = stripCodicons(el.description);
+      }
+
+      return roots.map((id) => nodes.get(id));
+    } catch {
+      return undefined;   // bundle-ul cade înapoi pe lista plată
+    }
+  };
+
   // Click pe rotița mouse-ului în cod = ⌘-click (Go to Definition). VS Code
   // n-are nicio setare pentru butonul din mijloc și nici keybindings-urile nu
   // primesc butoane de mouse — dar editorul își ia deciziile din evenimentele

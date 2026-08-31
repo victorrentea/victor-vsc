@@ -175,6 +175,36 @@ else:
     open(bundle, 'w', encoding='utf8').write(src_js)
     print('   margine sticky scroll: maxLineCount -> numărul real de rânduri lipite')
 
+# 3d-bis. rezultatele testelor, ierarhic — ca în IntelliJ.
+#     `getTaskChildren` din panoul „Test Results" trece o singură dată prin lista
+#     PLATĂ `result.tests` și scoate câte un rând pentru fiecare, deci clasele
+#     @Nested de JUnit 5 și metodele lor ies frați, una sub alta. Rescriem
+#     expresia ca să întrebe întâi `__victorNestTestResults` din
+#     victor-workbench.js, care reconstruiește arborele din prefixele de extId;
+#     `?.()` + `??` fac ca lipsa funcției (sau o excepție în ea) să cadă înapoi
+#     pe `Iterable.map`, adică pe lista plată din fabrică.
+#     Numele minificate se schimbă la fiecare release, deci ancora e forma
+#     expresiei — element + incompressible + children —, nu numele.
+NEST = re.compile(
+    r'(\w+)=(\w+)\.map\((\w+),(\w+)=>\(\{element:(\w+)\.getOrCreate\(\4,\(\)=>new (\w+)'
+    r'\((\w+),\4,(\w+)\)\),incompressible:!0,children:(\w+)\(\7,\4,\8\)\}\)\)')
+if '__victorNestTestResults' in src_js:
+    pass                       # deja aplicat (bundle nerescris de un update)
+else:
+    m = NEST.search(src_js)
+    if not m:
+        print('   ATENȚIE: nu găsesc lista de rezultate din panoul Test Results — '
+              'testele @Nested rămân plate')
+    else:
+        node = ('{0}=>({{element:{1}.getOrCreate({0},()=>new {2}({3},{0},{4})),'
+                'incompressible:!0,children:{5}({3},{0},{4})}})').format(
+                    m.group(4), m.group(5), m.group(6), m.group(7), m.group(8), m.group(9))
+        new = '{ne}=globalThis.__victorNestTestResults?.({j},{node})??{It}.map({j},{node})'.format(
+            ne=m.group(1), It=m.group(2), j=m.group(3), node=node)
+        src_js = src_js[:m.start()] + new + src_js[m.end():]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print('   rezultate de test: listă plată -> arbore (clasele @Nested devin părinți)')
+
 # 3e. poziția butoanelor de markdown din bara de titlu. VS Code sortează acțiunile
 #     dintr-un grup după `order` și, la egalitate, ALFABETIC după titlu — iar
 #     „Open as Preview", „Reopen as Source File" și „Open Changes" (git) sunt toate
