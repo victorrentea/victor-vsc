@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs');
 const puml = require('./puml');
 const relayTerminal = require('./relay-terminal');
 const githubLink = require('./github-link');
@@ -47,8 +48,45 @@ function enforceMainProcessSettings() {
   }
 }
 
+// ⌘T / ⌘W în terminal. Ocolul prin fișier merită făcut fiindcă
+// `contributes.keybindings` dintr-o extensie NU poate învinge sigur altă extensie:
+// la egalitate câștigă ultima înregistrată, iar ordinea dintre extensii nu e
+// garantată. `k--kato.intellij-idea-keybindings` leagă ⌘T de `git.sync` și ⌘W de
+// `workbench.action.closeActiveEditor` **fără niciun `when`**, deci se potrivesc și
+// cu cursorul în terminal și se bat cu ale noastre — de-aia ⌘T mergea abia „la a
+// doua apăsare". Contează cine câștigă și dincolo de comanda rulată: `terminal.new`
+// și `terminal.kill` sunt în lista implicită `commandsToSkipShell` (160 de comenzi),
+// deci ocolesc shell-ul; `git.sync` și `closeActiveEditor` nu sunt, așa că atunci
+// când ele câștigă apăsarea pleacă spre shell și nu se întâmplă nimic vizibil.
+// keybindings.json e singurul strat care bate mereu extensiile — VS Code n-are API
+// pentru el, de unde scrisul direct în fișier, ca la enforceMainProcessSettings().
+//
+// Numai reguli pozitive, fără `-git.sync`: `when: terminalFocus` le lasă pe ale lui
+// k--kato neatinse în afara terminalului, deci ⌘T rămâne git sync în editor.
+const TERMINAL_KEYBINDINGS = [
+  { key: 'cmd+t', command: 'workbench.action.terminal.new', when: 'terminalFocus' },
+  { key: 'cmd+w', command: 'workbench.action.terminal.kill', when: 'terminalFocus' },
+];
+const KEYBINDINGS_MARKER = '// victor-vsc: ⌘T/⌘W în terminal — scrise automat la activare';
+
+function enforceKeybindings(context) {
+  // globalStorageUri e <userData>/User/globalStorage/<id>, deci de la el două nivele
+  // în sus ajungem la User/ — fără să codăm calea de macOS.
+  const file = path.join(context.globalStorageUri.fsPath, '..', '..', 'keybindings.json');
+  let text;
+  try { text = fs.readFileSync(file, 'utf8'); } catch { return; }
+  if (text.includes(KEYBINDINGS_MARKER)) return;
+  const close = text.lastIndexOf(']');
+  if (close < 0) return; // fișier în altă formă decât ne așteptăm — mai bine nimic
+  const before = text.slice(0, close).trimEnd();
+  const block = TERMINAL_KEYBINDINGS.map(k => '    ' + JSON.stringify(k)).join(',\n');
+  const sep = before.endsWith('[') ? '' : ',';
+  fs.writeFileSync(file, `${before}${sep}\n    ${KEYBINDINGS_MARKER}\n${block}\n${text.slice(close)}`, 'utf8');
+}
+
 function activate(context) {
   enforceMainProcessSettings();
+  enforceKeybindings(context);
 
   // A tools button that opens the Command Palette on click. It lives in the
   // status bar rather than up next to the four layout controls because that

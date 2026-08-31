@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.56",
+  "version": "0.0.57",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -63,9 +63,6 @@
       "workbench.editor.enablePreview": false,
       "workbench.editor.enablePreviewFromQuickOpen": false,
       "workbench.editor.enablePreviewFromCodeNavigation": false,
-      "terminal.integrated.commandsToSkipShell": [
-        "workbench.action.terminal.new"
-      ],
       "editor.inlayHints.enabled": "off",
       "workbench.browser.openLocalhostLinks": true,
       "[markdown]": {
