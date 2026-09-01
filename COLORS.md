@@ -176,3 +176,20 @@ margine pe care layout-ul nou cu panouri „plutitoare" o adaugă dedesubt, iar
 grila workbench-ului pune dimensiunea pe container din JS, deci ai obține o bară
 mică într-un spațiu rămas mare. Se patchează constanta, ancorată chiar pe numele
 ei — e destul de rar ca să nu se confunde cu altceva.
+
+### `NO_COLOR` scos din terminalele integrate
+
+`"terminal.integrated.env.osx": { "NO_COLOR": null }` în `configurationDefaults`.
+
+VS Code copiază în fiecare terminal integrat mediul procesului **main**, iar acela
+e mediul din care a fost pornită aplicația. Dacă VS Code e lansat dintr-un tool
+Bash de-al lui Claude Code (`open -a "Visual Studio Code"`, `code .`), moștenește
+`NO_COLOR=1` — variabila cu care Claude își ține curată ieșirea uneltelor — și o
+predă mai departe la orice shell din panou. Efectul: tot ce respectă `NO_COLOR`
+(inclusiv Claude Code în TUI, git, ls, npm) scrie monocrom pe `terminal.foreground`
+(#CCCCCC), și rămâne așa până când aplicația e închisă complet și repornită din
+Dock — un reload de fereastră nu schimbă mediul procesului main.
+
+`null` înseamnă „șterge variabila", nu „setează pe gol", deci terminalele ies
+curate indiferent cum a fost pornit VS Code. Se aplică doar terminalelor **noi**;
+cele deja deschise păstrează mediul cu care au pornit.
