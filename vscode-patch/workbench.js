@@ -162,16 +162,26 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   //    și proiectul n-au. Așa iese exact arborele din IntelliJ — clasa e
   //    rădăcina rândului, nu al treilea nivel de indentare.
   //
-  // Nodul de clasă adus așa are `state` 0, adică s-ar desena cu iconița „unset"
-  // lângă copii verzi. Îi umbrim getter-ul cu `computedState`-ul pe care VS Code
-  // îl calculează oricum din copii, deci clasa se colorează ca în IntelliJ: roșu
-  // dacă a picat ceva sub ea. Umbrirea stă pe instanța de element (cache-uită),
+  // Nodurile de clasă n-au stare proprie folositoare: extensia raportează pentru
+  // suite doar eșecurile, iar clasa pe care ai cerut-o rămâne pe „queued" de la
+  // pornirea rulării — adică un ceas gri deasupra a opt bife verzi. Nici
+  // `computedState`-ul lui VS Code nu ajută, fiindcă „queued" și „running" au
+  // prioritate mai mare decât „passed" tocmai ca să se vadă cât timp rulează.
+  // Deci le calculăm noi starea din copii, cu prioritățile din VS Code, și
+  // păstrăm starea proprie doar când clasa chiar a picat (failed/errored — un
+  // @BeforeAll căzut, de pildă). Umbrirea stă pe instanța de element (cache-uită),
   // nu pe rezultat, ca să nu stricăm numărătoarea „X passed" din antet.
   //
   // apply.sh rescrie expresia din bundle ca să întrebe funcția asta; dacă
   // lipsește sau crapă, `?.()` + `??` cad înapoi pe `Iterable.map`, adică pe
   // lista plată din fabrică — patch-ul e inofensiv fără scriptul injectat.
   const TEST_ID_SEP = '\0';
+
+  // TestResultState + statePriority din VS Code (testingStates.ts): „running" și
+  // „queued" bat „passed" tocmai ca să se vadă rulările în curs, iar eșecul bate
+  // tot restul.
+  const FAILED = 4, ERRORED = 6;
+  const STATE_PRIORITY = { 2: 6, 6: 5, 4: 4, 1: 3, 3: 2, 5: 1, 0: 0 };
 
   // Breadcrumb-ul e text simplu, nu label cu iconițe, așa că `$(symbol-class)`
   // pus de Test Runner for Java în label-uri ajunge ACOLO ca atare, vizibil.
@@ -227,7 +237,6 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       // ca să-și caute la rândul lui părintele (metodă -> clasă @Nested -> clasă).
       const queue = list.slice();
       const linked = new Set();
-      const materialized = new Set();
       while (queue.length) {
         const item = queue.shift();
         const id = idOf(item);
@@ -240,7 +249,6 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
         const parentId = idOf(parent);
         if (kids.has(parentId)) kids.get(parentId).push(id);
         else kids.set(parentId, [id]);
-        if (!listed.has(parentId)) materialized.add(parentId);
         queue.push(parent);
       }
 
@@ -254,15 +262,33 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
         }
       }
 
-      // Nodurile de clasă aduse din rezultat n-au stare proprie; le dăm starea
-      // agregată, ca să nu stea cu iconița „unset" peste copii verzi sau roșii.
-      for (const id of materialized) {
-        const el = nodes.get(id).element;
-        const state = results && results.getStateById && results.getStateById(id);
-        const computed = state && state.computedState;
-        if (el && typeof computed === 'number') {
-          Object.defineProperty(el, 'state', { configurable: true, get: () => computed });
+      // Starea nodurilor-părinte, agregată din copii (vezi comentariul de sus).
+      const ownState = (id) => {
+        const rec = results && results.getStateById && results.getStateById(id);
+        const task = rec && rec.tasks && rec.tasks[taskIndex];
+        return task ? task.state : 0;
+      };
+      const settled = new Map();
+      const aggregate = (id) => {
+        if (settled.has(id)) return settled.get(id);
+        settled.set(id, 0);                       // taie o eventuală buclă
+        const childIds = kids.get(id);
+        const own = ownState(id);
+        let state = own;
+        if (childIds && own !== FAILED && own !== ERRORED) {
+          state = 0;
+          for (const childId of childIds) {
+            const child = aggregate(childId);
+            if (STATE_PRIORITY[child] > STATE_PRIORITY[state]) state = child;
+          }
         }
+        settled.set(id, state);
+        return state;
+      };
+      for (const parentId of kids.keys()) {
+        const el = nodes.get(parentId).element;
+        const state = aggregate(parentId);
+        if (el) Object.defineProperty(el, 'state', { configurable: true, get: () => state });
       }
 
       for (const id of roots) {
