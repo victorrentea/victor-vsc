@@ -6,6 +6,7 @@ const relayTerminal = require('./relay-terminal');
 const githubLink = require('./github-link');
 const openFileReporter = require('./open-file-reporter');
 const cucumberRunner = require('./cucumber-runner');
+const javaTestOutput = require('./java-test-output');
 
 const SEP = '  ›  ';
 
@@ -236,6 +237,11 @@ function activate(context) {
   // Săgeata verde de run în dreptul fiecărui Scenario dintr-un .feature —
   // cucumber-js n-are runner în VS Code. Vezi cucumber-runner.js.
   cucumberRunner.register(context);
+
+  // Panoul „Test Results" arăta protocolul brut al runner-ului JUnit (`%TESTS`,
+  // `%TESTE`, `%RUNTIME…`), dublu-spațiat, peste output-ul real al testelor.
+  // Vezi java-test-output.js.
+  javaTestOutput.patch();
 
   render();
   renderProblems();
