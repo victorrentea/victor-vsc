@@ -362,6 +362,90 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (e.button === 1 && e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
   }, true);
 
+  // Panou maximizat => fără bara laterală în stânga.
+  //
+  // „Maximize Panel Size" (butonul din bara panoului, F12 din terminal, comanda
+  // din palette) doar înalță panoul: Project Explorer-ul rămâne pe loc, iar
+  // terminalul pornește tot de la ~300px din stânga. VS Code n-are setare pentru
+  // asta, iar o extensie nu poate prinde execuția unei comenzi built-in — dar
+  // layout-ul își pune singur pe workbench clasele `nomaineditorarea` (editorul
+  // ascuns, adică panou maximizat) și `nosidebar`, deci starea se citește din DOM.
+  //
+  // Ascunderea o facem cu un click pe iconița activă din activity bar, fiindcă de
+  // aici nu putem executa comenzi VS Code; e exact drumul pe care l-ar face mâna
+  // (`setPartHidden(sidebar)`), nu o păcăleală de CSS — altfel panoul ar rămâne
+  // decalat cu lățimea barei, layout-ul fiind poziționat în px de grid.
+  //
+  // Reacționăm doar la TRANZIȚIA maximizat/nemaximizat, nu la orice schimbare de
+  // clasă: altfel, dacă Victor deschide Explorer-ul cât panoul e maximizat, i-l
+  // stingem imediat la loc. Și restaurăm bara numai dacă noi am fost cei care
+  // au închis-o.
+  const ACTIVITY_ITEM = '.part.activitybar .monaco-action-bar .action-item';
+
+  // Iconițele n-au un id stabil pe care să-l reținem; aria-label („Explorer
+  // (⇧⌘E)") e pus pe li sau pe <a>, iar codicon-ul e ultima plasă de siguranță.
+  function activityItemKey(item) {
+    const label = item.querySelector('.action-label');
+    return item.getAttribute('aria-label') || label?.getAttribute('aria-label')
+        || item.id || label?.className || '';
+  }
+
+  // La ascundere workbench-ul cheamă singur `focusPanelOrEditor()`, deci focusul
+  // ajunge în terminal fără ajutor. La restaurare, în schimb, deschiderea
+  // Explorer-ului fură focusul (`openPaneComposite(id, focus=true)`), așa că-l
+  // punem noi înapoi — dar numai dacă era în panou, ca să nu focusăm un element
+  // rămas într-o parte ascunsă.
+  function clickActivityItem(item, restoreFocus) {
+    const prev = restoreFocus ? document.activeElement : null;
+    const inPanel = !!prev?.closest?.('.part.panel');
+    (item.querySelector('.action-label') || item).click();
+    if (!inPanel) return;
+    const back = () => { if (prev.isConnected && document.activeElement !== prev) prev.focus(); };
+    setTimeout(back, 0);
+    setTimeout(back, 80);
+  }
+
+  let hiddenSidebarKey = null;   // iconița pe care am stins-o noi
+  let wasMaximized = null;       // null = starea de la pornire, pe care n-o „corectăm"
+
+  function syncSidebarToPanel(workbench) {
+    const maximized = workbench.classList.contains('nomaineditorarea');
+    if (maximized === wasMaximized) return;
+    const first = wasMaximized === null;
+    wasMaximized = maximized;
+    if (first) return;
+
+    const sidebarVisible = !workbench.classList.contains('nosidebar');
+
+    if (maximized) {
+      if (!sidebarVisible) return;   // deja închisă cu mâna, n-avem ce restaura
+      const item = document.querySelector(ACTIVITY_ITEM + '.checked');
+      if (!item) return;
+      hiddenSidebarKey = activityItemKey(item);
+      clickActivityItem(item, false);
+      return;
+    }
+
+    const key = hiddenSidebarKey;
+    hiddenSidebarKey = null;
+    if (!key || sidebarVisible) return;   // a redeschis-o singur între timp
+    const items = Array.from(document.querySelectorAll(ACTIVITY_ITEM));
+    const item = items.find((i) => activityItemKey(i) === key)
+              || document.querySelector('.part.activitybar .composite-bar .action-item');
+    if (item) clickActivityItem(item, true);
+  }
+
+  // Un singur element, doar atributul `class`, fără subtree: observatorul se
+  // trezește de câteva ori pe sesiune, nu de mii de ori pe secundă ca unul pus
+  // pe document (vezi nota de mai jos).
+  const workbench = document.querySelector('.monaco-workbench');
+  if (workbench) {
+    syncSidebarToPanel(workbench);
+    new MutationObserver(() => {
+      try { syncSidebarToPanel(workbench); } catch { /* un selector mutat nu strică nimic */ }
+    }).observe(workbench, { attributes: true, attributeFilter: ['class'] });
+  }
+
   let lastTitle = null;
 
   function tick() {
