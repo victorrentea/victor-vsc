@@ -435,11 +435,20 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (item) clickActivityItem(item, true);
   }
 
-  // Un singur element, doar atributul `class`, fără subtree: observatorul se
-  // trezește de câteva ori pe sesiune, nu de mii de ori pe secundă ca unul pus
-  // pe document (vezi nota de mai jos).
-  const workbench = document.querySelector('.monaco-workbench');
-  if (workbench) {
+  // Scriptul e injectat la finalul lui workbench.html, adică pe un `<body>` gol:
+  // `.monaco-workbench` apare abia după ce se construiește workbench-ul. De-aia
+  // instalarea se încearcă din `tick()`, până prinde, nu o singură dată la load.
+  //
+  // Observatorul stă pe UN element și doar pe atributul `class`, fără subtree:
+  // se trezește de câteva ori pe sesiune, nu de mii de ori pe secundă ca unul pus
+  // pe document (vezi nota de la `tick`).
+  let panelSyncInstalled = false;
+
+  function installPanelSidebarSync() {
+    if (panelSyncInstalled) return;
+    const workbench = document.querySelector('.monaco-workbench');
+    if (!workbench) return;
+    panelSyncInstalled = true;
     syncSidebarToPanel(workbench);
     new MutationObserver(() => {
       try { syncSidebarToPanel(workbench); } catch { /* un selector mutat nu strică nimic */ }
@@ -455,6 +464,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
+      installPanelSidebarSync();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();
