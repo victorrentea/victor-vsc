@@ -263,32 +263,58 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       }
 
       // Starea nodurilor-părinte, agregată din copii (vezi comentariul de sus).
+      // `seen` e per apel, nu memorat între apeluri: getter-ul e leneș, ca să
+      // răspundă cu starea de ACUM de fiecare dată când rândul se re-desenează.
       const ownState = (id) => {
         const rec = results && results.getStateById && results.getStateById(id);
         const task = rec && rec.tasks && rec.tasks[taskIndex];
         return task ? task.state : 0;
       };
-      const settled = new Map();
-      const aggregate = (id) => {
-        if (settled.has(id)) return settled.get(id);
-        settled.set(id, 0);                       // taie o eventuală buclă
+      const aggregate = (id, seen) => {
+        if (seen.has(id)) return seen.get(id);
+        seen.set(id, 0);                          // taie o eventuală buclă
         const childIds = kids.get(id);
         const own = ownState(id);
         let state = own;
         if (childIds && own !== FAILED && own !== ERRORED) {
           state = 0;
           for (const childId of childIds) {
-            const child = aggregate(childId);
+            const child = aggregate(childId, seen);
             if (STATE_PRIORITY[child] > STATE_PRIORITY[state]) state = child;
           }
         }
-        settled.set(id, state);
+        seen.set(id, state);
         return state;
       };
+
+      // Rândul de clasă nu se re-desenează singur. `onDidChange` al unui element
+      // ascultă DOAR schimbările itemului lui, iar clasa nu mai primește niciuna
+      // după ce a fost pusă pe „queued" la pornirea rulării — deci rămânea cu
+      // iconița de atunci oricât de verzi deveneau copiii dedesubt. Îi lărgim
+      // ascultarea la tot subarborele. Un event VS Code e doar o funcție
+      // `(listener, thisArgs, disposables) => IDisposable`, deci se poate filtra
+      // de mână; `results.onChange` există doar pe rezultatul viu, iar pentru
+      // unul rehidratat (rulare veche, restaurată la reload) lăsăm getter-ul din
+      // clasă, care întoarce Event.None.
+      const subtreeChanges = (id, source) => (listener, thisArgs, disposables) =>
+        source((event) => {
+          const changed = event && event.item && event.item.item && event.item.item.extId;
+          if (changed === id || (typeof changed === 'string' && changed.startsWith(id + TEST_ID_SEP))) {
+            listener.call(thisArgs, event);
+          }
+        }, undefined, disposables);
+
       for (const parentId of kids.keys()) {
         const el = nodes.get(parentId).element;
-        const state = aggregate(parentId);
-        if (el) Object.defineProperty(el, 'state', { configurable: true, get: () => state });
+        if (!el) continue;
+        Object.defineProperty(el, 'state', {
+          configurable: true,
+          get: () => aggregate(parentId, new Map()),
+        });
+        if (results && typeof results.onChange === 'function') {
+          const event = subtreeChanges(parentId, results.onChange.bind(results));
+          Object.defineProperty(el, 'onDidChange', { configurable: true, get: () => event });
+        }
       }
 
       for (const id of roots) {
