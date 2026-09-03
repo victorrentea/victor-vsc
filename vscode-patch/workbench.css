@@ -240,23 +240,23 @@
 }
 
 /* „Nu mai tasta acolo" — vezi blocul cu același nume din workbench.js.
-   Chenarul stă mereu în DOM, doar cu opacitatea pe 0, ca să se poată stinge
-   lin (`transition`) când clasa dispare; cât timp clasa e pusă, animația îi
-   plimbă opacitatea încet, între aproape stins și vizibil.
-   `inset` peste tot `.part.editor` (tab-uri incluse) = exact conturul „ecranului
-   de editare"; `pointer-events: none` ca să nu fure niciun click. */
-.monaco-workbench .part.editor::after {
-  content: '';
+   Chenarul e un `div.victor-typing-overlay` pus de JS ca ultim copil al părții
+   de editor (un `::after` rămânea sub straturile cu z-index mare ale grupurilor
+   de editoare). Stă mereu în DOM cu opacitatea 0, ca să se poată stinge lin
+   (`transition`) când clasa dispare de pe părinte; cât timp clasa e pusă,
+   animația îi plimbă opacitatea încet, între aproape stins și vizibil.
+   `pointer-events: none` ca să nu fure niciun click. */
+.monaco-workbench .part.editor > .victor-typing-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 30;
+  z-index: 2147483000;
   opacity: 0;
   transition: opacity 0.8s ease-out;
   box-shadow: inset 0 0 0 3px #e0a33c, inset 0 0 14px 3px rgba(224, 163, 60, 0.35);
 }
 
-.monaco-workbench .part.editor.victor-typing::after {
+.monaco-workbench .part.editor.victor-typing > .victor-typing-overlay {
   opacity: 1;
   animation: victor-typing-pulse 1.8s ease-in-out infinite;
 }

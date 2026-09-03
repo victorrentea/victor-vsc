@@ -394,6 +394,20 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     return e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab';
   }
 
+  // Chenarul e un DIV propriu, nu un `::after` pe `.part.editor`: partea de
+  // editor e plină de straturi cu z-index mare (grupuri, overlay-uri, sticky
+  // scroll), care acopereau pseudo-elementul. Un nod real, ultimul copil și cu
+  // z-index maxim, se vede peste tot ce e dedesubt.
+  function typingOverlay(part) {
+    let el = part.querySelector(':scope > .victor-typing-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'victor-typing-overlay';
+      part.appendChild(el);
+    }
+    return el;
+  }
+
   function stopTypingWarning() {
     typingTimer = null;
     if (typingPart) typingPart.classList.remove('victor-typing');
@@ -407,6 +421,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       if (!part) return;
       if (typingPart && typingPart !== part) typingPart.classList.remove('victor-typing');
       typingPart = part;
+      typingOverlay(part);
       part.classList.add('victor-typing');
       clearTimeout(typingTimer);
       typingTimer = setTimeout(stopTypingWarning, TYPING_IDLE_MS);
