@@ -122,6 +122,29 @@ function handle(req, res) {
       app: 'vscode',
       focused: vscode.window.state.focused,
       folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null,
+      // **Which paths this window owns.** `folder` above is a *name*, and a name is
+      // not an address: `~/workspace/petclinic` and `~/workspace/petclinic-pr/…`
+      // opened as `petclinic` are two different trees answering to overlapping
+      // labels, and a caller that picks a window by name can hand a file to a
+      // window from another checkout — where the same relative path exists with
+      // different content, so the mistake is invisible. Callers route on these.
+      //
+      // Every folder, not just the first: a multi-root window owns all of them,
+      // and the review's repo is not always root 0.
+      //
+      // Both the literal path and its realpath, because a checkout reached through
+      // a symlink is the same tree under two names, and the caller only has the one
+      // its own `git rev-parse` produced.
+      folders: (vscode.workspace.workspaceFolders || []).map((f) => {
+        const p = f.uri.fsPath;
+        let real = p;
+        try { real = fs.realpathSync(p); } catch (_) { /* folder went away under us */ }
+        return { name: f.name, path: p, realPath: real };
+      }),
+      // What this window is showing. Nothing routes on it — it is here so that
+      // "did the click land in the right window" is answerable from a script
+      // instead of from a screenshot, which is how this feature gets tested at all.
+      activeFile: vscode.window.activeTextEditor?.document.uri.fsPath || null,
     });
   }
 
@@ -271,6 +294,26 @@ function handle(req, res) {
           preserveFocus: false,
           viewColumn: vscode.ViewColumn.One,
         });
+        // `showTextDocument` focuses the editor *within* this window; it does not
+        // raise the window. Measured: with the caller in Terminal and this window
+        // behind it, the file opened correctly and the frontmost app never changed
+        // — so the click "did nothing" as far as the reader could see, and the file
+        // was waiting in a window they would find minutes later by accident.
+        //
+        // `workbench.action.focusWindow` is the native raise — it is what VS Code's
+        // own URL handler runs after it handles a `vscode://` link (`URLService#
+        // handleURL` → `nativeHostService.focusWindow({mode:2})`), so this is the
+        // same door the OS route uses, opened deliberately at a window we chose
+        // instead of one the OS guessed.
+        //
+        // Opt-out, because a caller that is only staging a file for later (or a
+        // test asserting where a click landed) should not have the screen yanked.
+        if (parsed.focus !== false) {
+          try { await vscode.commands.executeCommand('workbench.action.focusWindow'); } catch (_) {
+            // Older builds may not have it; the file is already open, which is the
+            // part that matters. Never fail the request over the raise.
+          }
+        }
         send(res, 200, { ok: true, path: doc.uri.fsPath, line: line + 1 });
       } catch (e) {
         send(res, 404, { ok: false, error: e.message, path: file });

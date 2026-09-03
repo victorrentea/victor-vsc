@@ -52,6 +52,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `puml.js` | randare PlantUML + comanda text / split / diagramă |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
+| `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
@@ -110,3 +111,46 @@ Trei lucruri măsurate, care arată de ce e scris exact așa:
 - **`file://` nu merge în niciunul.** Iframe-ul Simple Browser e legat de un CSP
   `frame-src *`, iar wildcard-ul nu acoperă schemele non-network: iese panou alb, fără
   nicio eroare. Cine cheamă servește folderul și dă URL-ul de localhost.
+
+## Deschiderea unui fișier în fereastra care îl conține
+
+`./open-in-editor.py /cale/absolută/File.java:120` deschide fișierul în fereastra VS
+Code al cărei **workspace folder conține calea**, și o ridică. Acceptă și un
+`vscode://file/...` ca argument, deci un link din raport se poate da direct.
+
+Măsurat pe 1.135, cu trei ferestre pe trei checkout-uri ale aceluiași proiect
+(`petclinic`, `petclinic-main`, `petclinic-pr`):
+
+- **`open vscode://file/<abs>` rutează deja corect.** Fiecare link a aterizat în
+  fereastra care ținea acel checkout, chiar când alta era ultima activă, și forma cu
+  slash dublu (`vscode://file//Users/...`, cea emisă efectiv de rapoarte) se comportă
+  la fel. Deci scriptul **nu** e un patch pentru cazul obișnuit — nu strica ce merge.
+- **Ce nu merge:** o cale pe care n-o deține nicio fereastră deschisă cade pe ultima
+  activă. Fișierul e corect (URL-ul poartă calea absolută), dar se deschide într-o
+  fereastră care ține alt proiect — iar referința `path:line` de lângă el, lipită în
+  Quick Open, se rezolvă în *acel* proiect, unde aceeași cale relativă există cu alt
+  conținut. Nu e o eroare, e un fișier plauzibil greșit.
+- **Și a doua instanță de VS Code.** LaunchServices știe o singură aplicație; procesul
+  main care răspunde rutează doar printre ferestrele *lui*. Registrul de sub
+  `~/.walkie-talkie/ide/` e per extension host, deci acoperă instanțe care nu se văd
+  între ele.
+- **`/ping` publică acum căile absolute ale folderelor** (`folders`), nu doar numele
+  primului. Un nume nu e o adresă: două checkout-uri se numesc amândouă `petclinic`.
+  Alegerea e pe cel mai lung prefix care se potrivește — fereastra deschisă pe checkout
+  bate fereastra deschisă pe folderul de deasupra.
+- **`showTextDocument` nu ridică fereastra.** Măsurat: fișierul s-a deschis corect și
+  aplicația din față n-a fost schimbată, deci click-ul părea că nu face nimic.
+  `/open-file` rulează acum și `workbench.action.focusWindow` — exact ce rulează și
+  handler-ul de URL-uri al lui VS Code după ce tratează un `vscode://`.
+
+**Nu se pune mâna pe schema `vscode://` la nivel de OS.** VS Code o folosește pentru
+callback-urile lui de OAuth (`vscode://vscode.github-authentication/...`); un alt
+handler pe ea ar rupe login-urile în feluri imposibil de diagnosticat mai târziu.
+Rutarea stă în afara schemei — în registru și în scriptul ăsta — iar schema rămâne
+fallback-ul, cum era.
+
+**Intrări moarte în registru:** o fereastră care crapă nu apucă să-și șteargă fișierul.
+O intrare e crezută doar după ce procesul pe care-l numește răspunde, pe portul lui, cu
+token-ul lui. Portul *refuzat* → intrarea se șterge (dovadă că fereastra nu mai e);
+timeout → nu se șterge nimic (nu dovedește nimic, iar o fereastră vie rămasă fără
+fișier de registru e deconectată de Walkie Talkie până la următoarea activare).
