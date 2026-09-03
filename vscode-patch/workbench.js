@@ -373,9 +373,13 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // Terminalul integrat e EXCEPTAT, inclusiv când e deschis ca tab în zona de
   // editare: acolo e locul unde e voie să scrii. La fel navigarea (săgeți, Escape,
   // scurtături cu ⌘/⌃/⌥) — cine doar se plimbă prin fișier nu modifică nimic.
+  // Cât stă aprins după ultima tastă, apoi cât durează stingerea. Stingerea e
+  // lungă intenționat: chenarul se retrage blând, nu clipește o dată și dispare.
   const TYPING_IDLE_MS = 1500;
+  const TYPING_FADE_MS = 1400;   // ține pasul cu `transition` din CSS
   let typingPart = null;
   let typingTimer = null;
+  let typingFadeTimer = null;
 
   function typingEditorPart(target) {
     if (!target?.closest) return null;
@@ -398,20 +402,40 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // editor e plină de straturi cu z-index mare (grupuri, overlay-uri, sticky
   // scroll), care acopereau pseudo-elementul. Un nod real, ultimul copil și cu
   // z-index maxim, se vede peste tot ce e dedesubt.
+  // Două straturi, ca stingerea să iasă lină: cel de afară ține DOAR opacitatea
+  // de ansamblu (aprindere/stingere prin `transition`), cel dinăuntru desenează
+  // chenarul și pulsează. Dacă pulsul ar sta pe același element cu stingerea,
+  // oprirea animației i-ar smuci opacitatea înapoi la valoarea de bază și
+  // dispariția ar fi bruscă — așa pulsul continuă liniștit cât timp ansamblul
+  // se stinge.
   function typingOverlay(part) {
     let el = part.querySelector(':scope > .victor-typing-overlay');
     if (!el) {
       el = document.createElement('div');
       el.className = 'victor-typing-overlay';
+      const ring = document.createElement('div');
+      ring.className = 'victor-typing-ring';
+      el.appendChild(ring);
       part.appendChild(el);
     }
     return el;
   }
 
+  // Pasul 1: scoatem `victor-typing` și punem `victor-typing-out`, care doar
+  // duce opacitatea spre 0 (pulsul merge mai departe). Pasul 2, după fade:
+  // curățăm și clasa de stingere, ca animația să se oprească de tot.
   function stopTypingWarning() {
     typingTimer = null;
-    if (typingPart) typingPart.classList.remove('victor-typing');
+    const part = typingPart;
     typingPart = null;
+    if (!part) return;
+    part.classList.remove('victor-typing');
+    part.classList.add('victor-typing-out');
+    clearTimeout(typingFadeTimer);
+    typingFadeTimer = setTimeout(() => {
+      typingFadeTimer = null;
+      part.classList.remove('victor-typing-out');
+    }, TYPING_FADE_MS);
   }
 
   document.addEventListener('keydown', (e) => {
@@ -422,6 +446,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       if (typingPart && typingPart !== part) typingPart.classList.remove('victor-typing');
       typingPart = part;
       typingOverlay(part);
+      clearTimeout(typingFadeTimer);
+      typingFadeTimer = null;
+      part.classList.remove('victor-typing-out');   // tastat din nou în timpul stingerii
       part.classList.add('victor-typing');
       clearTimeout(typingTimer);
       typingTimer = setTimeout(stopTypingWarning, TYPING_IDLE_MS);
