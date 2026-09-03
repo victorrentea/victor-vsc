@@ -238,3 +238,30 @@
 .editor-actions .action-item:has(> .action-label[aria-label^="Preview Current Diagram"]) {
   display: none !important;
 }
+
+/* „Nu mai tasta acolo" — vezi blocul cu același nume din workbench.js.
+   Chenarul stă mereu în DOM, doar cu opacitatea pe 0, ca să se poată stinge
+   lin (`transition`) când clasa dispare; cât timp clasa e pusă, animația îi
+   plimbă opacitatea încet, între aproape stins și vizibil.
+   `inset` peste tot `.part.editor` (tab-uri incluse) = exact conturul „ecranului
+   de editare"; `pointer-events: none` ca să nu fure niciun click. */
+.monaco-workbench .part.editor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+  box-shadow: inset 0 0 0 3px #e0a33c, inset 0 0 14px 3px rgba(224, 163, 60, 0.35);
+}
+
+.monaco-workbench .part.editor.victor-typing::after {
+  opacity: 1;
+  animation: victor-typing-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes victor-typing-pulse {
+  0%, 100% { opacity: 0.18; }
+  50%      { opacity: 0.85; }
+}

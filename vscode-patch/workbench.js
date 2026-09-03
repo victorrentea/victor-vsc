@@ -362,6 +362,57 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (e.button === 1 && e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
   }, true);
 
+  // „Nu mai tasta acolo" — pulsul lent de pe marginea zonei de editare.
+  //
+  // Inginerul agentic nu mai scrie cod cu mâna: dictează în prompt, în terminal.
+  // De-aia orice tastă apăsată ÎNTR-UN EDITOR (indiferent de limbaj: Java,
+  // Markdown, JSON, orice) aprinde un chenar care pulsează încet și se stinge
+  // singur la ~1.5s după ultima tastă. E doar un avertisment vizual — nu blochează
+  // nimic, tastarea merge mai departe.
+  //
+  // Terminalul integrat e EXCEPTAT, inclusiv când e deschis ca tab în zona de
+  // editare: acolo e locul unde e voie să scrii. La fel navigarea (săgeți, Escape,
+  // scurtături cu ⌘/⌃/⌥) — cine doar se plimbă prin fișier nu modifică nimic.
+  const TYPING_IDLE_MS = 1500;
+  let typingPart = null;
+  let typingTimer = null;
+
+  function typingEditorPart(target) {
+    if (!target?.closest) return null;
+    const part = target.closest('.part.editor');
+    if (!part) return null;
+    // Terminal-în-tab, consola de debug și webview-urile (preview de Markdown,
+    // Simple Browser) nu sunt „cod scris cu mâna".
+    if (target.closest('.xterm, .terminal, .repl, .webview, iframe')) return null;
+    return part;
+  }
+
+  function isTypingKey(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return false;   // scurtături, nu text
+    if (e.isComposing) return true;                          // dictare / IME
+    if (e.key.length === 1) return true;                     // literă, cifră, semn
+    return e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab';
+  }
+
+  function stopTypingWarning() {
+    typingTimer = null;
+    if (typingPart) typingPart.classList.remove('victor-typing');
+    typingPart = null;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    try {
+      if (!isTypingKey(e)) return;
+      const part = typingEditorPart(e.target);
+      if (!part) return;
+      if (typingPart && typingPart !== part) typingPart.classList.remove('victor-typing');
+      typingPart = part;
+      part.classList.add('victor-typing');
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(stopTypingWarning, TYPING_IDLE_MS);
+    } catch { /* niciun avertisment nu merită să strice o tastă */ }
+  }, true);
+
   // Panou maximizat => fără bara laterală în stânga.
   //
   // „Maximize Panel Size" (butonul din bara panoului, F12 din terminal, comanda
