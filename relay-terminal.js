@@ -34,6 +34,8 @@ const crypto = require('crypto');
 
 const vscode = require('vscode');
 
+const { openDiff } = require('./diff');
+
 /** Where the relay looks for us. Fixed, and deliberately not under the relay's
  *  `--home`: that flag moves the outbox for testing, and an extension has no
  *  way to learn it was passed. */
@@ -318,6 +320,32 @@ function handle(req, res) {
       } catch (e) {
         send(res, 404, { ok: false, error: e.message, path: file });
       }
+    });
+    return;
+  }
+
+  // Open a file as a diff in this window: a committed revision on the left, the working
+  // tree on the right. The companion of /open-file, and the hand-off target of the URI
+  // handler — VS Code delivers `vscode://victorrentea.victor-vsc/diff?…` to whichever
+  // extension host it likes, which is not necessarily the one whose workspace holds the
+  // path, so that host resolves the owner from the registry and posts here.
+  if (req.method === 'POST' && url.pathname === '/open-diff') {
+    let body = '';
+    req.on('data', (c) => { body += c; if (body.length > 100_000) req.destroy(); });
+    req.on('end', async () => {
+      let parsed;
+      try { parsed = JSON.parse(body || '{}'); } catch (_) {
+        return send(res, 400, { ok: false, error: 'expected JSON' });
+      }
+      const result = await openDiff({
+        file: String(parsed.file || parsed.path || ''),
+        base: String(parsed.base || ''),
+        focus: parsed.focus !== false,
+      });
+      // 200 with `ok:false` and a sentence, not a bare status: every refusal here is a
+      // thing the reader should be told ("unchanged since cb0988f5"), and the caller
+      // relays it verbatim rather than inventing its own.
+      send(res, result.ok ? 200 : 409, result);
     });
     return;
   }

@@ -53,6 +53,8 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
+| `uri-handler.js` | handler pentru `vscode://victorrentea.victor-vsc/…` — canalul pe care îl are o pagină `file://`, fără server |
+| `diff.js` | deschide un fișier ca **diff** (o revizie în stânga, working tree-ul în dreapta), folosit și de `/open-diff` și de handler |
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
@@ -148,6 +150,54 @@ callback-urile lui de OAuth (`vscode://vscode.github-authentication/...`); un al
 handler pe ea ar rupe login-urile în feluri imposibil de diagnosticat mai târziu.
 Rutarea stă în afara schemei — în registru și în scriptul ăsta — iar schema rămâne
 fallback-ul, cum era.
+
+## `vscode://victorrentea.victor-vsc/…` — canalul unei pagini fără server
+
+Raportul Human Review servit peste http își poate cere singur lucruri de la propria
+origine (`/__open__`, `/__open_diff__`). Deschis direct de pe disc din Chrome — cum e
+citit în realitate — o pagină `file://` n-are origine de întrebat și n-ajunge la
+loopback, deci orice referință degradează la singurul lucru pe care-l mai poate face un
+browser: dă un `vscode://file/…` sistemului. Ăla deschide **fișierul**. Nu poate deschide
+un **diff**, fiindcă un diff cere partea „înainte" materializată din git, și nicio pagină
+nu-și poate face asta singură. Așa a ieșit că un click care promitea un before/after
+dădea în tăcere un fișier simplu, și feature-ul părea stricat, nu indisponibil.
+
+`registerUriHandler` acoperă exact golul ăsta, **fără să atingă înregistrarea schemei**:
+`vscode://` rămâne a lui VS Code, callback-urile lui de OAuth
+(`vscode://vscode.github-authentication/…`) merg mai departe, LaunchServices nu e atins.
+Suntem doar încă o extensie către care VS Code rutează o autoritate.
+
+Rute: `/diff?file=<abs>&base=<sha>&line=<n>` și `/open?file=<abs>&line=<n>`.
+
+Ce a costat timp și trebuie știut:
+
+- **Fereastra pe care o alege OS-ul nu e fereastra care deține fișierul.** VS Code livrează
+  URI-ul unui singur extension host — în practică al ferestrei ultim-active — și exact
+  asta era bug-ul de la care a pornit toată zona. Deci handler-ul **nu** presupune că el e
+  cel bun: întreabă registrul din `~/.walkie-talkie/ide/` care fereastră conține calea
+  (cel mai lung prefix câștigă) și, când nu e el, predă treaba prin `/open-diff` (sau
+  `/open-file` pe calea de rezervă). Măsurat: URI livrat ferestrei `human-review`, diff-ul
+  s-a deschis în `petclinic-pr`.
+- **Și calea de rezervă trebuie rutată.** Prima variantă deschidea fișierul local când
+  refuza diff-ul — adică fix bug-ul inițial cu altă pălărie: fișierul corect, într-o
+  fereastră a altui checkout. Acum și rezerva trece prin proprietar.
+- **VS Code cere confirmare pentru handler-ele de URI ale extensiilor care nu vin din
+  Marketplace** și dialogul apare *în fereastra care primește URI-ul* — invizibil dintr-un
+  terminal, deci `handleUri` pur și simplu nu se declanșa și nu scria nimic nicăieri. Nu e
+  o eroare, e `dialogService.confirm` care așteaptă. Poarta e
+  `didUserTrustExtension()` → storage-ul `extensionUrlHandler.confirmedExtensions` **sau**
+  setarea `extensions.confirmedUriHandlerExtensionIds`. Extensia își pune singură id-ul în
+  a doua, prin `configurationDefaults`, deci sursa rămâne versionată aici.
+- **`base` se validează înainte să ajungă la `git`** (`^[0-9a-fA-F]{7,40}$`), în ambele
+  capete. `git` e pornit fără shell, deci nu e vorba de ghilimele — e vorba de
+  `--upload-pack=…` venit dintr-un query string pe care orice proces local îl poate
+  compune. Verificat: un `base` cu `--upload-pack=touch /tmp/pwned` e respins și fișierul
+  se deschide simplu, fără să execute nimic.
+- **URL-ul nu e portabil, deci se emite doar unde merge.** Pe o mașină fără extensie un
+  `vscode://<publisher>.<ext>/…` moare în loc să degradeze. `build-review-html.py` îl pune
+  în `data-diff-uri` doar când găsește extensia instalată (`diff_uri_handler()`;
+  `HUMAN_REVIEW_DIFF_URI_HANDLER` forțează în ambele sensuri), iar `href`-ul rămâne
+  `vscode://file/…` pentru toată lumea.
 
 **Intrări moarte în registru:** o fereastră care crapă nu apucă să-și șteargă fișierul.
 O intrare e crezută doar după ce procesul pe care-l numește răspunde, pe portul lui, cu

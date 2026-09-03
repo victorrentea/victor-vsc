@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const puml = require('./puml');
 const relayTerminal = require('./relay-terminal');
+const uriHandler = require('./uri-handler');
 const githubLink = require('./github-link');
 const openFileReporter = require('./open-file-reporter');
 const cucumberRunner = require('./cucumber-runner');
@@ -224,6 +225,7 @@ function activate(context) {
   // n-are adresă — relay-ul cădea pe clipboard + ⌘V, iar ⌘V se duce unde e
   // cursorul, deci ateriza în editor sau în alt tab. Vezi relay-terminal.js.
   relayTerminal.activate(context);
+  uriHandler.register(context);
 
   // „Copy GitHub Link" în meniul de click-dreapta din Explorer: linkul către
   // fișier pe branșa curentă, cea din bara de stare — nu pe main.
