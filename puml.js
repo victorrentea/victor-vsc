@@ -415,32 +415,107 @@ function targetUri() {
  * înapoi. Fără split: `vscode.openWith` pe același grup schimbă editorul pe loc,
  * cum face „Reopen Editor With…".
  *
- * Starea se citește din tab-urile deschise, nu se ține minte, ca închiderea unui
- * panou cu mâna să nu desincronizeze butonul. Tab-urile de tipul greșit rămase
- * pe undeva (dintr-un split vechi) se închid, ca fișierul să rămână într-o
- * singură reprezentare.
+ * Modul e GLOBAL și persistent, nu per-tab: Victor lucrează ori „în diagrame",
+ * ori „în text". De-aia butonul comută toate `.puml`-urile deschise deodată, iar
+ * alegerea se ține minte în `globalState` — orice `.puml` deschis după aceea
+ * (tab nou, sau altul pe care sari) apare direct randat, fără să reapeși.
  */
+const MODE_KEY = 'pumlViewMode';
+let store = null;   // context.globalState, pus în `register`
+
+const wantsDiagram = () => store?.get(MODE_KEY) === 'diagram';
+
+/** Toate tab-urile de `.puml` din toate grupurile, cu felul în care sunt desenate. */
+function allPumlTabs() {
+  const found = [];
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      const input = tab.input;
+      const uri = input && input.uri;
+      if (!isPuml(uri)) continue;
+      const kind = input instanceof vscode.TabInputCustom ? 'diagram'
+                 : input instanceof vscode.TabInputText ? 'text' : 'other';
+      if (kind !== 'other') found.push({ tab, group, kind, uri });
+    }
+  }
+  return found;
+}
+
+function tabKind(tab) {
+  return tab?.input instanceof vscode.TabInputCustom ? 'diagram'
+       : tab?.input instanceof vscode.TabInputText ? 'text' : 'other';
+}
+
+// Cât rescriem tab-urile, evenimentele pe care le producem noi trebuie ignorate,
+// altfel ascultătorul de mai jos ar reintra în conversie la fiecare tab schimbat.
+let applying = false;
+
+/** Aduce toate tab-urile de `.puml` în modul cerut și lasă focusul unde era. */
+async function applyMode(diagram) {
+  if (applying) return;
+  applying = true;
+  try {
+    const group = vscode.window.tabGroups.activeTabGroup;
+    const active = group.activeTab;
+    const activeUri = active?.input?.uri;
+    const activeKind = tabKind(active);
+    const activeColumn = group.viewColumn;
+
+    for (const t of allPumlTabs()) {
+      if ((t.kind === 'diagram') === diagram) continue;
+      await vscode.commands.executeCommand('vscode.openWith', t.uri, diagram ? VIEW_TYPE : 'default',
+        { viewColumn: t.group.viewColumn, preserveFocus: true, preview: false });
+    }
+
+    // Tab-urile de tipul greșit rămase pe undeva (dintr-un split vechi) se închid,
+    // ca fișierul să rămână într-o singură reprezentare.
+    for (const t of allPumlTabs()) {
+      if ((t.kind === 'diagram') !== diagram) await vscode.window.tabGroups.close(t.tab);
+    }
+
+    // Conversia altor tab-uri le activează în grupul lor; dacă tab-ul din față
+    // era altul (un `.java`, un `.md`), îl aducem înapoi în față.
+    const nowActive = vscode.window.tabGroups.activeTabGroup.activeTab;
+    const same = nowActive?.input?.uri?.toString() === activeUri?.toString();
+    if (activeUri && !same && activeKind !== 'other') {
+      const viewType = isPuml(activeUri) ? (diagram ? VIEW_TYPE : 'default')
+                     : activeKind === 'diagram' ? undefined : 'default';
+      if (viewType) {
+        await vscode.commands.executeCommand('vscode.openWith', activeUri, viewType,
+          { viewColumn: activeColumn, preview: false });
+      }
+    }
+  } finally {
+    applying = false;
+  }
+}
+
+/** Butonul: comută modul global și rescrie toate tab-urile deschise. */
 async function toggle() {
-  const uri = targetUri();
-  if (!uri) {
-    vscode.window.showInformationMessage('Victor VSC: fișierul activ nu e un PlantUML.');
-    return;
-  }
-  const tabs = tabsFor(uri);
-  const diagram = tabs.find(t => t.kind === 'diagram');
-  const showDiagram = !diagram;   // dacă nu e nicio diagramă deschisă, o arătăm
-  const column = (diagram || tabs.find(t => t.kind === 'text'))?.group.viewColumn;
+  const diagram = !wantsDiagram();
+  await store?.update(MODE_KEY, diagram ? 'diagram' : 'text');
+  await applyMode(diagram);
+}
 
-  await vscode.commands.executeCommand('vscode.openWith', uri, showDiagram ? VIEW_TYPE : 'default', column);
-
-  for (const t of tabsFor(uri)) {
-    if ((t.kind === 'diagram') !== showDiagram) await vscode.window.tabGroups.close(t.tab);
-  }
+/**
+ * Un `.puml` deschis cât timp suntem „în diagrame" se convertește singur. Doar
+ * pe direcția asta: modul „text" e deja ce face VS Code din oficiu, deci n-are
+ * ce converti.
+ */
+function watchNewTabs() {
+  return vscode.window.tabGroups.onDidChangeTabs((e) => {
+    if (applying || !wantsDiagram()) return;
+    const fresh = [...e.opened, ...e.changed]
+      .some(tab => tab.input instanceof vscode.TabInputText && isPuml(tab.input.uri));
+    if (fresh) applyMode(true).catch(() => { /* un tab care s-a închis între timp */ });
+  });
 }
 
 function register(context) {
   const renderer = new Renderer();
+  store = context.globalState;
   context.subscriptions.push(
+    watchNewTabs(),
     { dispose: () => renderer.dispose() },
     vscode.window.registerCustomEditorProvider(VIEW_TYPE, new PumlEditorProvider(renderer), {
       webviewOptions: { retainContextWhenHidden: true },
