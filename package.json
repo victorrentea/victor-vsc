@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.69",
+  "version": "0.0.70",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -245,7 +245,7 @@
     "keybindings": [
       {
         "command": "git.pull",
-        "key": "ctrl+t",
+        "key": "cmd+t",
         "when": "!terminalFocus"
       },
       {
