@@ -98,6 +98,66 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // Liniile schimbate, în capul grupului din Source Control.
+  //
+  // Badge-ul de acolo numără FIȘIERE (`group.resources.length`), iar rândul e
+  // desenat de workbench, nu de o extensie — deci cifra cu liniile n-avea cum să
+  // vină din `contributes`. Numerele le calculează git-lines.js din extensie și
+  // le publică în textul unei intrări de status bar ascunse; aici doar le citim
+  // și le punem în stânga badge-ului. Aceeași manevră ca la pastila de branch:
+  // sursa de adevăr stă undeva în DOM, noi doar o mutăm unde se vede.
+  const LINES_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.gitlines"]';
+
+  // „Changes=142/38|Staged Changes=10/2" → Map(label → {added, removed}).
+  function scmLineCounts() {
+    const counts = new Map();
+    const node = document.querySelector(LINES_ITEM + ' a.statusbar-item-label')
+              || document.querySelector(LINES_ITEM);
+    if (!node) return counts;
+    for (const part of (node.textContent || '').split('|')) {
+      // `lastIndexOf`, nu `split('=')`: eticheta e text liber, venit din
+      // extensia de git, iar despărțitorul e ULTIMUL `=`, nu primul.
+      const eq = part.lastIndexOf('=');
+      if (eq < 0) continue;
+      const [added, removed] = part.slice(eq + 1).split('/');
+      counts.set(part.slice(0, eq).trim(), { added: Number(added) || 0, removed: Number(removed) || 0 });
+    }
+    return counts;
+  }
+
+  function ensureScmLineCounts() {
+    const groups = document.querySelectorAll('.scm-view .monaco-list-row .resource-group');
+    if (!groups.length) return;
+    const counts = scmLineCounts();
+
+    for (const group of groups) {
+      const badge = group.querySelector(':scope > .count');
+      if (!badge) continue;
+
+      let pill = group.querySelector(':scope > .victor-scm-lines');
+      if (!pill) {
+        pill = document.createElement('span');
+        pill.className = 'victor-scm-lines';
+        const added = document.createElement('span');
+        added.className = 'victor-scm-added';
+        const removed = document.createElement('span');
+        removed.className = 'victor-scm-removed';
+        pill.append(added, removed);
+      }
+      if (pill.nextElementSibling !== badge) group.insertBefore(pill, badge);
+
+      // Lista e virtuală: același șablon de rând e refolosit pentru alt grup pe
+      // măsură ce se scrolează, iar `renderElement` rescrie doar `.name` și
+      // badge-ul — nodul nostru rămâne cu ce scrisese rândul dinainte. De-aia
+      // citim eticheta de fiecare dată, în loc s-o ținem minte.
+      const label = (group.querySelector(':scope > .name')?.textContent || '').trim();
+      const count = counts.get(label);
+      pill.querySelector('.victor-scm-added').textContent = count?.added ? '+' + count.added : '';
+      pill.querySelector('.victor-scm-removed').textContent = count?.removed ? '\u2212' + count.removed : '';
+      pill.classList.toggle('victor-empty', !count || (!count.added && !count.removed));
+    }
+  }
+
   // Sticky scroll pe mai multe niveluri, fără ca ecranul să sară la tastat.
   //
   // `_computeScrollTopToRevealRange` din editor ține cursorul la o margine de
@@ -558,6 +618,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
       installPanelSidebarSync();
+      ensureScmLineCounts();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();

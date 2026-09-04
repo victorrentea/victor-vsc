@@ -279,3 +279,38 @@
   0%, 100% { opacity: 0.25; }
   50%      { opacity: 0.9; }
 }
+
+/* ------------------- liniile schimbate, în capul grupului din Source Control */
+
+/* Intrarea de status bar e doar conducta prin care git-lines.js trimite cifrele
+   în renderer (vezi workbench.js) — n-are ce căuta în bară. Fără patch nu există
+   regula asta, dar nici desenatul, deci ar rămâne un text ciudat jos: de-aia
+   extensia îi dă `text = ''` când nu are ce raporta. */
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.gitlines"] {
+  display: none;
+}
+
+/* Rândul e `display:flex`, cu `.name` pe `flex:1`, deci pastila se așază singură
+   lângă badge; distanța până la el o dă `margin-left` de pe `.count`. */
+.scm-view .monaco-list-row .resource-group > .victor-scm-lines {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;   /* cifrele să nu joace la fiecare tastă */
+}
+
+.scm-view .monaco-list-row .resource-group > .victor-scm-lines.victor-empty {
+  display: none;
+}
+
+/* Aceleași culori ca decorațiile de fișier din arbore, ca „+" să însemne
+   vizual același lucru sus și jos. */
+.victor-scm-added {
+  color: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+}
+
+.victor-scm-removed {
+  color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+}

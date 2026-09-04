@@ -55,6 +55,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
 | `uri-handler.js` | handler pentru `vscode://victorrentea.victor-vsc/…` — canalul pe care îl are o pagină `file://`, fără server |
 | `diff.js` | deschide un fișier ca **diff** (o revizie în stânga, working tree-ul în dreapta), folosit și de `/open-diff` și de handler |
+| `git-lines.js` | numără liniile schimbate pe grup de SCM și le publică într-o intrare de status bar ascunsă, de unde le ia `vscode-patch/workbench.js` |
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
