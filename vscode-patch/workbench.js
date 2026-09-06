@@ -588,6 +588,86 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (item) clickActivityItem(item, true);
   }
 
+  // ------------------------------------------- „Update with AI", lângă update
+
+  // Butonul albastru de update al VS Code stă în title bar (`update.titleBar`),
+  // ca item de action bar: containerul are `role="button"`, iar înăuntru e
+  // `.update-indicator`, care primește `prominent` exact în stările în care merită
+  // apăsat — „available for download", „downloaded", „ready". Deci `prominent` e
+  // și semnalul „există un update", pe care o extensie nu-l poate citi altfel:
+  // starea update-ului nu e expusă nici ca API, nici ca context key.
+  //
+  // Al nostru se pune imediat în STÂNGA lui și face același lucru, plus că lasă
+  // în urmă un marker pe care extensia îl găsește după repornire și reaplică
+  // patch-urile. Nu executăm noi comanda de update: care e comanda potrivită
+  // depinde de stare (download / install / restart), iar starea o știe butonul.
+  // Îl apăsăm pe el, ca la pastila de branch.
+  const UPDATE_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.updatepatch"]';
+
+  function updateChannelText() {
+    const node = document.querySelector(UPDATE_ITEM + ' a.statusbar-item-label')
+              || document.querySelector(UPDATE_ITEM);
+    return node ? (node.textContent || '') : '';
+  }
+
+  // Marker-ul întâi, update-ul după: dacă VS Code repornește înainte ca extensia
+  // să apuce să scrie fișierul, patch-ul nu se mai reaplică și butonul n-a servit
+  // la nimic. De-aia așteptăm confirmarea („armed" în textul intrării ascunse) în
+  // loc să ne bazăm pe un setTimeout ghicit.
+  function armThenUpdate(host) {
+    const item = document.querySelector(UPDATE_ITEM);
+    if (!item) return;                     // extensia nu e activă: nu updatăm pe ascuns
+    (item.querySelector('a.statusbar-item-label') || item).click();
+
+    const deadline = Date.now() + 3000;
+    (function waitArmed() {
+      if (updateChannelText().includes('armed')) { host.click(); return; }
+      if (Date.now() > deadline) return;   // n-a răspuns nimeni — mai bine niciun update
+      setTimeout(waitArmed, 100);
+    })();
+  }
+
+  function ensureUpdateWithAi() {
+    const indicator = document.querySelector('.update-indicator.prominent');
+    const host = indicator && (indicator.closest('[role="button"]') || indicator.parentElement);
+    let btn = document.querySelector('.victor-update-ai');
+
+    // Fără update (sau cu unul în curs de descărcare) butonul n-are ce căuta acolo.
+    if (!host || !host.parentElement) { btn?.remove(); return; }
+
+    if (!btn) {
+      // Același tag ca vecinul: într-un action bar copiii sunt `<li>`, iar un
+      // `<div>` strecurat într-un `<ul>` ar fi valid doar din întâmplare.
+      btn = document.createElement(host.tagName);
+      btn.className = 'victor-update-ai';
+      btn.title = 'Update VS Code și reaplică patch-urile victor-vsc după repornire';
+      btn.setAttribute('role', 'button');
+      // Floarea, nu `codicon-sparkle`: pe 1.135 sparkle e hexagonul de Copilot,
+      // iar butonul ăsta cheamă Claude. `victor-flower` e glifa din
+      // `contributes.icons`, aceeași cu profilul de terminal „Claude" — registrul
+      // de iconițe îi emite regula de font la pornire, deci merge și din DOM brut.
+      const icon = document.createElement('span');
+      icon.className = 'codicon codicon-victor-flower';
+      const label = document.createElement('span');
+      label.className = 'victor-update-ai-label';
+      label.textContent = 'Update with AI';
+      btn.append(icon, label);
+      btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        armThenUpdate(document.querySelector('.update-indicator.prominent')
+          ?.closest('[role="button"]') || host);
+      });
+    }
+
+    // Action bar-ul își reconstruiește copiii când se schimbă starea update-ului,
+    // deci verificăm de fiecare dată că suntem tot exact în stânga lui.
+    if (btn.parentElement !== host.parentElement || btn.nextElementSibling !== host) {
+      host.parentElement.insertBefore(btn, host);
+    }
+  }
+
   // Scriptul e injectat la finalul lui workbench.html, adică pe un `<body>` gol:
   // `.monaco-workbench` apare abia după ce se construiește workbench-ul. De-aia
   // instalarea se încearcă din `tick()`, până prinde, nu o singură dată la load.
@@ -617,6 +697,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
+      ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;

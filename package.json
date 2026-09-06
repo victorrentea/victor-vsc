@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.71",
+  "version": "0.0.73",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -240,6 +240,12 @@
         "title": "Debug Tests in Current File",
         "category": "victor-vsc",
         "icon": "$(debug-alt)"
+      },
+      {
+        "command": "victor-vsc.updateWithAi",
+        "title": "Update with AI",
+        "category": "victor-vsc",
+        "icon": "$(sparkle)"
       }
     ],
     "keybindings": [
@@ -335,6 +341,16 @@
           "type": "string",
           "default": "http://127.0.0.1:55123/intellij/file-opened",
           "description": "Where to report the actively open file. Same endpoint as the IntelliJ plugin: the payload is identical and the add-on does not care which IDE sent it."
+        },
+        "victorVsc.repoPath": {
+          "type": "string",
+          "default": "~/workspace/victor-vsc",
+          "description": "Checkout-ul acestei extensii, de unde se rulează vscode-patch/apply.sh după un update de VS Code. Reparațiile de ancore trebuie să ajungă în git, nu în copia instalată din ~/.vscode/extensions."
+        },
+        "victorVsc.restartAfterUpdatePatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "După ce „Update with AI\" reaplică patch-urile, repornește singur aplicația (patch-ul nu se vede fără repornire completă — vezi UPDATE-LESSONS.md). Notificarea lasă câteva secunde pentru „Nu reporni\"."
         }
       }
     }

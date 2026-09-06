@@ -7,6 +7,41 @@ cu branch-ul din stânga sus și butonul de unelte din stânga pastilei de titlu
 bara de sus redevine mai înaltă (35px în loc de 28), iar Explorer-ul revine la
 fontul de sistem cu rânduri mai strânse.
 
+## Butonul „Update with AI"
+
+De obicei nu trebuie să rulezi nimic din ce scrie mai jos: în bara de titlu, în
+**stânga butonului albastru „Update"** al VS Code-ului, stă unul al nostru,
+„Update with AI". Face update-ul obișnuit și, la repornire, reaplică singur
+patch-urile — pașii din secțiunea următoare, executați automat.
+
+Ce se întâmplă când îl apeși:
+
+1. `vscode-patch/workbench.js` apasă întâi intrarea ascunsă de status bar
+   `victorrentea.victor-vsc.updatepatch`, care armează un marker în
+   `globalStorage`, și abia după ce vede confirmarea („armed") apasă butonul
+   albastru. Ordinea contează: dacă VS Code repornește înainte de scrierea
+   marker-ului, patch-ul nu se mai reaplică.
+2. Nu executăm noi comanda de update, fiindcă cea corectă depinde de stare
+   (`update.downloadNow` / `update.install` / `update.restart`), iar starea nu e
+   expusă nici ca API de extensie, nici ca context key. Butonul albastru o știe;
+   noi doar îl apăsăm.
+3. După update, la activare, `update-patch.js` vede că s-a schimbat commit-ul din
+   `product.json`, ia marker-ul cu un `rename` (atomic — altfel toate ferestrele
+   ar rula `apply.sh` în paralel peste același bundle) și rulează `apply.sh`.
+4. Dacă scriptul iese curat, repornește aplicația singur — patch-ul nu se vede
+   fără repornire completă (capcana 1 din [`UPDATE-LESSONS.md`](UPDATE-LESSONS.md)).
+   Notificarea lasă câteva secunde pentru „Nu reporni";
+   `victorVsc.restartAfterUpdatePatch: false` scoate automatismul de tot.
+5. Dacă apare vreun „ATENȚIE" (o ancoră minificată nu mai prinde pe noul build),
+   **nu** repornește: deschide un terminal cu `claude` în repo, cu tot ce trebuie
+   ca să repare ancorele. Ăsta e „with AI"-ul din nume — reparatul ancorelor e
+   citit de bundle minificat, nu ceva ce poate face un script.
+
+Log-ul ultimei rulări e în `globalStorage/victorrentea.victor-vsc/update-patch.log`.
+
+Restul paginii e ce se întâmplă când dai update din meniu sau când vrei să
+reaplici cu mâna.
+
 ## Ce rulezi
 
 ```sh

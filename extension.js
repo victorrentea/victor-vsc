@@ -9,6 +9,7 @@ const openFileReporter = require('./open-file-reporter');
 const cucumberRunner = require('./cucumber-runner');
 const javaTestOutput = require('./java-test-output');
 const gitLines = require('./git-lines');
+const updatePatch = require('./update-patch');
 
 const SEP = '  ›  ';
 
@@ -245,6 +246,11 @@ function activate(context) {
   // din Source Control. Extensia doar publică cifrele; desenatul îl face
   // vscode-patch/workbench.js. Vezi git-lines.js.
   gitLines.register(context);
+
+  // „Update with AI", în stânga butonului albastru de update: pornește update-ul
+  // VS Code-ului și lasă un marker după care, la repornire, reaplică singur
+  // patch-urile din vscode-patch/. Vezi update-patch.js.
+  updatePatch.register(context);
 
   // Panoul „Test Results" arăta protocolul brut al runner-ului JUnit (`%TESTS`,
   // `%TESTE`, `%RUNTIME…`), dublu-spațiat, peste output-ul real al testelor.

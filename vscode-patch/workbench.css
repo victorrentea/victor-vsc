@@ -314,3 +314,56 @@
 .victor-scm-removed {
   color: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
 }
+
+/* ------------------------------ „Update with AI", în stânga butonului albastru */
+
+/* Intrarea de status bar e doar conducta prin care workbench.js armează
+   marker-ul înainte să apese update-ul (vezi update-patch.js) — n-are ce căuta
+   în bară. Fără patch regula asta nu există, iar intrarea rămâne vizibilă ca o
+   floricică: atunci comanda ei tot armează, doar că butonul de update îl apeși
+   singur. */
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.updatepatch"] {
+  display: none;
+}
+
+/* Aceleași dimensiuni ca `.update-indicator` de lângă el (22px, colțuri medii),
+   ca cele două butoane să pară o pereche, nu unul lipit de altul. Culorile sunt
+   ale command center-ului, ca la butonul de unelte: albastrul rămâne al VS
+   Code-ului, ca să se vadă din prima care e primar. NU `button.secondaryBackground`
+   — în tema de aici nu e definit, iar butonul ieșea text gol pe bara de titlu,
+   fără nicio margine care să spună că e apăsabil. */
+.victor-update-ai {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  height: 22px;
+  padding: 0 8px;
+  margin-right: 4px;
+  border-radius: var(--vscode-cornerRadius-medium, 6px);
+  white-space: nowrap;
+  font-size: var(--vscode-bodyFontSize-small, 11px);
+  line-height: normal;
+  cursor: pointer;
+  color: var(--vscode-titleBar-activeForeground);
+  background-color: var(--vscode-commandCenter-background);
+  border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  -webkit-app-region: no-drag;
+}
+
+/* Proprietatea nu se moștenește: fără regula asta glifa și textul rămân zonă de
+   „drag" a ferestrei, iar click-ul pe ele mută fereastra în loc să apese. */
+.victor-update-ai > * {
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.victor-update-ai > .codicon {
+  font-size: 14px;
+}
+
+.victor-update-ai:hover {
+  color: var(--vscode-commandCenter-activeForeground);
+  background-color: var(--vscode-commandCenter-activeBackground);
+  border-color: var(--vscode-commandCenter-activeBorder);
+}
