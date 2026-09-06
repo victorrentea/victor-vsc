@@ -4,6 +4,37 @@ Procedura e în [`VSCODE-UPDATE.md`](VSCODE-UPDATE.md). Aici stă doar ce s-a
 învățat *rulând-o* — capcanele care au costat timp, ca să nu se plătească de
 două ori. Câte o secțiune per update.
 
+## 1.135.0 → 1.136.1 (6 sep 2026) — primul update dat din butonul „Update with AI"
+
+Update-ul a fost dat din butonul nou din bara de titlu, nu din meniu. Lanțul a
+mers cap-coadă, fără nimic manual: marker armat la click, `apply.sh` rulat singur
+la 21:37:23 (ieșire 0, niciun „ATENȚIE"), aplicație repornită singură la 21:39:16.
+Verificat după aceea în UI, nu doar pe disc: pastila de branch și butonul de
+unelte sunt la locul lor, deci `workbench.js` chiar rulează pe 1.136.
+
+Log-ul rulării: `globalStorage/victorrentea.victor-vsc/update-patch.log`.
+
+### Ce s-a schimbat în bundle
+
+Toate ancorele au prins. Două constante au venit din fabrică cu alte valori:
+
+| ce | pe 1.135 | pe 1.136.1 | rezultat |
+|---|---|---|---|
+| `ITEM_HEIGHT` (rând Explorer) | 23.4 | **22** | nimic de făcut — `apply.sh` nu scrie și nu raportează când valoarea e deja cea vrută |
+| `FLOATING_BOTTOM_PADDING` | 10 | 6 | 6 → 0, ca înainte |
+| `FLOATING_COMPACT_ACTIVITYBAR_WIDTH` | 28 | 28 | neatinsă, e chiar valoarea din fabrică |
+
+Adică VS Code a ajuns singur la înălțimea de rând a IntelliJ-ului. Pasul rămâne
+în script: dacă un release o mută la loc, se reaplică singur — dar de-acum
+**absența liniei „rând Explorer: … -> 22" din log nu mai e un semn de rău**, e
+semnul că nu era nimic de schimbat.
+
+### Butonul albastru de update, ca ancoră DOM
+
+`workbench.js` se agață de `.update-indicator.prominent` (containerul cu
+`role="button"` din jurul lui e item-ul de action bar pe care se apasă). Pe
+1.136.1 structura e neschimbată față de 1.135, unde a fost scrisă.
+
 ## 1.133.0 → 1.134.0 (21 aug 2026)
 
 Update-ul a fost dat din meniu (**Code → Restart to Update**; după update
