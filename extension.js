@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const puml = require('./puml');
+const renderToggle = require('./render-toggle');
 const relayTerminal = require('./relay-terminal');
 const uriHandler = require('./uri-handler');
 const githubLink = require('./github-link');
@@ -230,8 +231,10 @@ function activate(context) {
     vscode.workspace.onDidChangeTextDocument(debounced),
     vscode.languages.onDidChangeDiagnostics(debouncedProblems),
   );
-  // PlantUML: custom editor + butonul care ciclează text / split / diagramă.
+  // PlantUML: editorul custom care desenează diagrama.
   puml.register(context);
+  // Butonul din colț: text ⇄ randat, cu modul ținut minte pe fiecare tip de fișier.
+  renderToggle.register(context);
 
   // Walkie Talkie: un listener pe loopback prin care relay-ul livrează dictarea
   // în EXACT terminalul pe care l-a legat. Din afară, o extensie de terminal

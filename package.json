@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.79",
+  "version": "0.0.81",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -223,10 +223,16 @@
     ],
     "commands": [
       {
-        "command": "victor-vsc.togglePumlView",
-        "title": "Preview Diagram",
-        "category": "PlantUML",
+        "command": "victor-vsc.showRendered",
+        "title": "Show Rendered",
+        "category": "victor-vsc",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "victor-vsc.showSource",
+        "title": "Show Source",
+        "category": "victor-vsc",
+        "icon": "$(code)"
       },
       {
         "command": "victor-vsc.noop",
@@ -349,9 +355,14 @@
           "when": "resourceFilename =~ /\\.(spec|test)\\.[jt]sx?$/"
         },
         {
-          "command": "victor-vsc.togglePumlView",
-          "group": "navigation@1",
-          "when": "resourceExtname == .puml || resourceExtname == .plantuml || resourceExtname == .iuml || resourceExtname == .wsd || resourceExtname == .pu"
+          "command": "victor-vsc.showRendered",
+          "group": "navigation@99",
+          "when": "activeEditor == 'workbench.editors.files.fileEditorInput' && resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/"
+        },
+        {
+          "command": "victor-vsc.showSource",
+          "group": "navigation@99",
+          "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/"
         }
       ]
     },

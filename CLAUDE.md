@@ -49,7 +49,8 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `package.json` | toate `contributes`: culori (`configurationDefaults`), icon theme, profil de terminal, custom editor, comenzi, meniuri, setări |
 | `COLORS.md` | de ce sunt culorile alea — `package.json` e JSON strict, n-are comentarii |
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
-| `puml.js` | randare PlantUML + comanda text / split / diagramă |
+| `puml.js` | randare PlantUML: editorul custom care desenează diagrama |
+| `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului; modul e per tip de fișier (Markdown / PlantUML / Draw.io), global și persistent |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
