@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.77",
+  "version": "0.0.78",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -327,8 +327,8 @@
       "view/title": [
         {
           "command": "victor-vsc.selectOpenedFile",
-          "group": "navigation@-1",
-          "when": "view == workbenchExplorerFileView"
+          "group": "navigation@0",
+          "when": "view == workbench.explorer.fileView"
         }
       ],
       "explorer/context": [
