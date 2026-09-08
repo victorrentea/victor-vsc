@@ -1,7 +1,7 @@
-"""Builds icons/victor-icons.woff: a six-petal flower (U+E001) and two coins
-(U+E002), drawn on the same grid as VS Code's codicon.ttf (upem 300, ascent 300,
-glyph box 0..282) so they line up with the built-in icons everywhere VS Code
-renders a ThemeIcon."""
+"""Builds icons/victor-icons.woff: a six-petal flower (U+E001), two coins
+(U+E002) and a crosshair (U+E003), drawn on the same grid as VS Code's
+codicon.ttf (upem 300, ascent 300, glyph box 0..282) so they line up with the
+built-in icons everywhere VS Code renders a ThemeIcon."""
 import math, sys
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
@@ -55,6 +55,40 @@ def draw_coins(pen):
         ellipse(pen, C + dx, C + dy, COIN_R_IN, COIN_R_IN, 0, clockwise=False)
 
 
+CROSS_R_OUT = 88.0   # inelul din mijloc
+CROSS_R_IN = 64.0    # 24 de unități de contur ≈ 1.1px la 14px, ca la codicon-uri
+CROSS_DOT = 20.0     # punctul din centru
+CROSS_TICK_IN = 82.0 # gradațiile pornesc din inel (suprapunere, ca să nu apară fantă)
+CROSS_TICK_OUT = 138.0
+CROSS_TICK_W = 12.0  # jumătate de lățime
+
+
+def rect(pen, x0, y0, x1, y1):
+    """Dreptunghi bobinat în sensul acelor de ceas — adică umplut, ca elipsele
+    de mai sus: în spațiul fontului (y în sus) sus→dreapta→jos→stânga."""
+    pen.moveTo((round(x0), round(y0)))
+    pen.lineTo((round(x0), round(y1)))
+    pen.lineTo((round(x1), round(y1)))
+    pen.lineTo((round(x1), round(y0)))
+    pen.closePath()
+
+
+def draw_crosshair(pen):
+    """Ținta din toolbarul IntelliJ („Select Opened File"): inel, punct în
+    centru, patru gradații pe axe. Punctul e bobinat ca inelul exterior, deci
+    în gaura inelului (winding -1) suma redevine +1 și se umple."""
+    ellipse(pen, C, C, CROSS_R_OUT, CROSS_R_OUT, 0, clockwise=True)
+    ellipse(pen, C, C, CROSS_R_IN, CROSS_R_IN, 0, clockwise=False)
+    ellipse(pen, C, C, CROSS_DOT, CROSS_DOT, 0, clockwise=True)
+    for sx, sy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        if sx:
+            x0, x1 = C + sx * CROSS_TICK_IN, C + sx * CROSS_TICK_OUT
+            rect(pen, min(x0, x1), C - CROSS_TICK_W, max(x0, x1), C + CROSS_TICK_W)
+        else:
+            y0, y1 = C + sy * CROSS_TICK_IN, C + sy * CROSS_TICK_OUT
+            rect(pen, C - CROSS_TICK_W, min(y0, y1), C + CROSS_TICK_W, max(y0, y1))
+
+
 def glyph(fn):
     pen = TTGlyphPen(None)
     fn(pen)
@@ -62,11 +96,12 @@ def glyph(fn):
 
 
 fb = FontBuilder(UPEM, isTTF=True)
-order = [".notdef", "flower", "coins"]
+order = [".notdef", "flower", "coins", "crosshair"]
 fb.setupGlyphOrder(order)
-fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins"})
+fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins", 0xE003: "crosshair"})
 fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(),
-              "flower": glyph(draw), "coins": glyph(draw_coins)})
+              "flower": glyph(draw), "coins": glyph(draw_coins),
+              "crosshair": glyph(draw_crosshair)})
 fb.setupHorizontalMetrics({g: (UPEM, 0) for g in order})
 fb.setupHorizontalHeader(ascent=UPEM, descent=0)
 fb.setupNameTable({"familyName": "victor-icons", "styleName": "Regular",
@@ -79,11 +114,11 @@ print("wrote", sys.argv[1])
 
 if len(sys.argv) > 2:      # proof sheet: the very contours that went into the font
     paths = []
-    for i, fn in enumerate((draw, draw_coins)):
+    for i, fn in enumerate((draw, draw_coins, draw_crosshair)):
         svg = SVGPathPen(None)
         fn(svg)
         paths.append(f'<g transform="translate({i * UPEM},{UPEM}) scale(1,-1)">'
                      f'<path fill="#D97757" fill-rule="nonzero" d="{svg.getCommands()}"/></g>')
     open(sys.argv[2], "w").write(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {2 * UPEM} {UPEM}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {3 * UPEM} {UPEM}">'
         + "".join(paths) + '</svg>')
