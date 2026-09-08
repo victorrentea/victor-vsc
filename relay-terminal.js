@@ -102,6 +102,18 @@ function deactivate() {
   if (registryFile) { try { fs.unlinkSync(registryFile); } catch (_) {} registryFile = null; }
 }
 
+/** Where that terminal's shell is, as the editor knows it.
+ *
+ *  `shellIntegration` and not a pid walk: the pid is already in the bind reply
+ *  and the relay derives a folder from it itself, so this is the *second*
+ *  answer — the one that survives a shell whose pid we never got. It is
+ *  undefined until VS Code's shell integration has actually attached, which is
+ *  a beat after the panel opens and never at all for a shell that refuses the
+ *  injection, hence the nulls. */
+function cwdOf(term) {
+  try { return term.shellIntegration?.cwd?.fsPath || null; } catch (_) { return null; }
+}
+
 function send(res, code, body) {
   const data = JSON.stringify(body);
   res.writeHead(code, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) });
@@ -175,10 +187,31 @@ function handle(req, res) {
     // real rm. Until now IDE targets were the one place that could not be
     // checked, and `guarded: false` was the honest admission of it.
     term.processId.then(
-      (pid) => send(res, 200, { ok: true, id, name: term.name, shellPID: pid || null }),
-      () => send(res, 200, { ok: true, id, name: term.name, shellPID: null }),
+      (pid) => send(res, 200, { ok: true, id, name: term.name, shellPID: pid || null, cwd: cwdOf(term) }),
+      () => send(res, 200, { ok: true, id, name: term.name, shellPID: null, cwd: cwdOf(term) }),
     );
     return;
+  }
+
+  // Where a bound terminal is **now**, and whether it is still open.
+  //
+  // The relay has always asked for this — `IDEBridge.currentDirectory` and
+  // `IDEBridge.alive` both `GET /state?id=` — and only the IntelliJ plugin ever
+  // answered. This side 404'd on the route like any unknown path, so for VS Code
+  // targets the chip beside the cursor kept naming the folder it was bound in an
+  // hour ago, and a panel closed under the binding was never noticed. Both
+  // answers are one line each; the reason it was missing is that nothing in a
+  // session says a route was never implemented, only that the caller got nothing.
+  //
+  // 404 for a terminal that is gone, matching the IntelliJ side: the relay reads
+  // any non-2xx as *silence* rather than as "closed", which is what keeps an
+  // extension host in the middle of a reload from costing Victor his binding.
+  if (req.method === 'GET' && url.pathname === '/state') {
+    const term = bound.get(Number(url.searchParams.get('id')));
+    if (!term || term.exitStatus !== undefined) {
+      return send(res, 404, { ok: false, error: 'that terminal is gone' });
+    }
+    return send(res, 200, { ok: true, name: term.name, cwd: cwdOf(term) });
   }
 
   // Reload this window. Installing a new build of this very extension does
