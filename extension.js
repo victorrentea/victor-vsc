@@ -206,6 +206,16 @@ function activate(context) {
   const debugFile = vscode.commands.registerCommand('victor-vsc.debugFileTests',
     () => vscode.commands.executeCommand('testing.debugCurrentFile'));
 
+  // Ținta din toolbarul Project-ului IntelliJ („Select Opened File"): sare în
+  // Explorer pe fișierul din editor. E o comandă proprie doar ca să aibă
+  // iconiță — un `view/title` care referă direct comanda nativă moștenește
+  // iconița ei, iar `workbench.files.action.showActiveFileInExplorer` n-are
+  // niciuna, deci butonul ar fi apărut doar ca text în meniul „…".
+  // Cu focusul în Explorer, editorul activ rămâne cel de dinainte, deci
+  // butonul lucrează pe fișierul corect chiar dacă îl apeși din arbore.
+  const selectOpened = vscode.commands.registerCommand('victor-vsc.selectOpenedFile',
+    () => vscode.commands.executeCommand('workbench.files.action.showActiveFileInExplorer'));
+
   context.subscriptions.push(
     tools,
     trail,
@@ -214,6 +224,7 @@ function activate(context) {
     noop,
     runFile,
     debugFile,
+    selectOpened,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
     vscode.workspace.onDidChangeTextDocument(debounced),

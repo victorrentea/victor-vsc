@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.75",
+  "version": "0.0.76",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -71,6 +71,7 @@
       "editor.inlayHints.enabled": "off",
       "workbench.browser.openLocalhostLinks": true,
       "workbench.browser.showInTitleBar": true,
+      "workbench.tree.expandMode": "doubleClick",
       "[markdown]": {
         "editor.wordWrap": "off"
       },
@@ -247,6 +248,12 @@
         "title": "Update with AI",
         "category": "victor-vsc",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "victor-vsc.selectOpenedFile",
+        "title": "Select Opened File",
+        "category": "victor-vsc",
+        "icon": "$(target)"
       }
     ],
     "keybindings": [
@@ -308,6 +315,13 @@
         {
           "command": "victor-vsc.noop",
           "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "victor-vsc.selectOpenedFile",
+          "group": "navigation@-1",
+          "when": "view == workbenchExplorerFileView"
         }
       ],
       "explorer/context": [
