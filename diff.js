@@ -17,8 +17,17 @@ const { execFile } = require('child_process');
 
 // A ref, and nothing that could be read as a flag or a second argument. `git` is spawned
 // without a shell, so this is not about quoting — it is about `--upload-pack=…` and
-// friends arriving from a query string that anything on this machine can compose.
-const REF_RE = /^[0-9a-fA-F]{7,40}$/;
+// friends arriving from a query string that anything on this machine can compose. Hence
+// the first character: a ref may not open with `-`, which is the whole of the attack.
+//
+// It used to be `[0-9a-fA-F]{7,40}` — a raw sha and nothing else. But every source bar in
+// a Human Review guide is written against `origin/main`, so every one of those handles
+// arrived here and was turned away with "that is not a git ref": the page's most-clicked
+// button, refused by the check meant to let it through, and the reader got the file
+// instead of the diff. A name is not less safe than a sha — it is resolved through git
+// before it reaches anything, and a name git cannot resolve is refused exactly as before.
+// serve-review.py widened the same regex for the same reason; these two are a pair.
+const REF_RE = /^[0-9A-Za-z][0-9A-Za-z._/+^~{}-]{0,100}$/;
 
 function git(cwd, args, encoding) {
   return new Promise((resolve) => {
@@ -51,7 +60,7 @@ function safeReal(p) {
  * in it, or the two sides are identical, there is no diff to show — and a diff with an
  * invented left half is worse than no diff, because it looks exactly like evidence.
  */
-async function openDiff({ file, base, focus = true }) {
+async function openDiff({ file, base, line = 0, focus = true }) {
   if (!file || !path.isAbsolute(file)) return { ok: false, error: 'absolute path required' };
   if (!REF_RE.test(base || '')) return { ok: false, error: 'not a usable git ref' };
   if (!ownedHere(safeReal(file)) && !ownedHere(file)) {
@@ -93,11 +102,17 @@ async function openDiff({ file, base, focus = true }) {
     return { ok: false, error: `could not write the before-image: ${e.message}` };
   }
 
+  // `selection` lands the diff on the line the click was about instead of at the top of
+  // the file. Without it a fix five hundred lines down opens with the reader looking at
+  // the package declaration, hunting for the change — which is the hunt the handle they
+  // clicked exists to end. It is a `TextDocumentShowOptions`, so it applies to the
+  // modified side, which is the one with a line number the caller could have known.
+  const at = line > 0 ? new vscode.Range(line - 1, 0, line - 1, 0) : undefined;
   await vscode.commands.executeCommand(
     'vscode.diff',
     vscode.Uri.file(before), vscode.Uri.file(file),
     `${parsed.name}@${short}${parsed.ext} ↔ ${path.basename(file)}`,
-    { preview: false },
+    { preview: false, selection: at },
   );
   if (focus) {
     try { await vscode.commands.executeCommand('workbench.action.focusWindow'); } catch (_) { /* the diff is open regardless */ }

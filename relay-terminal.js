@@ -373,6 +373,11 @@ function handle(req, res) {
       const result = await openDiff({
         file: String(parsed.file || parsed.path || ''),
         base: String(parsed.base || ''),
+        // Carried through rather than dropped here: the caller is the only side that
+        // knows which line of the file the reader clicked on, and losing it here is
+        // indistinguishable — from over there — from a diff that opened at the top
+        // because nothing better was known.
+        line: Number(parsed.line) || 0,
         focus: parsed.focus !== false,
       });
       // 200 with `ok:false` and a sentence, not a bare status: every refusal here is a

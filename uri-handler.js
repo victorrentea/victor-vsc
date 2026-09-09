@@ -122,7 +122,7 @@ async function handleDiff(query) {
   // Either this window owns it, or nobody does and we are the window the OS chose. Doing
   // it here is then the best available answer; `openDiff` still refuses if the path is
   // outside this window's folders, and the fallback below catches that.
-  const done = await openDiff({ file, base });
+  const done = await openDiff({ file, base, line });
   if (!done.ok) {
     vscode.window.showWarningMessage(`victor-vsc: no diff (${done.error}) — opening the file instead.`);
     return openPlainRouted(file, line);
