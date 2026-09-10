@@ -178,8 +178,18 @@ async function convert(t, rendered) {
   // Deci închidem noi forma veche, după ce ne-am asigurat că cea nouă e sus.
   const viewType = rendered ? t.type.viewType() : 'default';
   if (!viewType) return;
-  await vscode.commands.executeCommand('vscode.openWith', t.uri, viewType,
-    { viewColumn: t.column, preserveFocus: true, preview: false });
+  try {
+    await vscode.commands.executeCommand('vscode.openWith', t.uri, viewType,
+      { viewColumn: t.column, preserveFocus: true, preview: false });
+  } catch (err) {
+    // Editorul nativ de Markdown își declară selectorul pe `*.md`, deci un
+    // `.mdx` sau `.markdown` poate fi refuzat. Mai bine spunem, decât să pară că
+    // butonul e stricat — și nu ținem minte un mod în care fișierul n-a intrat.
+    await setRendered(t.type, !rendered);
+    vscode.window.showWarningMessage(
+      `victor-vsc: nu pot randa ${path.basename(t.uri.fsPath)} — ${err.message || err}`);
+    return;
+  }
   await settle(() => !stillOpen(t.tab) || allTabs().some(tab => tab !== t.tab && sameFile(tab, t.uri)));
   await closeTab(t.tab, t.column);
 }
