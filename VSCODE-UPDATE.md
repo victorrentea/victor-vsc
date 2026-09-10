@@ -86,7 +86,9 @@ grep -c victor-vsc "/Applications/Visual Studio Code.app/Contents/Resources/app/
      compactă, fiindcă `workbench.activityBar.compact` e pornit; lăsată pe 28,
      valoarea din fabrică, dar reglabilă din `ACTIVITY_BAR_WIDTH`);
    - **înălțimea title bar-ului cu command center** (35 → 28, adică −20%),
-     găsită după `this.isCommandCenterVisible||…?<nume>:30`.
+     găsită după `this.isCommandCenterVisible…?<nume>:` — numele minificat poate
+     conține `$`, deci ancora nu se poate scrie cu `\w` / `\b`
+     ([`UPDATE-LESSONS.md`](UPDATE-LESSONS.md), 1.137.0).
    - **pasul de zoom al terminalului** (1px → 0.5, reglabil din
      `TERMINAL_ZOOM_STEP`): ⌘+scroll peste terminal și comenzile Increase/Decrease
      Font Size mutau `terminal.integrated.fontSize` cu 1px, adică ~9% dintr-un corp

@@ -83,7 +83,13 @@ stamp = hashlib.sha256((css + js).encode()).hexdigest()[:8]
 #    Așa nu ținem un backup care s-ar învechi la primul update de VS Code.
 BEGIN, END = '<!-- victor-vsc:start -->', '<!-- victor-vsc:end -->'
 doc = open(html, encoding='utf8').read()
-doc = re.sub(re.escape(BEGIN) + r'.*?' + re.escape(END), '', doc, flags=re.S).rstrip() + '\n'
+#    Ștergerea ia și indentarea și newline-ul liniei, altfel fiecare rulare lăsa în
+#    urmă o linie goală: fișierul creștea, checksum-ul ieșea altul, și `apply.sh`
+#    rulat de două ori la rând raporta „checksum actualizat: workbench.html" fără
+#    să se fi schimbat nimic real. `\n{3,}` de dinainte de `</html>` curăță ce au
+#    adunat rulările vechi, ca rezultatul să fie identic la bit de-acum înainte.
+doc = re.sub(r'[ \t]*' + re.escape(BEGIN) + r'.*?' + re.escape(END) + r'[ \t]*\n?', '', doc, flags=re.S)
+doc = re.sub(r'\n{3,}(?=</html>)', '\n\n', doc).rstrip() + '\n'
 
 block = (f'{BEGIN}\n'
          f'\t<link rel="stylesheet" href="./victor-workbench.css?v={stamp}" data-victor-css>\n'
@@ -115,10 +121,13 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print(f'   rând Explorer: {m.group(1)} -> {row_h}')
 
-# 3b. marginea de sub status bar, tot o constantă în bundle. Ancora e chiar
-#     numele ei, care e destul de rar ca să nu se confunde cu altceva.
+# 3b. marginea de sub status bar, tot o constantă în bundle. Ancora e numele ei,
+#     dar CU `this.` în față: din 1.137 mai există una, `COMPACT_DENSITY_FLOATING_
+#     BOTTOM_PADDING=4` (folosită când `window.density.layout` e "compact"), în
+#     care numele cerut intră ca sufix. Aici e a doua în fișier, deci `search` a
+#     nimerit-o pe cea bună din noroc — `this.` face alegerea explicită.
 sb = os.environ['SB_PAD']
-m = re.search(r'FLOATING_BOTTOM_PADDING=([\d.]+)', src_js)
+m = re.search(r'this\.FLOATING_BOTTOM_PADDING=([\d.]+)', src_js)
 if not m:
     print('   ATENȚIE: nu găsesc FLOATING_BOTTOM_PADDING, footerul rămâne cel din fabrică')
 elif m.group(1) != sb:
@@ -139,16 +148,22 @@ elif m.group(1) != act_w:
     open(bundle, 'w', encoding='utf8').write(src_js)
     print(f'   lățime bară de activități: {m.group(1)} -> {act_w}')
 
-# 3c. înălțimea title bar-ului. În bundle e o variabilă minificată (`mte=35`),
-#     al cărei nume se schimbă la fiecare release — o găsim prin locul în care e
-#     folosită, care e stabil: `this.isCommandCenterVisible||…?<nume>:30`.
+# 3c. înălțimea title bar-ului. În bundle e o variabilă minificată (`mte=35` pe
+#     1.134, `$oe=35` pe 1.137), al cărei nume se schimbă la fiecare release — o
+#     găsim prin locul în care e folosită, care e stabil: title bar-ul o alege în
+#     `minimumHeight`, cu `this.isCommandCenterVisible…?<nume>:<altceva>`.
+#     Două lucruri despre `<nume>`, ambele plătite pe 1.137: poate conține `$`,
+#     care NU e `\w` (de-aia clasa e `[\w$]`, și de-aia definiția nu se poate căuta
+#     cu `\b` — între un spațiu și un `$` nu există graniță de cuvânt), și partea
+#     de după `:` s-a schimbat din `30` într-un `this.macTitlebarSize` în varianta
+#     nativă, deci nu mai e bună ca ancoră.
 title_h = os.environ['TITLE_H']
-m = re.search(r'this\.isCommandCenterVisible\|\|\w+\?(\w+):30', src_js)
+m = re.search(r'this\.isCommandCenterVisible(?:\|\|[\w$]+)?\?([\w$]+):', src_js)
 if not m:
     print('   ATENȚIE: nu găsesc înălțimea title bar-ului, rămâne cea din fabrică')
 else:
     name = m.group(1)
-    m2 = re.search(rf'\b{name}=(\d+(?:\.\d+)?)\b', src_js)
+    m2 = re.search(r'(?:^|[^\w$.])' + re.escape(name) + r'=(\d+(?:\.\d+)?)[,;]', src_js)
     if not m2:
         print(f'   ATENȚIE: {name} e folosit, dar nu găsesc unde e definit — title bar neatins')
     elif m2.group(1) != title_h:

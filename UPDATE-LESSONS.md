@@ -4,6 +4,73 @@ Procedura e în [`VSCODE-UPDATE.md`](VSCODE-UPDATE.md). Aici stă doar ce s-a
 învățat *rulând-o* — capcanele care au costat timp, ca să nu se plătească de
 două ori. Câte o secțiune per update.
 
+## 1.136.1 → 1.137.0 (10 sep 2026) — o singură ancoră ruptă, din două motive deodată
+
+Update-ul a venit tot din butonul „Update with AI". Lanțul a mers până la capăt:
+marker armat, `apply.sh` rulat singur la 15:36:34, ieșire 0 — dar cu un „ATENȚIE"
+pe înălțimea title bar-ului, deci pasul 4 (repornirea automată) **nu** s-a
+executat, cum e proiectat, și în loc de asta s-a deschis terminalul cu `claude`.
+Restul patch-urilor prinseseră deja: `margine sub status bar: 6 -> 0`, sticky
+scroll, arborele de teste, butoanele de markdown, pasul de zoom la terminal.
+
+### Ancora title bar-ului: `$` nu e `\w`, iar `:30` nu mai e acolo
+
+Pe 1.137 constanta se cheamă `$oe` (era `mte` pe 1.134, `Hte` pe 1.135). Ancora
+veche
+
+```python
+re.search(r'this\.isCommandCenterVisible\|\|\w+\?(\w+):30', src_js)
+```
+
+pică din **două** motive independente, și e util să se știe amândouă, fiindcă
+reparat doar unul ar fi părut că merge:
+
+1. **`\w` nu prinde `$`.** Terser folosește `$` ca literă normală în numele
+   generate, deci `[\w$]` e clasa corectă peste tot unde ancora citește un nume
+   minificat. Din același motiv **nu se poate căuta definiția cu `\b`**:
+   `re.search(rf'\b{name}=…')` nu găsește niciodată `var $oe=35`, fiindcă între
+   spațiu și `$` nu există graniță de cuvânt — ambele sunt non-word. Căutarea e
+   acum `(?:^|[^\w$.])` + `re.escape(name)` + `=(\d+…)[,;]`; `re.escape` fiindcă
+   `$` e ancoră în regex, iar `[^…\.]` ca să nu nimerească un `x.$oe=`.
+2. **`:30` a dispărut din forma pe care o citim.** Getter-ul e acum
+   `let e=$t&&Oge(),t=this.isCommandCenterVisible||e?$oe:30`, dar subclasa nativă
+   de macOS (nouă în 1.137) are `this.isCommandCenterVisible?$oe:this.macTitlebarSize`.
+   Ancora se oprește la `?<nume>:` și nu mai spune nimic despre ce urmează.
+
+`macTitlebarSize` e `this.tahoeOrNewer?32:28` — se folosește **doar** cu command
+center-ul ascuns, deci nu ne atinge (Victor îl are pornit, pastila de branch stă
+chiar în el). `$oe` e citit și de poziționarea notificărilor (`t+=$oe`), care
+vrea oricum înălțimea reală — deci un singur loc de scris acoperă tot.
+
+### `FLOATING_BOTTOM_PADDING` are de-acum un frate care-l conține
+
+1.137 a adăugat `COMPACT_DENSITY_FLOATING_BOTTOM_PADDING=4`, folosit când
+`window.density.layout` e `"compact"`. Numele vechi intră în cel nou ca **sufix**,
+deci vechiul `re.search(r'FLOATING_BOTTOM_PADDING=…')` putea nimeri constanta
+greșită și raporta linia de succes obișnuită. De data asta cea bună e prima în
+fișier, deci a mers din noroc; ancora cere acum `this.` în față.
+
+Consecință de ținut minte: cât timp `window.density.layout` **nu** e `"compact"`,
+patch-ul lucrează pe constanta citită. Dacă densitatea compactă se pornește
+vreodată, marginea de 4px se întoarce și `apply.sh` va spune că totul e în regulă
+— pentru că, pe constanta lui, chiar e.
+
+### `ITEM_HEIGHT` rămâne 22 din fabrică
+
+Ca pe 1.136.1. Absența liniei „rând Explorer: … -> 22" din log nu e un semn de
+rău, e semnul că nu era nimic de schimbat.
+
+### Reparat pe drum: injecția din `workbench.html` nu era stabilă la bit
+
+`apply.sh` scotea blocul `<!-- victor-vsc:start --> … :end -->` cu un `re.sub` care
+lăsa în urmă **linia goală** pe care stătuse. La fiecare rulare fișierul creștea cu
+un rând, deci checksum-ul ieșea altul și scriptul rulat de două ori la rând
+raporta „checksum actualizat: workbench.html" fără să se fi schimbat nimic real.
+Zgomotul ăsta e exact ce nu vrei când rulezi scriptul de mai multe ori după un
+update, ca să verifici că a ieșit curat. Ștergerea ia acum și indentarea și
+newline-ul, plus un `\n{3,}` care curăță ce adunaseră rulările vechi — două rulări
+consecutive lasă acum fișierul identic la bit.
+
 ## 1.135.0 → 1.136.1 (6 sep 2026) — primul update dat din butonul „Update with AI"
 
 Update-ul a fost dat din butonul nou din bara de titlu, nu din meniu. Lanțul a
