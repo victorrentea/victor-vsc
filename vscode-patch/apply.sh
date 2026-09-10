@@ -220,34 +220,36 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   rezultate de test: listă plată -> arbore (clasele @Nested devin părinți)')
 
-# 3e. poziția butoanelor de markdown din bara de titlu. VS Code sortează acțiunile
-#     dintr-un grup după `order` și, la egalitate, ALFABETIC după titlu — iar
-#     „Open as Preview", „Reopen as Source File" și „Open Changes" (git) sunt toate
-#     pe `navigation@2`. De-aia butonul de toggle stă înaintea lui „Open Changes" în
-#     sursă („Open as…" < „Open Ch…") și după el în randare („Open Ch…" < „Reopen…"),
-#     deci sare cu o lățime de icon la fiecare click — și își schimbă poziția și
-#     după cum fișierul are sau nu modificări în git, fiindcă butonul de git apare
-#     doar atunci. Le urcăm ordinul peste tot ce mai contribuie cineva în bara de
-#     titlu (restul extensiilor instalate sunt pe `navigation` simplu, adică 0), ca
-#     toggle-ul să fie ULTIMUL buton dinaintea celor trei puncte în ambele stări.
+# 3e. butoanele de markdown din bara de titlu. VS Code contribuie patru („Open
+#     Preview to the Side", „Open as Preview", „Show Source", „Reopen as Source
+#     File"), iar extensia are acum unul singur care le face pe toate — pe tab-ul
+#     din față, în ambele sensuri. Trei dintre ele arătau spre aceeași direcție ca
+#     al nostru, deci colțul avea trei butoane pentru două stări; și, pentru că
+#     VS Code sortează un grup după `order` și, la egalitate, ALFABETIC după titlu,
+#     „Open as Preview" cădea înaintea lui „Open Changes" (git) iar „Reopen as
+#     Source File" după el — adică butonul sărea cu o lățime de icon la fiecare
+#     click, și încă una după cum fișierul avea sau nu modificări în git.
+#     Le scoatem din `editor/title`. Comenzile rămân înregistrate: paleta și
+#     ⌘K V / ⌘⇧V merg mai departe, doar iconițele dispar din bară.
+#     `restore.sh` le pune la loc exact cum erau.
 md_manifest = os.path.join(res, 'extensions/markdown-language-features/package.json')
-MD_NAV = {
-    'markdown.showPreviewToSide': 'navigation@8',
-    'markdown.reopenAsPreview':   'navigation@9',
-    'markdown.showSource':        'navigation@9',
-    'markdown.reopenAsSource':    'navigation@9',
-}
+MD_HIDE = {'markdown.showPreviewToSide', 'markdown.reopenAsPreview',
+           'markdown.showSource', 'markdown.reopenAsSource'}
 if not os.path.isfile(md_manifest):
-    print('   ATENȚIE: nu găsesc extensia markdown, butonul de preview rămâne unde e')
+    print('   ATENȚIE: nu găsesc extensia markdown, butoanele ei rămân în bară')
 else:
     man = json.load(open(md_manifest, encoding='utf8'))
-    items = man.get('contributes', {}).get('menus', {}).get('editor/title', [])
-    moved = [it['command'] for it in items
-             if MD_NAV.get(it.get('command')) and it.get('group') != MD_NAV[it['command']]]
-    for it in items:
-        if it.get('command') in MD_NAV:
-            it['group'] = MD_NAV[it['command']]
-    if moved:
+    menus = man.get('contributes', {}).get('menus', {})
+    items = menus.get('editor/title', [])
+    dropped = [it['command'] for it in items if it.get('command') in MD_HIDE]
+    if dropped:
+        # Le punem deoparte ÎN manifest, nu în `restore.sh`: acolo ar însemna patru
+        # `when`-uri copiate de mână, care rămân în urmă la primul release în care
+        # VS Code le schimbă, și restaurarea ar reintroduce condiții vechi. Cheia e
+        # necunoscută schemei, deci VS Code o ignoră; după un update al aplicației
+        # nici nu mai există, și atunci nu e nimic de restaurat.
+        man['_victorMarkdownTitleItems'] = [it for it in items if it.get('command') in MD_HIDE]
+        menus['editor/title'] = [it for it in items if it.get('command') not in MD_HIDE]
         json.dump(man, open(md_manifest, 'w', encoding='utf8'), indent='\t')
         # Manifestele extensiilor built-in sunt citite dintr-un cache validat pe
         # mtime-ul FOLDERULUI extensiei; pe APFS o scriere în fișier nu-l atinge,
@@ -258,8 +260,8 @@ else:
         for c in _glob.glob(os.path.expanduser(
                 '~/Library/Application Support/Code*/Cached*/**/builtin'), recursive=True):
             os.remove(c)
-        print('   butoane markdown mutate la coada barei de titlu:',
-              ', '.join(c.split('.')[-1] for c in moved))
+        print('   butoane markdown scoase din bara de titlu:',
+              ', '.join(c.split('.')[-1] for c in dropped))
 
 # 3f. pasul de zoom al terminalului, tot o constantă din bundle. Din fabrică VS Code
 #     sare cu 1px de `terminal.integrated.fontSize` la fiecare notch de ⌘+scroll și

@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.99",
+  "version": "0.0.100",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -223,16 +223,10 @@
     ],
     "commands": [
       {
-        "command": "victor-vsc.showRendered",
-        "title": "Show Rendered",
+        "command": "victor-vsc.toggleRender",
+        "title": "Toggle Rendered / Source",
         "category": "victor-vsc",
-        "icon": "$(open-preview)"
-      },
-      {
-        "command": "victor-vsc.showSource",
-        "title": "Show Source",
-        "category": "victor-vsc",
-        "icon": "$(code)"
+        "icon": "$(arrow-swap)"
       },
       {
         "command": "victor-vsc.noop",
@@ -355,14 +349,9 @@
           "when": "resourceFilename =~ /\\.(spec|test)\\.[jt]sx?$/"
         },
         {
-          "command": "victor-vsc.showRendered",
-          "group": "navigation@1",
-          "when": "resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/ && !activeWebviewPanelId && !activeCustomEditorId && !isInDiffEditor"
-        },
-        {
-          "command": "victor-vsc.showSource",
-          "group": "navigation@1",
-          "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/"
+          "command": "victor-vsc.toggleRender",
+          "group": "navigation@9",
+          "when": "(resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/ && !isInDiffEditor) || activeWebviewPanelId == 'markdown.preview'"
         }
       ]
     },

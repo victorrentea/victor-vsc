@@ -46,28 +46,26 @@ if dirty:
     open(bundle, 'w', encoding='utf8').write(src)
     for d in dirty: print('  ', d)
 
-# butoanele de markdown, înapoi pe ordinul din fabrică (vezi 3e din apply.sh).
+# butoanele de markdown, înapoi în bara de titlu (vezi 3e din apply.sh). Sunt
+# păstrate ca atare în manifest, deci le punem exact cum erau, fără să presupunem
+# nimic despre `when`-urile lor. Lipsa cheii înseamnă că n-au fost scoase — sau că
+# un update de VS Code a rescris deja manifestul.
 md_manifest = os.path.join(res, 'extensions/markdown-language-features/package.json')
-MD_NAV = {
-    'markdown.showPreviewToSide': 'navigation@1',
-    'markdown.reopenAsPreview':   'navigation@2',
-    'markdown.showSource':        'navigation@2',
-    'markdown.reopenAsSource':    'navigation@2',
-}
 if os.path.isfile(md_manifest):
     man = json.load(open(md_manifest, encoding='utf8'))
-    items = man.get('contributes', {}).get('menus', {}).get('editor/title', [])
-    if any(it.get('group') != MD_NAV[it['command']] for it in items if it.get('command') in MD_NAV):
-        for it in items:
-            if it.get('command') in MD_NAV:
-                it['group'] = MD_NAV[it['command']]
+    saved = man.pop('_victorMarkdownTitleItems', None)
+    if saved:
+        menus = man.setdefault('contributes', {}).setdefault('menus', {})
+        items = menus.get('editor/title', [])
+        have = {it.get('command') for it in items}
+        menus['editor/title'] = [it for it in saved if it.get('command') not in have] + items
         json.dump(man, open(md_manifest, 'w', encoding='utf8'), indent='\t')
         os.utime(os.path.dirname(md_manifest))
         import glob as _glob
         for c in _glob.glob(os.path.expanduser(
                 '~/Library/Application Support/Code*/Cached*/**/builtin'), recursive=True):
             os.remove(c)
-        print('   butoane markdown: înapoi pe navigation@1/@2')
+        print('   butoane markdown: puse la loc în bara de titlu')
 
 pj   = os.path.join(res, 'product.json')
 prod = json.load(open(pj, encoding='utf8'))
