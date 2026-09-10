@@ -45,6 +45,13 @@ const MAIN_PROCESS_SETTINGS = {
 };
 
 function enforceMainProcessSettings() {
+  // Un settings.json cu modificări nesalvate nu poate fi scris de API, și fiecare
+  // fereastră nou deschisă mai încerca — de unde „Failed to save 'settings.json':
+  // The content of the file is newer" peste un fișier pe care nu l-am deschis noi.
+  // Valorile se impun oricum la următoarea activare, deci amânarea nu costă nimic.
+  const dirty = vscode.workspace.textDocuments.some(
+    d => d.isDirty && /[\\/]User[\\/]settings\.json$/.test(d.uri.fsPath));
+  if (dirty) return;
   const config = vscode.workspace.getConfiguration();
   for (const [key, value] of Object.entries(MAIN_PROCESS_SETTINGS)) {
     if (config.inspect(key)?.globalValue !== value) {

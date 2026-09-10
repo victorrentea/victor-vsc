@@ -91,6 +91,7 @@ async function settle(probe, tries = 40) {
 }
 
 const allTabs = () => vscode.window.tabGroups.all.flatMap(g => g.tabs);
+const columnOf = tab => vscode.window.tabGroups.all.find(g => g.tabs.includes(tab))?.viewColumn;
 const stillOpen = tab => allTabs().includes(tab);
 
 /**
@@ -113,6 +114,28 @@ function previewUri(tab) {
   const uri = previewUris.get(tab);
   if (!uri) return undefined;
   return tab.label.endsWith(path.basename(uri.fsPath)) ? uri : undefined;
+}
+
+/**
+ * A doua evidență a acelorași surse, ținută după NUMELE de pe tab. Identitatea
+ * unui tab de preview se pierde de două ori în viața normală a unei ferestre: la
+ * unirea a două grupuri (VS Code închide și redeschide tab-urile mutate) și la
+ * restaurarea sesiunii. Fără evidența asta, „înapoi pe text" cădea pe comanda
+ * Markdown-ului, care redeschide sursa în coloana ORIGINALĂ a panoului — adică
+ * învia grupul pe care tocmai îl închiseseși.
+ *
+ * Un nume purtat de două fișiere randate simultan se retrage din registru
+ * (`null`): mai bine „nu știu" decât sursa celuilalt fișier.
+ */
+const previewByLabel = new Map();
+const labelName = label => String(label).replace(/^\[?Preview\]?\s*/, '').trim();
+
+function rememberPreview(label, uri) {
+  const name = labelName(label);
+  if (!name) return;
+  const known = previewByLabel.get(name);
+  if (known === undefined) previewByLabel.set(name, uri);
+  else if (known === null || String(known) !== String(uri)) previewByLabel.set(name, null);
 }
 
 /** `{ type, rendered, uri }` pentru un tab pe care îl putem comuta, altfel undefined. */
@@ -219,6 +242,7 @@ async function closeTab(tab, column) {
 // mai jos ar reintra în conversie la fiecare tab rescris.
 let applying = false;
 
+
 async function convert(t, rendered) {
   if (t.rendered === rendered) return;
   // Un preview a cărui sursă am uitat-o (după un reload de fereastră harta e
@@ -253,6 +277,7 @@ async function convert(t, rendered) {
     || await settle(() => activeWebviewTab(), 10);
   if (preview) {
     previewUris.set(preview, t.uri);
+    rememberPreview(preview.label, t.uri);
     // Un preview deblocat e refolosit pentru următorul .md deschis — adică al
     // doilea Markdown randat l-ar fura pe primul. Blocat, fiecare fișier își
     // ține panoul lui. (`[Preview] x.md` = blocat, `Preview x.md` = nu.)
@@ -264,20 +289,63 @@ async function convert(t, rendered) {
   await closeTab(t.tab, t.column);
 }
 
+/** Fișierul din spatele unei etichete `Preview x.md` / `[Preview] x.md`.
+ *
+ *  După un reload de fereastră harta tab → fișier e goală, iar panourile
+ *  restaurate n-au altă urmă a sursei lor decât eticheta. Căutăm fișierul în
+ *  workspace și îl acceptăm numai dacă numele e neambiguu — mai bine „nu știu"
+ *  decât sursa altui fișier cu același nume.
+ */
+async function uriFromLabel(label) {
+  const name = labelName(label);
+  if (!name || !typeForUri(vscode.Uri.file(name))) return undefined;
+  const known = previewByLabel.get(name);
+  if (known) return known;
+  if (known === null) return undefined;                  // nume ambiguu, vezi mai sus
+  const hits = await vscode.workspace.findFiles(`**/${name}`, '**/node_modules/**', 2);
+  return hits.length === 1 ? hits[0] : undefined;
+}
+
 /**
- * Preview → sursă. Comanda proprie a Markdown-ului știe ce fișier arată panoul,
- * și o știe și după un reload de fereastră, când harta noastră s-a golit — deci
- * o preferăm hărții. Rămâne pe ea doar dacă panoul nu poate fi adus în față.
+ * Preview → sursă. Preferăm calea prin fișier, fiindcă nu mișcă focusul: aducem
+ * sursa în grupul panoului și închidem panoul. Dacă nu știm fișierul (reload),
+ * îl deducem din etichetă, iar ca ultimă soluție lăsăm comanda proprie a
+ * Markdown-ului să-l spună ea.
+ *
+ * Regula care leagă totul: panoul se închide DOAR după ce sursa lui e sigur
+ * deschisă. Un preview restaurat prost („An unexpected error occurred while
+ * restoring the Markdown preview") nu răspunde la `markdown.showSource`, și
+ * atunci închiderea lui necondiționată ștergea tab-ul cu totul — fișierul
+ * dispărea din editor la o simplă apăsare de buton.
  */
 async function unrender(t) {
-  if (await activateTab(t.tab)) {
-    await vscode.commands.executeCommand('markdown.showSource');
-    await settle(() => !stillOpen(t.tab) || !isMarkdownPreview(activeTab()?.input));
-    await closeTab(t.tab, t.column);
+  const uri = t.uri || await uriFromLabel(t.tab.label);
+  if (uri) {
+    await vscode.window.showTextDocument(uri, { viewColumn: t.column, preview: false });
+    if (await settle(() => allTabs().some(tab => tab.input instanceof vscode.TabInputText
+      && sameFile(tab, uri)))) {
+      await closeTab(t.tab, t.column);
+    }
     return;
   }
-  if (!t.uri) return;
-  await vscode.window.showTextDocument(t.uri, { viewColumn: t.column, preview: false });
+  // Nu știm ce fișier arată panoul. Folosim comanda Markdown-ului ca ORACOL — ea
+  // știe — și abia după ce am aflat fișierul facem lucrul normal. Nu o lăsăm să
+  // facă ea deschiderea, fiindcă redeschide sursa în coloana ORIGINALĂ a
+  // panoului: dacă grupul acela a fost închis între timp, îl învie.
+  if (!await activateTab(t.tab)) return;
+  const wanted = labelName(t.tab.label);
+  try { await vscode.commands.executeCommand('markdown.showSource'); } catch (_) { return; }
+  const shown = await settle(() => {
+    const tab = activeTab();
+    return tab && tab.input instanceof vscode.TabInputText && tab.label === wanted ? tab : undefined;
+  });
+  if (!shown) return;
+  rememberPreview(t.tab.label, shown.input.uri);
+  if (columnOf(shown) !== t.column) {
+    const stray = shown;
+    await vscode.window.showTextDocument(stray.input.uri, { viewColumn: t.column, preview: false });
+    await closeTab(stray, columnOf(stray));
+  }
   await closeTab(t.tab, t.column);
 }
 
@@ -331,6 +399,7 @@ async function guarded(fn) {
   if (applying) return;
   applying = true;
   try { await fn(); } finally { applying = false; }
+  drain().catch(() => { /* tab închis între timp */ });   // ce s-a adunat între timp
 }
 
 /* ---------------------------------------------------------------- comenzile */
@@ -358,36 +427,55 @@ function toggleTo(rendered) {
  * Fișierele deschise după ce modul a fost ales se aliniază singure — și în ambele
  * sensuri, fiindcă Draw.io pornește randat din oficiu, deci „text" chiar are ce
  * converti. Se ating DOAR tab-urile nou apărute: restul rămân cum sunt, ca
- * deschiderea unui al doilea fișier să nu rescrie primul. Sunt tratate toate, nu
- * doar primul: la restaurarea unei sesiuni toate tab-urile sosesc într-un singur
- * eveniment, iar celelalte rămâneau altfel în modul greșit.
+ * deschiderea unui al doilea fișier să nu rescrie primul.
+ *
+ * Tab-urile trec printr-o coadă, nu direct în conversie, fiindcă o conversie
+ * ține câteva sute de milisecunde și în timpul ei soseau alte evenimente — care
+ * erau pur și simplu ignorate. O rafală de click-uri în Explorer (sau o sesiune
+ * restaurată cu mai multe tab-uri) lăsa atunci ultimul fișier în modul greșit,
+ * fără să se mai corecteze niciodată. Acum așteaptă la rând.
  */
+const pending = new Set();
+
+let draining = false;
+async function drain() {
+  if (applying || draining) return;
+  draining = true;
+  try {
+    while (pending.size) {
+      const tab = pending.values().next().value;
+      pending.delete(tab);
+      if (!stillOpen(tab)) continue;
+      const info = classify(tab);
+      if (!info || !info.uri || info.rendered === isRendered(info.type)) continue;
+      const column = vscode.window.tabGroups.all.find(g => g.tabs.includes(tab))?.viewColumn;
+      applying = true;
+      try { await convert({ ...info, tab, column }, isRendered(info.type)); }
+      catch (_) { /* tab închis între timp */ }
+      finally { applying = false; }
+    }
+  } finally { draining = false; }
+}
+
 function watchNewTabs() {
   return vscode.window.tabGroups.onDidChangeTabs(e => {
-    for (const tab of e.closed) previewUris.delete(tab);
+    for (const tab of e.closed) { previewUris.delete(tab); pending.delete(tab); }
 
     // Un preview deschis de mână (⌘K V) nu se contrazice — doar îl înregistrăm,
     // ca butonul să știe ce sursă să aducă înapoi din el.
     for (const tab of e.opened) {
       if (!isMarkdownPreview(tab.input) || previewUris.has(tab)) continue;
       const src = vscode.window.activeTextEditor?.document.uri;
-      if (src && typeForUri(src) === MARKDOWN) previewUris.set(tab, src);
+      if (src && typeForUri(src) === MARKDOWN) {
+        previewUris.set(tab, src);
+        rememberPreview(tab.label, src);
+      }
     }
 
-    if (applying) return;
-    const fresh = [...new Set([...e.opened, ...e.changed])]
-      .filter(tab => !isMarkdownPreview(tab.input))   // vezi mai sus: nu-l contrazicem
-      .map(tab => ({ info: classify(tab), tab }))
-      .filter(({ info }) => info && info.uri && info.rendered !== isRendered(info.type));
-    if (!fresh.length) return;
-
-    guarded(async () => {
-      for (const { info, tab } of fresh) {
-        if (!stillOpen(tab)) continue;
-        const column = vscode.window.tabGroups.all.find(g => g.tabs.includes(tab))?.viewColumn;
-        await convert({ ...info, tab, column }, isRendered(info.type));
-      }
-    }).catch(() => { /* tab închis între timp */ });
+    for (const tab of [...e.opened, ...e.changed]) {
+      if (!isMarkdownPreview(tab.input)) pending.add(tab);   // vezi mai sus: nu-l contrazicem
+    }
+    drain().catch(() => { /* tab închis între timp */ });
   });
 }
 
