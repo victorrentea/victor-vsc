@@ -200,9 +200,12 @@ else:
 #     pe `Iterable.map`, adică pe lista plată din fabrică.
 #     Numele minificate se schimbă la fiecare release, deci ancora e forma
 #     expresiei — element + incompressible + children —, nu numele.
+#     Numele minificate pot fi și `$` sau `$e` — `\w` NU le prinde (aceeași
+#     capcană ca la title bar pe 1.137.0), deci identificatorul se scrie cu ID.
+ID = r'[A-Za-z_$][A-Za-z0-9_$]*'
 NEST = re.compile(
-    r'(\w+)=(\w+)\.map\((\w+),(\w+)=>\(\{element:(\w+)\.getOrCreate\(\4,\(\)=>new (\w+)'
-    r'\((\w+),\4,(\w+)\)\),incompressible:!0,children:(\w+)\(\7,\4,\8\)\}\)\)')
+    r'({0})=({0})\.map\(({0}),({0})=>\(\{{element:({0})\.getOrCreate\(\4,\(\)=>new ({0})'
+    r'\(({0}),\4,({0})\)\),incompressible:!0,children:({0})\(\7,\4,\8\)\}}\)\)'.format(ID))
 if '__victorNestTestResults' in src_js:
     pass                       # deja aplicat (bundle nerescris de un update)
 else:

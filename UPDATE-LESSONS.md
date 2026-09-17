@@ -4,6 +4,44 @@ Procedura e în [`VSCODE-UPDATE.md`](VSCODE-UPDATE.md). Aici stă doar ce s-a
 învățat *rulând-o* — capcanele care au costat timp, ca să nu se plătească de
 două ori. Câte o secțiune per update.
 
+## 1.137.0 → 1.138.0 (15 sep 2026) — update dat pe lângă buton, descoperit după 2 zile
+
+Update-ul **nu** a venit din „Update with AI": în `globalStorage` nu există
+niciun `pending-update-patch.json`, iar ultima linie din `update-patch.log` e
+tot cea din 10 sep. Fără marker armat, `update-patch.js` nu are ce consuma la
+activare — funcționează exact cum e proiectat, doar că atunci nimeni nu reaplică
+nimic. Bundle-ul s-a rescris pe 15 sep la 10:51, iar lipsa s-a observat abia pe
+17 sep, când Victor a spus „am pierdut customizările".
+
+Deci: **un update dat din butonul albastru (sau automat) lasă patch-ul mort, în
+tăcere, pe termen nelimitat.** Singurul semnal e UI-ul întors din fabrică.
+Extensia (`.vsix`) era neatinsă, ca de obicei — 0.0.101, aceeași ca în repo.
+
+### Iar ancora ruptă a fost tot un `$`
+
+`apply.sh` a reaplicat tot, cu un singur „ATENȚIE": lista din Test Results.
+Expresia din fabrică arată acum așa (numele minificate, `$` printre ele):
+
+```js
+se=Dt.map($,le=>({element:U.getOrCreate(le,()=>new ete(F,le,W)),incompressible:!0,children:v(F,le,W)}))
+```
+
+Forma e **neschimbată** față de 1.137 — element + `incompressible:!0` + children.
+A picat doar fiindcă unul din numele generate de terser e literalmente `$`, iar
+ancora scria `(\w+)` pentru fiecare identificator. Aceeași capcană ca la title
+bar pe 1.137.0, la trei rânduri distanță de un comentariu care o explica.
+
+Morala, aplicată acum în cod: în `apply.sh` numele minificate nu se mai scriu cu
+`\w`. Există o constantă, folosită de ancorele care citesc identificatori:
+
+```python
+ID = r'[A-Za-z_$][A-Za-z0-9_$]*'
+```
+
+Când scrii o ancoră nouă peste bundle, pornește de la ea. `\w` pare că merge
+pentru că **de obicei** merge — terser scoate `$` abia când rămâne fără litere
+scurte, adică exact la release-ul următor.
+
 ## 1.136.1 → 1.137.0 (10 sep 2026) — o singură ancoră ruptă, din două motive deodată
 
 Update-ul a venit tot din butonul „Update with AI". Lanțul a mers până la capăt:
