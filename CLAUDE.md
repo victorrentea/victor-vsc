@@ -50,7 +50,8 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `COLORS.md` | de ce sunt culorile alea — `package.json` e JSON strict, n-are comentarii |
 | `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
 | `puml.js` | randare PlantUML: editorul custom care desenează diagrama |
-| `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului: unul singur, comută TAB-UL DIN FAȚĂ (Markdown / PlantUML / Draw.io). Forma aleasă ultima oară rămâne implicita per tip, pentru fișierele deschise de atunci încolo |
+| `openapi.js` | randare OpenAPI: Swagger UI ca editor custom peste `openapi.yaml`/`.json`, în ACELAȘI tab. Recunoaște fișierul după conținut (`openapi:`/`swagger:`), nu după extensie, și ridică cheia de context `victorVsc.openapiFile` pentru butonul ⇄. Assets-urile (Swagger UI, js-yaml) sunt vendorate în `media/` |
+| `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului: unul singur, comută TAB-UL DIN FAȚĂ (Markdown / PlantUML / OpenAPI / Draw.io). Forma aleasă ultima oară rămâne implicita per tip, pentru fișierele deschise de atunci încolo |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
