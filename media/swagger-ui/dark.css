@@ -1,0 +1,142 @@
+/* Swagger UI e alb prin construcție: foaia lui pune culori fixe pe fiecare
+   suprafață, nu variabile. Preview-ul de la 42Crunch era întunecat, deci pe o
+   temă închisă un panou alb s-ar citi ca o regresie, nu ca o mutare a aceleiași
+   randări în tab.
+
+   Deci: o foaie de deasupra, legată de variabilele temei din VS Code, activă
+   doar când webview-ul e pe `vscode-dark` / `vscode-high-contrast` (clasa o pune
+   VS Code pe `body`). Pe temă deschisă nu se aplică nimic, iar Swagger UI rămâne
+   exact cum arată în orice browser.
+
+   Ce NU se atinge: culorile metodelor (GET/POST/DELETE) și codurile de răspuns.
+   Ele sunt semantice — de-aia se recunosc dintr-o privire — deci rămân ale lui
+   Swagger UI, doar pe fundal întunecat. */
+
+body.vscode-dark,
+body.vscode-high-contrast {
+  background: var(--vscode-editor-background);
+}
+
+body.vscode-dark .swagger-ui,
+body.vscode-high-contrast .swagger-ui {
+  color: var(--vscode-editor-foreground);
+}
+
+/* Textul: Swagger UI îl pune pe zeci de selectoare, fiecare cu propriul gri. */
+body.vscode-dark .swagger-ui .info .title,
+body.vscode-dark .swagger-ui .info li,
+body.vscode-dark .swagger-ui .info p,
+body.vscode-dark .swagger-ui .info table,
+body.vscode-dark .swagger-ui .opblock-tag,
+body.vscode-dark .swagger-ui .opblock .opblock-summary-operation-id,
+body.vscode-dark .swagger-ui .opblock .opblock-summary-path,
+body.vscode-dark .swagger-ui .opblock .opblock-summary-path__deprecated,
+body.vscode-dark .swagger-ui .opblock .opblock-summary-description,
+body.vscode-dark .swagger-ui .opblock-description-wrapper p,
+body.vscode-dark .swagger-ui .opblock-external-docs-wrapper p,
+body.vscode-dark .swagger-ui .opblock-title_normal p,
+body.vscode-dark .swagger-ui .opblock-section-header h4,
+body.vscode-dark .swagger-ui .opblock-section-header > label,
+body.vscode-dark .swagger-ui .tab li,
+body.vscode-dark .swagger-ui .parameter__name,
+body.vscode-dark .swagger-ui .parameter__type,
+body.vscode-dark .swagger-ui .parameter__extension,
+body.vscode-dark .swagger-ui .parameter__in,
+body.vscode-dark .swagger-ui .response-col_status,
+body.vscode-dark .swagger-ui .response-col_links,
+body.vscode-dark .swagger-ui table thead tr td,
+body.vscode-dark .swagger-ui table thead tr th,
+body.vscode-dark .swagger-ui .responses-inner h4,
+body.vscode-dark .swagger-ui .responses-inner h5,
+body.vscode-dark .swagger-ui .markdown p,
+body.vscode-dark .swagger-ui .markdown li,
+body.vscode-dark .swagger-ui .renderedMarkdown p,
+body.vscode-dark .swagger-ui .model-title,
+body.vscode-dark .swagger-ui .model,
+body.vscode-dark .swagger-ui section.models h4,
+body.vscode-dark .swagger-ui .scheme-container .schemes > label,
+body.vscode-dark .swagger-ui .servers > label,
+body.vscode-dark .swagger-ui .btn,
+body.vscode-dark .swagger-ui label,
+body.vscode-dark .swagger-ui h1,
+body.vscode-dark .swagger-ui h2,
+body.vscode-dark .swagger-ui h3,
+body.vscode-dark .swagger-ui h4,
+body.vscode-dark .swagger-ui h5 {
+  color: var(--vscode-editor-foreground);
+}
+
+body.vscode-dark .swagger-ui a,
+body.vscode-dark .swagger-ui .info a,
+body.vscode-dark .swagger-ui .info a:hover {
+  color: var(--vscode-textLink-foreground);
+}
+
+/* Suprafețele: bara de servere, corpul operațiilor, modelele. */
+body.vscode-dark .swagger-ui .scheme-container,
+body.vscode-dark .swagger-ui section.models,
+body.vscode-dark .swagger-ui .model-box,
+body.vscode-dark .swagger-ui .opblock .opblock-section-header,
+body.vscode-dark .swagger-ui .responses-inner,
+body.vscode-dark .swagger-ui .dialog-ux .modal-ux {
+  background: var(--vscode-editorWidget-background);
+  border-color: var(--vscode-editorWidget-border, var(--vscode-panel-border));
+  box-shadow: none;
+}
+
+body.vscode-dark .swagger-ui .opblock {
+  background: var(--vscode-editorWidget-background);
+}
+
+body.vscode-dark .swagger-ui section.models .model-container,
+body.vscode-dark .swagger-ui .opblock-tag,
+body.vscode-dark .swagger-ui .opblock .opblock-summary,
+body.vscode-dark .swagger-ui table tbody tr td,
+body.vscode-dark .swagger-ui .parameters-col_description,
+body.vscode-dark .swagger-ui .tab li,
+body.vscode-dark .swagger-ui hr {
+  border-color: var(--vscode-panel-border);
+}
+
+body.vscode-dark .swagger-ui section.models .model-container {
+  background: transparent;
+}
+
+/* Blocurile de cod: fundalul lor propriu e aproape negru, deci pe temă închisă
+   se pierde în pagină — îl legăm de cel al editorului. */
+body.vscode-dark .swagger-ui .highlight-code > .microlight,
+body.vscode-dark .swagger-ui .microlight,
+body.vscode-dark .swagger-ui .body-param__example,
+body.vscode-dark .swagger-ui textarea.curl {
+  background: var(--vscode-textCodeBlock-background) !important;
+  color: var(--vscode-editor-foreground) !important;
+}
+
+/* Câmpurile: altfel rămân albe, cu text alb pe ele. */
+body.vscode-dark .swagger-ui input[type=text],
+body.vscode-dark .swagger-ui input[type=password],
+body.vscode-dark .swagger-ui input[type=search],
+body.vscode-dark .swagger-ui input[type=email],
+body.vscode-dark .swagger-ui input[type=file],
+body.vscode-dark .swagger-ui textarea,
+body.vscode-dark .swagger-ui select {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border-color: var(--vscode-input-border, var(--vscode-panel-border));
+}
+
+body.vscode-dark .swagger-ui .btn {
+  background: var(--vscode-button-secondaryBackground, transparent);
+  border-color: var(--vscode-panel-border);
+}
+
+body.vscode-dark .swagger-ui .btn.execute {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+/* Săgețile de deschidere/închidere sunt SVG-uri cu `fill` negru. */
+body.vscode-dark .swagger-ui svg:not(:root) {
+  fill: currentColor;
+}

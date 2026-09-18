@@ -239,6 +239,19 @@
   display: none !important;
 }
 
+/* Exact aceeași poveste cu 42crunch.vscode-openapi: „OpenAPI: show preview using
+   the default renderer" deschide spec-ul într-un webview panel în split — alt
+   tab, altă identitate, fără legătură cu fișierul. Butonul nostru ⇄ îl randează
+   în ACELAȘI tab, prin custom editor-ul din `openapi.js`, deci al lor rămâne un
+   dublur care face altceva decât pare.
+   Regula are aceeași formă ca cea de mai sus, din același motiv (`:has()` pe
+   `.action-label`, `^=` fiindcă la coadă se lipește keybinding-ul), și se rupe
+   la fel de vizibil dacă 42Crunch își redenumește vreodată comanda: butonul
+   reapare, nu dispare altceva în tăcere. */
+.editor-actions .action-item:has(> .action-label[aria-label^="OpenAPI: show preview"]) {
+  display: none !important;
+}
+
 /* „Nu mai tasta acolo" — vezi blocul cu același nume din workbench.js.
    Două straturi: `.victor-typing-overlay` ține doar opacitatea de ansamblu
    (aprindere scurtă, stingere lungă, prin `transition`), iar `.victor-typing-ring`

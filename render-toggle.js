@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
 const puml = require('./puml');
+const openapi = require('./openapi');
 
 /**
  * UN SINGUR buton, mereu în același loc din bara de titlu: comută TAB-UL DIN FAȚĂ
@@ -55,6 +56,16 @@ const TYPES = [
     fallback: 'text',
   },
   {
+    // Singurul tip care nu se recunoaște după nume: un `.yaml` sau `.json` e
+    // OpenAPI doar dacă are cheia de versiune înăuntru. De-aia `match` — fără
+    // ea, butonul ⇄ ar apărea peste orice fișier de configurare din proiect.
+    id: 'openapi',
+    exts: ['.yaml', '.yml', '.json'],
+    match: uri => openapi.looksLikeOpenapi(uri),
+    viewType: () => openapi.VIEW_TYPE,
+    fallback: 'text',
+  },
+  {
     // Draw.io deschide din oficiu editorul grafic, nu XML-ul — deci pentru el
     // „nimic ales încă" înseamnă randat, altfel prima deschidere l-ar contrazice.
     id: 'drawio',
@@ -69,7 +80,7 @@ const MARKDOWN = TYPES[0];
 function typeForUri(uri) {
   if (!uri || uri.scheme !== 'file') return undefined;
   const name = path.basename(uri.fsPath).toLowerCase();
-  return TYPES.find(t => t.exts.some(e => name.endsWith(e)));
+  return TYPES.find(t => t.exts.some(e => name.endsWith(e)) && (!t.match || t.match(uri)));
 }
 
 /* -------------------------------------------------------------------- mode */
@@ -295,6 +306,39 @@ function watchNewTabs() {
   });
 }
 
+/* ------------------------------------------ cheia de context pentru meniu */
+
+/**
+ * `when`-ul unei intrări de meniu nu poate citi conținutul unui fișier, iar
+ * OpenAPI e singurul tip de aici care nu se vede din nume. Deci ridicăm noi o
+ * cheie de context pentru documentul din față. Pe forma randată nu mai există
+ * `activeTextEditor`, dar acolo butonul e ținut de `activeCustomEditorId`.
+ *
+ * Un `.yaml` devine OpenAPI în timp ce scrii, deci cheia se reface și la tastat
+ * — cu răgaz, și doar pentru documentul activ. `last` există ca `setContext` să
+ * nu plece la fiecare literă: valoarea se schimbă o dată la o mie de tastări.
+ */
+let last = null;
+function refreshContext() {
+  const uri = vscode.window.activeTextEditor?.document.uri;
+  const on = !!uri && openapi.looksLikeOpenapi(uri);
+  if (on === last) return;
+  last = on;
+  vscode.commands.executeCommand('setContext', 'victorVsc.openapiFile', on);
+}
+
+function watchContext() {
+  let timer;
+  const soon = () => { clearTimeout(timer); timer = setTimeout(refreshContext, 400); };
+  return [
+    vscode.window.onDidChangeActiveTextEditor(refreshContext),
+    vscode.workspace.onDidChangeTextDocument(e => {
+      if (e.document === vscode.window.activeTextEditor?.document) soon();
+    }),
+    { dispose: () => clearTimeout(timer) },
+  ];
+}
+
 function register(context) {
   store = context.globalState;
   // Cheia pe care extensia de Markdown o consultă ca să-și ascundă butoanele de
@@ -304,8 +348,10 @@ function register(context) {
   vscode.commands.executeCommand('setContext', 'hasCustomMarkdownPreview', true);
   context.subscriptions.push(
     watchNewTabs(),
+    ...watchContext(),
     vscode.commands.registerCommand('victor-vsc.toggleRender', toggleRender()),
   );
+  refreshContext();
 }
 
 module.exports = { register };

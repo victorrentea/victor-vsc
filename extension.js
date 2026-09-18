@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const puml = require('./puml');
+const openapi = require('./openapi');
 const renderToggle = require('./render-toggle');
 const relayTerminal = require('./relay-terminal');
 const uriHandler = require('./uri-handler');
@@ -240,6 +241,8 @@ function activate(context) {
   );
   // PlantUML: editorul custom care desenează diagrama.
   puml.register(context);
+  // OpenAPI: Swagger UI în același tab, nu în panou lateral.
+  openapi.register(context);
   // Butonul din colț: text ⇄ randat, cu modul ținut minte pe fiecare tip de fișier.
   renderToggle.register(context);
 
