@@ -121,31 +121,63 @@ function register(context) {
 }
 
 async function consume(markerFile, storage) {
+  const build = currentBuild();
+  const marker = claimMarker(markerFile, build);
+  if (marker) return reapply(storage, marker.version, build);
+
+  // Fără marker: update-ul n-a trecut prin buton. S-a întâmplat de două ori într-o
+  // săptămână (1.138 și 1.139, vezi UPDATE-LESSONS.md): VS Code descarcă singur,
+  // iar pe macOS un update „ready" se instalează la quit, fără niciun click. Semnul
+  // e același indiferent pe unde a venit update-ul: injecția lipsește din
+  // workbench.html. Deci îl reaplic și atunci.
+  if (!vscode.workspace.getConfiguration('victorVsc').get('autoReapplyPatch')) return;
+  if (patchApplied()) return;
+
+  // O singură încercare per build, și un singur câștigător dintre ferestrele care
+  // pornesc deodată: fișierul poartă commit-ul în nume, iar `wx` îl creează atomic
+  // doar dacă nu există. Asta ține și bucla departe: dacă apply.sh n-a ieșit curat
+  // și a pornit Claude, nu-l mai pornim la fiecare fereastră deschisă după aceea.
+  // Iar un restore.sh dat intenționat pe același build rămâne în picioare.
+  const tried = path.join(storage, `auto-reapply-${build.commit || build.version}.done`);
+  try { fs.writeFileSync(tried, new Date().toISOString(), { flag: 'wx' }); } catch { return; }
+  for (const f of fs.readdirSync(storage)) {
+    if (/^auto-reapply-.*\.done$/.test(f) && path.join(storage, f) !== tried) {
+      fs.rmSync(path.join(storage, f), { force: true });
+    }
+  }
+  return reapply(storage, 'versiunea anterioară', build);
+}
+
+// Marker-ul armat de „Update with AI", luat cu `rename` ca să-l consume o singură
+// fereastră. null când nu e nimic de consumat.
+function claimMarker(markerFile, build) {
   let marker;
-  try { marker = JSON.parse(fs.readFileSync(markerFile, 'utf8')); } catch { return; }
+  try { marker = JSON.parse(fs.readFileSync(markerFile, 'utf8')); } catch { return null; }
 
   if (Date.now() - Date.parse(marker.armedAt || 0) > MARKER_TTL_MS) {
     fs.rmSync(markerFile, { force: true });
-    return;
+    return null;
   }
 
-  const build = currentBuild();
   // Același build → update-ul n-a avut loc încă (Victor a amânat repornirea, sau
   // asta e a doua fereastră deschisă între timp). Marker-ul rămâne armat.
-  if (build.commit && build.commit === marker.commit) return;
-  if (!build.commit && build.version === marker.version) return;
+  if (build.commit && build.commit === marker.commit) return null;
+  if (!build.commit && build.version === marker.version) return null;
 
   // La pornire se activează TOATE ferestrele deodată, fiecare cu extension host-ul
   // ei, iar două `apply.sh` care rescriu în paralel `workbench.desktop.main.js` ar
   // strica bundle-ul. `rename` e atomic pe APFS, deci marker-ul e și fișier de
   // stare, și lacăt: câștigă o singură fereastră, celelalte iau ENOENT și tac.
   const claimed = `${markerFile}.claimed`;
-  try { fs.renameSync(markerFile, claimed); } catch { return; }
-  if (patchApplied()) { fs.rmSync(claimed, { force: true }); return; }
+  try { fs.renameSync(markerFile, claimed); } catch { return null; }
+  fs.rmSync(claimed, { force: true });
+  if (patchApplied()) return null;
+  return marker;
+}
 
+async function reapply(storage, fromVersion, build) {
   const repo = repoDir();
   if (!repo) {
-    fs.rmSync(claimed, { force: true });
     vscode.window.showErrorMessage(
       'Update with AI: nu găsesc vscode-patch/apply.sh — setează `victorVsc.repoPath`.');
     return;
@@ -153,16 +185,15 @@ async function consume(markerFile, storage) {
 
   const apply = path.join(repo, 'vscode-patch', 'apply.sh');
   const { code, out } = await run('/bin/bash', [apply], { cwd: repo });
-  fs.rmSync(claimed, { force: true });
   fs.writeFileSync(path.join(storage, LOG),
-    `${new Date().toISOString()}  ${marker.version} → ${build.version}  exit=${code}\n${out}\n`);
+    `${new Date().toISOString()}  ${fromVersion} → ${build.version}  exit=${code}\n${out}\n`);
 
   // apply.sh nu iese cu cod de eroare când o ancoră nu mai prinde: scrie
   // „ATENȚIE" și lasă valoarea din fabrică (vezi VSCODE-UPDATE.md). Deci semnalul
   // e textul, nu codul de ieșire — și exact ăsta e cazul care cere AI.
   const warnings = out.split('\n').filter(l => l.includes('ATENȚIE'));
   if (code !== 0 || warnings.length) {
-    await handOffToClaude(repo, storage, marker, build, code, out, warnings);
+    await handOffToClaude(repo, storage, fromVersion, build, code, out, warnings);
     return;
   }
 
@@ -172,10 +203,10 @@ async function consume(markerFile, storage) {
 // Ancorele din apply.sh sunt nume minificați și forme de expresie care se schimbă
 // la fiecare release — repararea lor e citit de bundle, adică fix ce face Claude
 // mai bine decât un script. De-aia butonul se cheamă „with AI", nu „and repatch".
-async function handOffToClaude(repo, storage, marker, build, code, out, warnings) {
+async function handOffToClaude(repo, storage, fromVersion, build, code, out, warnings) {
   const promptFile = path.join(storage, PROMPT);
   fs.writeFileSync(promptFile, [
-    `VS Code s-a actualizat de la ${marker.version} la ${build.version} (commit ${build.commit || '?'}).`,
+    `VS Code s-a actualizat de la ${fromVersion} la ${build.version} (commit ${build.commit || '?'}).`,
     `Am rulat ${path.join(repo, 'vscode-patch/apply.sh')} și nu a ieșit curat (exit=${code}):`,
     '',
     (warnings.join('\n') || out.trim().split('\n').slice(-20).join('\n')),
@@ -186,7 +217,7 @@ async function handOffToClaude(repo, storage, marker, build, code, out, warnings
     '',
     'Apoi rulează din nou ./vscode-patch/apply.sh până iese fără „ATENȚIE", repornește',
     `aplicația (⌘Q + open -a), adaugă o secțiune nouă în UPDATE-LESSONS.md pentru`,
-    `${marker.version} → ${build.version} și fă commit + push.`,
+    `${fromVersion} → ${build.version} și fă commit + push.`,
   ].join('\n'));
 
   const terminal = vscode.window.createTerminal({

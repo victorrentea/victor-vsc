@@ -89,3 +89,5 @@ if [[ -f "$ICON_DST.orig" ]]; then
 fi
 
 echo "Gata. Reload Window din paleta de comenzi (⌘R e legat doar în build-urile de development)."
+echo "Atenție: extensia reaplică singură patch-ul la pornire când lipsește. Ca să rămână scos:"
+echo '   "victorVsc.autoReapplyPatch": false   în settings.json' 

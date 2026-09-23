@@ -27,6 +27,10 @@ depinde de un marker armat *înainte* de update, orice update care nu trece prin
 buton (descărcat automat și instalat la quit) lasă patch-ul mort până îl observă
 cineva.
 
+Reparat după asta (0.0.103): la pornire, extensia verifică direct dacă injecția
+e în `workbench.html` și rulează `apply.sh` când lipsește, cu sau fără marker —
+o dată per build. Marker-ul rămâne doar ca să știe versiunea de plecare.
+
 ## 1.137.0 → 1.138.0 (15 sep 2026) — update dat pe lângă buton, descoperit după 2 zile
 
 Update-ul **nu** a venit din „Update with AI": în `globalStorage` nu există

@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.102",
+  "version": "0.0.103",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -388,6 +388,11 @@
           "type": "string",
           "default": "~/workspace/victor-vsc",
           "description": "Checkout-ul acestei extensii, de unde se rulează vscode-patch/apply.sh după un update de VS Code. Reparațiile de ancore trebuie să ajungă în git, nu în copia instalată din ~/.vscode/extensions."
+        },
+        "victorVsc.autoReapplyPatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "La pornire, dacă patch-ul din vscode-patch/ lipsește din VS Code (un update venit pe lângă „Update with AI\", de ex. instalat la quit), rulează singur apply.sh — o dată per build. Pune false dacă ai dat restore.sh și vrei să rămână scos."
         },
         "victorVsc.restartAfterUpdatePatch": {
           "type": "boolean",

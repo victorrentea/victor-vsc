@@ -37,6 +37,20 @@ Ce se întâmplă când îl apeși:
    ca să repare ancorele. Ăsta e „with AI"-ul din nume — reparatul ancorelor e
    citit de bundle minificat, nu ceva ce poate face un script.
 
+### Și fără buton
+
+Un update poate veni și pe lângă buton: VS Code descarcă singur, iar pe macOS un
+update gata de instalare se instalează **la quit**, fără niciun click (1.138 și
+1.139, vezi [`UPDATE-LESSONS.md`](UPDATE-LESSONS.md)). Pentru cazul ăsta,
+`update-patch.js` se uită la pornire și dacă injecția lipsește din
+`workbench.html`; dacă da, face exact pașii 3–5 de mai sus, fără marker.
+O singură încercare per build (`globalStorage/…/auto-reapply-<commit>.done`,
+creat atomic, deci câștigă o singură fereastră) — altfel un apply.sh cu
+„ATENȚIE" ar porni Claude la fiecare fereastră deschisă.
+
+`victorVsc.autoReapplyPatch: false` oprește automatismul — de pus când dai
+`restore.sh` intenționat și vrei ca patch-ul să rămână scos.
+
 Log-ul ultimei rulări e în `globalStorage/victorrentea.victor-vsc/update-patch.log`.
 
 Restul paginii e ce se întâmplă când dai update din meniu sau când vrei să
