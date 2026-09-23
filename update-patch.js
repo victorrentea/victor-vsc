@@ -259,9 +259,27 @@ async function restart(build) {
   if (!cancelled) quit();
 }
 
+// `open -a` dat cât procesul main încă se închide doar activează instanța care
+// moare, și aplicația nu mai revine: pe 1.139 main-ul a trăit ~3s după quit, iar
+// vechiul `sleep 2` a pierdut cursa. Deci aștept să dispară main-ul — e părintele
+// direct al extension host-ului (utility process), adică `process.ppid`.
+// (`pgrep -f` pe calea bundle-ului, pornit de aici, nu-l găsea deloc.)
 function quit() {
-  spawn('/bin/sh', ['-c', `sleep 2; open -a ${JSON.stringify(appBundle())}`],
-    { detached: true, stdio: 'ignore' }).unref();
+  const bundle = appBundle();
+  const log = path.join(os.tmpdir(), 'victor-vsc-restart.log');
+  const script = [
+    `for i in $(seq 1 120); do kill -0 ${process.ppid} 2>/dev/null || break; sleep 0.5; done`,
+    `echo "$(date '+%F %T') main ${process.ppid} gone after $i ticks" >> ${JSON.stringify(log)}`,
+    'sleep 1',
+    `open -a ${JSON.stringify(bundle)} >> ${JSON.stringify(log)} 2>&1; echo "open exit=$?" >> ${JSON.stringify(log)}`,
+  ].join('\n');
+  // Mediul extension host-ului are ELECTRON_RUN_AS_NODE=1, iar `open` îl dă mai
+  // departe aplicației: VS Code pornea ca Node fără script și ieșea pe loc, cu
+  // `open exit=0` și nicio fereastră. Măsurat pe 23 sep 2026 din terminal:
+  // `ELECTRON_RUN_AS_NODE=1 open -a …` nu pornește nimic, fără variabilă pornește.
+  const env = Object.fromEntries(Object.entries(process.env)
+    .filter(([k]) => !k.startsWith('ELECTRON_') && !k.startsWith('VSCODE_')));
+  spawn('/bin/sh', ['-c', script], { detached: true, stdio: 'ignore', env }).unref();
   vscode.commands.executeCommand('workbench.action.quit');
 }
 

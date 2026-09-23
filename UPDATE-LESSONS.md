@@ -31,6 +31,24 @@ Reparat după asta (0.0.103): la pornire, extensia verifică direct dacă injec�
 e în `workbench.html` și rulează `apply.sh` când lipsește, cu sau fără marker —
 o dată per build. Marker-ul rămâne doar ca să știe versiunea de plecare.
 
+### Și repornirea automată era stricată — de când, nu se știe
+
+Testul cap-coadă (restore.sh → repornire) a arătat că după reaplicare VS Code
+se închidea și **nu mai revenea**. Două cauze, suprapuse:
+
+1. **`ELECTRON_RUN_AS_NODE=1` din mediul extension host-ului.** `open` dă mediul
+   apelantului mai departe aplicației, deci VS Code pornea ca Node fără script și
+   ieșea pe loc — `open exit=0`, niciun log, nicio fereastră. Verificat direct:
+   `ELECTRON_RUN_AS_NODE=1 open -a "Visual Studio Code"` nu pornește nimic.
+   `quit()` scoate acum toate `ELECTRON_*` / `VSCODE_*` din mediu.
+2. **`sleep 2` pierdea cursa cu închiderea.** Pe 1.139 procesul main a trăit între
+   3 și 29 s după `workbench.action.quit` (extension host-uri omorâte forțat).
+   Acum se așteaptă `kill -0 process.ppid` — main-ul e părintele direct al
+   extension host-ului. `pgrep -f` pe calea bundle-ului, pornit din extensie,
+   nu-l găsea deloc.
+
+Urma fiecărei reporniri: `$TMPDIR/victor-vsc-restart.log`.
+
 ## 1.137.0 → 1.138.0 (15 sep 2026) — update dat pe lângă buton, descoperit după 2 zile
 
 Update-ul **nu** a venit din „Update with AI": în `globalStorage` nu există
