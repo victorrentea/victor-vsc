@@ -4,6 +4,29 @@ Procedura e în [`VSCODE-UPDATE.md`](VSCODE-UPDATE.md). Aici stă doar ce s-a
 învățat *rulând-o* — capcanele care au costat timp, ca să nu se plătească de
 două ori. Câte o secțiune per update.
 
+## 1.138.0 → 1.139.0 (23 sep 2026) — instalat la închidere, iar butonul apăsat după
+
+A doua oară într-o săptămână același tipar ca la 1.138. Din `main.log`:
+
+- 13:38 — update-ul se descarcă singur, starea trece în `ready`;
+- după aceea VS Code se închide, iar pe macOS un update `ready` **se instalează
+  la quit**, fără niciun buton apăsat. La 16:00 aplicația pornește deja pe
+  1.139.0, fără patch;
+- 19:02:38 — cineva dă `victor-vsc.updateWithAi` (fără patch, floricica stă la
+  vedere în status bar). Marker-ul scris atunci poartă commit-ul **deja nou**,
+  `2242ebb`, așa că `consume()` îl vede la pornire ca „același build, încă n-a
+  venit update-ul” și nu face nimic. Butonul apăsat *după* update nu repară.
+
+`apply.sh` rulat de mână a prins totul din prima, fără niciun „ATENȚIE”:
+ancorele scrise cu `ID` de la 1.138 au rezistat. `ITEM_HEIGHT` a ieșit deja 22,
+deci linia „rând Explorer” nu se mai tipărește (scriptul tace când valoarea e
+deja cea dorită).
+
+Concluzia rămâne cea de la 1.138, acum cu două cazuri: cât timp reaplicarea
+depinde de un marker armat *înainte* de update, orice update care nu trece prin
+buton (descărcat automat și instalat la quit) lasă patch-ul mort până îl observă
+cineva.
+
 ## 1.137.0 → 1.138.0 (15 sep 2026) — update dat pe lângă buton, descoperit după 2 zile
 
 Update-ul **nu** a venit din „Update with AI": în `globalStorage` nu există
