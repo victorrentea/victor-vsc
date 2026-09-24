@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.106",
+  "version": "0.0.107",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -250,6 +250,11 @@
         "category": "victor-vsc"
       },
       {
+        "command": "victor-vsc.openInDrawioApp",
+        "title": "Open in Draw.io App",
+        "category": "victor-vsc"
+      },
+      {
         "command": "victor-vsc.runFileTests",
         "title": "Run Tests in Current File",
         "category": "victor-vsc",
@@ -346,6 +351,18 @@
         {
           "command": "victor-vsc.copyGitHubLink",
           "group": "6_copypath@3"
+        },
+        {
+          "command": "victor-vsc.openInDrawioApp",
+          "group": "navigation@9",
+          "when": "resourceFilename =~ /\\.drawio\\.(png|svg)$|\\.(drawio|dio)$/"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "victor-vsc.openInDrawioApp",
+          "group": "1_open@9",
+          "when": "resourceFilename =~ /\\.drawio\\.(png|svg)$|\\.(drawio|dio)$/"
         }
       ],
       "editor/title": [

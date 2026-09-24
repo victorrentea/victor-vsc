@@ -225,6 +225,19 @@ function activate(context) {
   const selectOpened = vscode.commands.registerCommand('victor-vsc.selectOpenedFile',
     () => vscode.commands.executeCommand('workbench.files.action.showActiveFileInExplorer'));
 
+  // „Open in Draw.io App" pe *.drawio.png/svg: macOS alege aplicația doar după
+  // ultima extensie, deci un .drawio.png ar merge în Preview. Din Explorer vin
+  // (item-ul pe care s-a dat click, toată selecția), din tab doar item-ul.
+  const openInDrawio = vscode.commands.registerCommand('victor-vsc.openInDrawioApp', (uri, uris) => {
+    const targets = (uris && uris.length ? uris : [uri || vscode.window.activeTextEditor?.document.uri])
+      .filter(Boolean);
+    for (const target of targets) {
+      require('child_process').execFile('open', ['-b', 'com.jgraph.drawio.desktop', target.fsPath], (err) => {
+        if (err) vscode.window.showErrorMessage(`Open in Draw.io App: ${err.message}`);
+      });
+    }
+  });
+
   context.subscriptions.push(
     tools,
     trail,
@@ -234,6 +247,7 @@ function activate(context) {
     runFile,
     debugFile,
     selectOpened,
+    openInDrawio,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
     vscode.workspace.onDidChangeTextDocument(debounced),
