@@ -10,14 +10,13 @@ const vscode = require('vscode');
 // dar ținem minte ce era înainte și punem înapoi exact aceea la ieșire —
 // `undefined` înseamnă „cheia nu era în fișier" și o scoate la loc.
 //
-// Title bar-ul nu se poate ascunde pe macOS într-o fereastră normală; cu
-// `customTitleBarVisibility: windowed` dispare doar în full screen, de-aia
-// modul intră și în full screen.
+// Title bar-ul rămâne: pe macOS se poate ascunde doar în full screen, iar full
+// screen-ul mută fereastra pe un Space propriu — la ieșire nu mai stătea pe
+// Space-ul celorlalte ferestre VS Code și ⌘` nu mai trecea între ele.
 const SETTINGS = {
   'workbench.editor.showTabs': 'none',
   'workbench.activityBar.location': 'hidden',
   'workbench.statusBar.visible': false,
-  'window.customTitleBarVisibility': 'windowed',
   // Golul din stânga numerelor e glyph margin-ul (breakpoint-uri), cel dintre
   // numere și cod sunt săgețile de folding. Padding-ul de 3 cifre al numerelor
   // rămâne: `lineNumbersMinChars` nu e setare înregistrată (scrierea ei pică cu
@@ -63,7 +62,6 @@ function register(context) {
       }
       await context.globalState.update(STATE, before);
     }
-    await vscode.commands.executeCommand('workbench.action.toggleFullScreen');
     await vscode.commands.executeCommand('setContext', STATE, !previous);
   }));
 }
