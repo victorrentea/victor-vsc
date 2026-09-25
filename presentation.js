@@ -17,12 +17,16 @@ const SETTINGS = {
   'workbench.editor.showTabs': 'none',
   'workbench.activityBar.location': 'hidden',
   'workbench.statusBar.visible': false,
-  // Golul din stânga numerelor e glyph margin-ul (breakpoint-uri), cel dintre
-  // numere și cod sunt săgețile de folding. Padding-ul de 3 cifre al numerelor
-  // rămâne: `lineNumbersMinChars` nu e setare înregistrată (scrierea ei pică cu
-  // „not a registered configuration"), editorul de text îl codează fix pe 3.
+  // Golul din stânga numerelor e glyph margin-ul (breakpoint-uri). Padding-ul
+  // de 3 cifre al numerelor rămâne: `lineNumbersMinChars` nu e setare
+  // înregistrată (scrierea ei pică cu „not a registered configuration"),
+  // editorul de text îl codează fix pe 3.
+  //
+  // Folding-ul rămâne pornit intenționat: coloana lui e singurul spațiu dintre
+  // numere și cod (săgețile apar doar la hover). Fără ea textul se lipea de
+  // numere, iar `lineDecorationsWidth`, care ar fi dat spațiul direct, nu e nici
+  // ea setare înregistrată.
   'editor.glyphMargin': false,
-  'editor.folding': false,
 };
 const STATE = 'victorVsc.presentation';
 
