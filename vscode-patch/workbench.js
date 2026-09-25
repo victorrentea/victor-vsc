@@ -642,16 +642,10 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       btn.className = 'victor-update-ai';
       btn.title = 'Update VS Code și reaplică patch-urile victor-vsc după repornire';
       btn.setAttribute('role', 'button');
-      // Floarea, nu `codicon-sparkle`: pe 1.135 sparkle e hexagonul de Copilot,
-      // iar butonul ăsta cheamă Claude. `victor-flower` e glifa din
-      // `contributes.icons`, aceeași cu profilul de terminal „Claude" — registrul
-      // de iconițe îi emite regula de font la pornire, deci merge și din DOM brut.
-      const icon = document.createElement('span');
-      icon.className = 'codicon codicon-victor-flower';
       const label = document.createElement('span');
       label.className = 'victor-update-ai-label';
-      label.textContent = 'Update with AI';
-      btn.append(icon, label);
+      label.textContent = '🤖Update';
+      btn.append(label);
       btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -660,6 +654,12 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
           ?.closest('[role="button"]') || host);
       });
     }
+
+    // Butonul albastru al VS Code rămâne în DOM, doar ascuns (vezi CSS-ul):
+    // al nostru îl apasă pe el după armare, deci trebuie să existe. Ascuns,
+    // fiindcă un click direct pe el sărea peste marker — patch-ul dispărea la
+    // repornire. Clasa se pune la fiecare trecere: action bar-ul reface `<li>`-ul.
+    host.classList.add('victor-update-native');
 
     // Action bar-ul își reconstruiește copiii când se schimbă starea update-ului,
     // deci verificăm de fiecare dată că suntem tot exact în stânga lui.

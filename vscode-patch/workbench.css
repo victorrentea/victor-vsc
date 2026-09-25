@@ -339,12 +339,15 @@
   display: none;
 }
 
-/* Aceleași dimensiuni ca `.update-indicator` de lângă el (22px, colțuri medii),
-   ca cele două butoane să pară o pereche, nu unul lipit de altul. Culorile sunt
-   ale command center-ului, ca la butonul de unelte: albastrul rămâne al VS
-   Code-ului, ca să se vadă din prima care e primar. NU `button.secondaryBackground`
-   — în tema de aici nu e definit, iar butonul ieșea text gol pe bara de titlu,
-   fără nicio margine care să spună că e apăsabil. */
+/* Butonul „Update" simplu al VS Code nu se mai vede: apăsat din greșeală
+   (25 sep 2026), sărea peste marker și patch-ul nu se mai reaplica după
+   repornire. Rămâne în DOM, pentru că „🤖Update" îl apasă pe el. */
+.victor-update-native {
+  display: none !important;
+}
+
+/* Aceleași dimensiuni ca `.update-indicator` pe care îl înlocuiește (22px,
+   colțuri medii) și albastrul lui: acum e singurul buton de update din bară. */
 .victor-update-ai {
   display: flex;
   align-items: center;
@@ -358,9 +361,9 @@
   font-size: var(--vscode-bodyFontSize-small, 11px);
   line-height: normal;
   cursor: pointer;
-  color: var(--vscode-titleBar-activeForeground);
-  background-color: var(--vscode-commandCenter-background);
-  border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  color: var(--vscode-button-foreground);
+  background-color: var(--vscode-button-background);
+  border: 1px solid transparent;
   -webkit-app-region: no-drag;
 }
 
@@ -371,12 +374,6 @@
   -webkit-app-region: no-drag;
 }
 
-.victor-update-ai > .codicon {
-  font-size: 14px;
-}
-
 .victor-update-ai:hover {
-  color: var(--vscode-commandCenter-activeForeground);
-  background-color: var(--vscode-commandCenter-activeBackground);
-  border-color: var(--vscode-commandCenter-activeBorder);
+  background-color: var(--vscode-button-hoverBackground);
 }
