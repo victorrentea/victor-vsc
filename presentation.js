@@ -18,33 +18,50 @@ const SETTINGS = {
   'workbench.activityBar.location': 'hidden',
   'workbench.statusBar.visible': false,
   'window.customTitleBarVisibility': 'windowed',
-  // Golul din stânga numerelor: glyph margin-ul (breakpoint-uri) + coloana
-  // de padding pentru 3 cifre. Între numere și cod: săgețile de folding.
+  // Golul din stânga numerelor e glyph margin-ul (breakpoint-uri), cel dintre
+  // numere și cod sunt săgețile de folding. Padding-ul de 3 cifre al numerelor
+  // rămâne: `lineNumbersMinChars` nu e setare înregistrată (scrierea ei pică cu
+  // „not a registered configuration"), editorul de text îl codează fix pe 3.
   'editor.glyphMargin': false,
   'editor.folding': false,
-  'editor.lineNumbersMinChars': 1,
 };
 const STATE = 'victorVsc.presentation';
 
 function register(context) {
   const saved = () => context.globalState.get(STATE);
+  const apply = async (values) => {
+    const config = vscode.workspace.getConfiguration();
+    for (const [key, value] of Object.entries(values)) {
+      await config.update(key, value ?? undefined, vscode.ConfigurationTarget.Global);
+    }
+  };
+  // Starea ținută minte fără setările care o confirmă (o intrare picată la
+  // jumătate, sau setările schimbate de mână) ar face ca următorul ⌘F12 să
+  // „iasă" dintr-un mod în care nu e — și să intre în full screen.
+  if (saved() && vscode.workspace.getConfiguration().inspect('workbench.editor.showTabs')?.globalValue !== 'none') {
+    context.globalState.update(STATE, undefined);
+  }
   vscode.commands.executeCommand('setContext', STATE, !!saved());
 
   context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
     const config = vscode.workspace.getConfiguration();
     const previous = saved();
     if (previous) {
-      for (const key of Object.keys(SETTINGS)) {
-        await config.update(key, previous[key] ?? undefined, vscode.ConfigurationTarget.Global);
-      }
+      // Doar cheile de acum: o stare scrisă de o versiune mai veche poate avea
+      // chei pe care VS Code nu le mai acceptă.
+      await apply(Object.fromEntries(Object.keys(SETTINGS).map(k => [k, previous[k]])));
       await context.globalState.update(STATE, undefined);
     } else {
       const before = {};
       for (const key of Object.keys(SETTINGS)) before[key] = config.inspect(key)?.globalValue ?? null;
-      await context.globalState.update(STATE, before);
-      for (const [key, value] of Object.entries(SETTINGS)) {
-        await config.update(key, value, vscode.ConfigurationTarget.Global);
+      try {
+        await apply(SETTINGS);
+      } catch (err) {
+        await apply(before).catch(() => {});
+        vscode.window.showErrorMessage(`Vic Presentation: ${err.message}`);
+        return;
       }
+      await context.globalState.update(STATE, before);
     }
     await vscode.commands.executeCommand('workbench.action.toggleFullScreen');
     await vscode.commands.executeCommand('setContext', STATE, !previous);
