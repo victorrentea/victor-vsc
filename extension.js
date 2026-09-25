@@ -121,6 +121,7 @@ function activate(context) {
   // bottom. Left-aligned with a priority above every other entry so it comes
   // first; only the remote indicator, which VS Code pins, stays to its left.
   const trail = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000000);
+  trail.name = 'Victor Breadcrumb';
   trail.command = 'workbench.action.gotoSymbol';
   trail.tooltip = 'Go to Symbol in Editor…';
 
