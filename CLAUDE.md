@@ -52,6 +52,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `puml.js` | randare PlantUML: editorul custom care desenează diagrama |
 | `openapi.js` | randare OpenAPI: Swagger UI ca editor custom peste `openapi.yaml`/`.json`, în ACELAȘI tab. Recunoaște fișierul după conținut (`openapi:`/`swagger:`), nu după extensie, și ridică cheia de context `victorVsc.openapiFile` pentru butonul ⇄. Assets-urile (Swagger UI, js-yaml) sunt vendorate în `media/` |
 | `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului: unul singur, comută TAB-UL DIN FAȚĂ (Markdown / PlantUML / OpenAPI / Draw.io). Forma aleasă ultima oară rămâne implicita per tip, pentru fișierele deschise de atunci încolo |
+| `presentation.js` | „Vic Presentation" (⌘F12, View › Vic Presentation): ascunde taburi, activity bar, status bar, title bar (prin full screen) și golul din gutter; scrie setările globale și le pune înapoi pe cele vechi la ieșire. Intrarea din meniul View o adaugă `vscode-patch/apply.sh` (pasul 3g) — extensiile n-au acces la meniul View |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |

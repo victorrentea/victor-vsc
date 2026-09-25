@@ -54,7 +54,7 @@ TITLE_BAR_HEIGHT="${TITLE_BAR_HEIGHT:-28}"
 TERMINAL_ZOOM_STEP="${TERMINAL_ZOOM_STEP:-0.5}"
 
 VSCODE_RES="$RES" PATCH_DIR="$HERE" VICTOR_WATCH="$WATCH" ROW_H="$TREE_ROW_HEIGHT" SB_PAD="$STATUS_BAR_FLOATING_PADDING" ACT_W="$ACTIVITY_BAR_WIDTH" TITLE_H="$TITLE_BAR_HEIGHT" ZOOM_STEP="$TERMINAL_ZOOM_STEP" python3 - <<'PY'
-import base64, hashlib, json, os, re, shutil, sys
+import base64, collections, hashlib, json, os, re, shutil, sys
 
 res   = os.environ['VSCODE_RES']
 src   = os.environ['PATCH_DIR']
@@ -309,6 +309,30 @@ for _cmd, _sign in (('fontZoomIn', '+'), ('fontZoomOut', '-')):
 if zoom_hits:
     open(bundle, 'w', encoding='utf8').write(src_js)
     print(f'   pas de zoom la terminal -> {zoom_step}px:', ', '.join(zoom_hits))
+
+# 3g. „Vic Presentation" în meniul View, lângă Appearance și Editor Layout.
+#     Extensiile nu pot contribui în meniul View (singurul `menuBar/*` deschis lor
+#     e `menuBar/home`, și acela propus), deci intrarea se adaugă direct în
+#     registry, imediat după submeniul Appearance. Comanda e a extensiei
+#     (extension.js), iar bifa urmează cheia de context pe care o setează ea.
+#     Alias-urile minificate (`xe` = MenuRegistry, `P` = MenuId) le luăm din
+#     ancoră; pe cel al lui ContextKeyExpr îl ia cel mai folosit `precondition:X.and(`.
+VIC_ID = '"victor-vsc.togglePresentation"'
+if VIC_ID in src_js:
+    pass                       # deja aplicat
+else:
+    m = re.search(r'([\w$]+)\.appendMenuItem\(([\w$]+)\.MenubarViewMenu,\{group:"2_appearance",title:[^{}]*?'
+                  r'submenu:\2\.MenubarAppearanceMenu[^{}]*\}\);', src_js)
+    ctx = collections.Counter(re.findall(r'precondition:([\w$]+)\.and\(', src_js)).most_common(1)
+    if not m or not ctx:
+        print('   ATENȚIE: nu găsesc submeniul Appearance din View — „Vic Presentation" rămâne doar pe ⌘F12')
+    else:
+        reg, ids = m.group(1), m.group(2)
+        item = (f'{reg}.appendMenuItem({ids}.MenubarViewMenu,{{group:"2_appearance",command:{{id:{VIC_ID},'
+                f'title:"Vic Presentation",toggled:{ctx[0][0]}.has("victorVsc.presentation")}},order:3}});')
+        src_js = src_js[:m.end()] + item + src_js[m.end():]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print('   meniul View: + Vic Presentation')
 
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation

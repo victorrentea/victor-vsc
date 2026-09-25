@@ -12,6 +12,7 @@ const cucumberRunner = require('./cucumber-runner');
 const javaTestOutput = require('./java-test-output');
 const gitLines = require('./git-lines');
 const updatePatch = require('./update-patch');
+const presentation = require('./presentation');
 
 const SEP = '  ›  ';
 
@@ -82,24 +83,34 @@ const TERMINAL_KEYBINDINGS = [
 ];
 const KEYBINDINGS_MARKER = '// victor-vsc: ⌘T/⌘W în terminal — scrise automat la activare';
 
-function enforceKeybindings(context) {
+// ⌘F12 pentru „Vic Presentation" (presentation.js). Același motiv: keymap-ul
+// IntelliJ leagă ⌘F12 de `workbench.action.gotoSymbol` (File Structure) când
+// editorul are focus, deci doar keybindings.json bate sigur. File Structure
+// rămâne pe ⇧⌘O.
+const PRESENTATION_KEYBINDINGS = [
+  { key: 'cmd+f12', command: 'victor-vsc.togglePresentation' },
+];
+const PRESENTATION_MARKER = '// victor-vsc: ⌘F12 = Vic Presentation — scris automat la activare';
+
+function enforceKeybindings(context, marker, bindings) {
   // globalStorageUri e <userData>/User/globalStorage/<id>, deci de la el două nivele
   // în sus ajungem la User/ — fără să codăm calea de macOS.
   const file = path.join(context.globalStorageUri.fsPath, '..', '..', 'keybindings.json');
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch { return; }
-  if (text.includes(KEYBINDINGS_MARKER)) return;
+  if (text.includes(marker)) return;
   const close = text.lastIndexOf(']');
   if (close < 0) return; // fișier în altă formă decât ne așteptăm — mai bine nimic
   const before = text.slice(0, close).trimEnd();
-  const block = TERMINAL_KEYBINDINGS.map(k => '    ' + JSON.stringify(k)).join(',\n');
+  const block = bindings.map(k => '    ' + JSON.stringify(k)).join(',\n');
   const sep = before.endsWith('[') ? '' : ',';
-  fs.writeFileSync(file, `${before}${sep}\n    ${KEYBINDINGS_MARKER}\n${block}\n${text.slice(close)}`, 'utf8');
+  fs.writeFileSync(file, `${before}${sep}\n    ${marker}\n${block}\n${text.slice(close)}`, 'utf8');
 }
 
 function activate(context) {
   enforceMainProcessSettings();
-  enforceKeybindings(context);
+  enforceKeybindings(context, KEYBINDINGS_MARKER, TERMINAL_KEYBINDINGS);
+  enforceKeybindings(context, PRESENTATION_MARKER, PRESENTATION_KEYBINDINGS);
 
   // A tools button that opens the Command Palette on click. It lives in the
   // status bar rather than up next to the four layout controls because that
@@ -260,6 +271,8 @@ function activate(context) {
   openapi.register(context);
   // Butonul din colț: text ⇄ randat, cu modul ținut minte pe fiecare tip de fișier.
   renderToggle.register(context);
+  // ⌘F12 / View › Vic Presentation: doar codul și numerele de linie pe ecran.
+  presentation.register(context);
 
   // Walkie Talkie: un listener pe loopback prin care relay-ul livrează dictarea
   // în EXACT terminalul pe care l-a legat. Din afară, o extensie de terminal

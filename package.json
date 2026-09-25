@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.109",
+  "version": "0.0.110",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -241,6 +241,11 @@
         "icon": "$(arrow-swap)"
       },
       {
+        "command": "victor-vsc.togglePresentation",
+        "title": "Vic Presentation",
+        "category": "victor-vsc"
+      },
+      {
         "command": "victor-vsc.noop",
         "title": "Do Nothing",
         "category": "victor-vsc"
@@ -310,6 +315,10 @@
         "command": "workbench.action.toggleMaximizedPanel",
         "key": "f12",
         "when": "terminalFocus"
+      },
+      {
+        "command": "victor-vsc.togglePresentation",
+        "key": "cmd+f12"
       },
       {
         "command": "victor-vsc.noop",
