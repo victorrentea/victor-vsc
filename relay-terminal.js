@@ -425,9 +425,14 @@ function handle(req, res) {
       // keeps the Return as text. A separate write is a keypress — which is
       // exactly why the tmux path has always been two calls.
       term.sendText(line, false);
-      setTimeout(() => {
-        try { term.sendText('\r', false); } catch (_) { /* the tab went away mid-flight */ }
-      }, 120);
+      // **`submit: false` leaves the Return to Victor** (2026-09-28): the
+      // relay's bound delivery types the words and stops; he sends them when
+      // he is done. Absent (an older relay), the Return is pressed as before.
+      if (parsed.submit !== false) {
+        setTimeout(() => {
+          try { term.sendText('\r', false); } catch (_) { /* the tab went away mid-flight */ }
+        }, 120);
+      }
       send(res, 200, { ok: true, name: term.name });
     });
     return;
