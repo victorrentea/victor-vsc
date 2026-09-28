@@ -428,10 +428,20 @@ function handle(req, res) {
       // **`submit: false` leaves the Return to Victor** (2026-09-28): the
       // relay's bound delivery types the words and stops; he sends them when
       // he is done. Absent (an older relay), the Return is pressed as before.
+      //
+      // **0.7 s, then once more at 1.5 s** (2026-09-28): Claude Code 2.1.283
+      // folds a key that lands within ~150 ms of a large chunk into the paste,
+      // and a Return inside a paste is a newline — at 120 ms the sentence sat
+      // unsent under a blank line (Victor's screenshot, Terminal.app, where
+      // even 0.5 s was folded once). The extension cannot read the terminal
+      // back, so the second Return is blind: if the first one worked it lands
+      // on an empty prompt, which in Claude Code is nothing.
       if (parsed.submit !== false) {
-        setTimeout(() => {
-          try { term.sendText('\r', false); } catch (_) { /* the tab went away mid-flight */ }
-        }, 120);
+        for (const ms of [700, 1500]) {
+          setTimeout(() => {
+            try { term.sendText('\r', false); } catch (_) { /* the tab went away mid-flight */ }
+          }, ms);
+        }
       }
       send(res, 200, { ok: true, name: term.name });
     });
