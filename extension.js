@@ -92,6 +92,16 @@ const PRESENTATION_KEYBINDINGS = [
 ];
 const PRESENTATION_MARKER = '// victor-vsc: ⌘F12 = Vic Presentation — scris automat la activare';
 
+// ⇧⇧ = Quick Open cu selecția (comanda din activate()). Tot keymap-ul IntelliJ:
+// leagă ⇧⇧ de `workbench.action.quickOpen`, fără `when`. Între extensii, ponderea
+// unui keybinding e 400 + poziția lui în array-ul `contributes.keybindings` (măsurat
+// în 1.140, `_asCommandRule`), iar al lui k--kato e pe poziția 74 din 220 — ăla
+// din package.json-ul nostru pierdea mereu, oricum s-ar fi numit comanda.
+const QUICK_OPEN_KEYBINDINGS = [
+  { key: 'shift shift', command: 'victor-vsc.quickOpenSelection', when: 'editorTextFocus' },
+];
+const QUICK_OPEN_MARKER = '// victor-vsc: ⇧⇧ = Quick Open cu selecția — scris automat la activare';
+
 function enforceKeybindings(context, marker, bindings) {
   // globalStorageUri e <userData>/User/globalStorage/<id>, deci de la el două nivele
   // în sus ajungem la User/ — fără să codăm calea de macOS.
@@ -111,6 +121,7 @@ function activate(context) {
   enforceMainProcessSettings();
   enforceKeybindings(context, KEYBINDINGS_MARKER, TERMINAL_KEYBINDINGS);
   enforceKeybindings(context, PRESENTATION_MARKER, PRESENTATION_KEYBINDINGS);
+  enforceKeybindings(context, QUICK_OPEN_MARKER, QUICK_OPEN_KEYBINDINGS);
 
   // A tools button that opens the Command Palette on click. It lives in the
   // status bar rather than up next to the four layout controls because that
@@ -254,11 +265,8 @@ function activate(context) {
   // știe nativ `shift shift` (două apăsări în 300 ms), dar argumentul unui
   // keybinding e fix, deci selecția trebuie citită de o comandă proprie.
   // Doar primul rând: o selecție pe mai multe rânduri n-are ce căuta acolo.
-  // Id-ul NU e `victor-vsc.*` intenționat: k--kato.intellij-idea-keybindings
-  // leagă și el ⇧⇧ de `workbench.action.quickOpen`, iar între două extensii
-  // VS Code sortează keybinding-urile după id-ul comenzii și câștigă ultimul.
-  // `victor-vsc.…` ieșea înainte de `workbench.…` și pierdea mereu.
-  const quickOpenSelection = vscode.commands.registerCommand('workbench.action.victor.quickOpenSelection', () => {
+  // Tasta e legată din keybindings.json — vezi QUICK_OPEN_KEYBINDINGS.
+  const quickOpenSelection = vscode.commands.registerCommand('victor-vsc.quickOpenSelection', () => {
     const editor = vscode.window.activeTextEditor;
     const text = editor ? editor.document.getText(editor.selection).split(/\r?\n/)[0].trim() : '';
     return vscode.commands.executeCommand('workbench.action.quickOpen', text || undefined);

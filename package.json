@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.126",
+  "version": "0.0.127",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -237,7 +237,7 @@
     ],
     "commands": [
       {
-        "command": "workbench.action.victor.quickOpenSelection",
+        "command": "victor-vsc.quickOpenSelection",
         "title": "Quick Open Selection",
         "category": "victor-vsc"
       },
@@ -298,16 +298,6 @@
       }
     ],
     "keybindings": [
-      {
-        "command": "workbench.action.victor.quickOpenSelection",
-        "key": "shift shift",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "workbench.action.quickOpen",
-        "key": "shift shift",
-        "when": "!editorTextFocus"
-      },
       {
         "command": "victor-vsc.commitAndPush",
         "key": "cmd+shift+enter",
