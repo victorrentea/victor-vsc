@@ -337,6 +337,32 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   meniul View: + Vic Presentation')
 
+# 3h. stratul de configurare MEMORY, deschis pentru extensie. Fiecare fereastră
+#     are în renderer și un strat MEMORY peste setările utilizatorului: per
+#     fereastră, nescris pe disc, pierdut la Reload Window. API-ul de extensii
+#     nu-l expune, deci „Vic Presentation" (presentation.js) aprindea modul prin
+#     setările globale — adică în toate ferestrele deodată. Comanda de aici face
+#     doar `configurationService.updateValue(cheie, valoare, 8)` (8 = MEMORY;
+#     `null` scoate cheia) și rulează în renderer-ul ferestrei care o cheamă.
+#     Alias-urile minificate le luăm din ancore stabile: KeybindingsRegistry din
+#     înregistrarea lui `exitZenMode`, IConfigurationService din string-ul cu care
+#     e creat decoratorul. Comanda se pune ÎNAINTEA lui `exitZenMode`, unde
+#     începe o instrucțiune nouă.
+MEM_ID = '"victor-vsc.memoryConfig"'
+if MEM_ID in src_js:
+    pass                       # deja aplicat
+else:
+    m = re.search(r'(?<=;)([\w$]+)\.registerCommandAndKeybindingRule\(\{id:"workbench\.action\.exitZenMode"', src_js)
+    cfg = re.findall(r'(?:^|[^\w$.])([\w$]+)=[\w$]+\("configurationService"\)', src_js)
+    if not m or len(cfg) != 1:
+        print('   ATENȚIE: nu găsesc ancorele pentru stratul MEMORY — „Vic Presentation" nu va porni')
+    else:
+        cmd = (f'{m.group(1)}.registerCommandAndKeybindingRule({{id:{MEM_ID},weight:0,handler(s,o){{'
+               f'let c=s.get({cfg[0]});return Promise.all(Object.entries(o||{{}}).map(([k,v])=>c.updateValue(k,v??void 0,8)))}}}});')
+        src_js = src_js[:m.start()] + cmd + src_js[m.start():]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print('   comanda victor-vsc.memoryConfig (setări per fereastră)')
+
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
 #    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),
