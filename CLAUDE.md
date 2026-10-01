@@ -52,7 +52,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `puml.js` | randare PlantUML: editorul custom care desenează diagrama |
 | `openapi.js` | randare OpenAPI: Swagger UI ca editor custom peste `openapi.yaml`/`.json`, în ACELAȘI tab. Recunoaște fișierul după conținut (`openapi:`/`swagger:`), nu după extensie, și ridică cheia de context `victorVsc.openapiFile` pentru butonul ⇄. Assets-urile (Swagger UI, js-yaml) sunt vendorate în `media/` |
 | `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului: unul singur, comută TAB-UL DIN FAȚĂ (Markdown / PlantUML / OpenAPI / Draw.io). Forma aleasă ultima oară rămâne implicita per tip, pentru fișierele deschise de atunci încolo |
-| `presentation.js` | „Vic Presentation" (⌘F12, View › Vic Presentation): ascunde taburi, activity bar, status bar și glyph margin-ul (title bar-ul rămâne: doar full screen l-ar ascunde, și ăla mută fereastra pe alt Space); scrie setările globale și le pune înapoi pe cele vechi la ieșire. Intrarea din meniul View o adaugă `vscode-patch/apply.sh` (pasul 3g) — extensiile n-au acces la meniul View |
+| `presentation.js` | „Vic Presentation" (⌘F12, View › Vic Presentation): ascunde taburi, activity bar, status bar și glyph margin-ul (title bar-ul rămâne: doar full screen l-ar ascunde, și ăla mută fereastra pe alt Space); scrie setările globale și le pune înapoi pe cele vechi la ieșire. „Pornit" se citește din setările globale, nu din `globalState`, ca bifa să fie aceeași în toate ferestrele; ieșirea scoate și fereastra din Zen Mode. Intrarea din meniul View o adaugă `vscode-patch/apply.sh` (pasul 3g) — extensiile n-au acces la meniul View |
 | `reload-window.py` | reîncarcă ferestrele VS Code după instalarea unei versiuni noi (pasul 5) |
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
@@ -63,7 +63,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
-| `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul |
+| `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul. `POST /command?id=…` rulează în fereastra aia o comandă dintr-un allowlist (Zen Mode, Vic Presentation) — așa se repară/testează o fereastră fără să-i atingi mouse-ul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
 | `app-icon/` | iconița aplicației (negru + margine subțire colorată, în cheia IntelliJ); o instalează `vscode-patch/apply.sh` |

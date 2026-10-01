@@ -120,6 +120,13 @@ function send(res, code, body) {
   res.end(data);
 }
 
+/** What `/command` will run. */
+const COMMANDS = new Set([
+  'workbench.action.exitZenMode',
+  'workbench.action.toggleZenMode',
+  'victor-vsc.togglePresentation',
+]);
+
 function handle(req, res) {
   const url = new URL(req.url, 'http://127.0.0.1');
   if (req.headers['x-relay-token'] !== global.__wisprRelayToken) {
@@ -227,6 +234,20 @@ function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/reload') {
     send(res, 200, { ok: true, folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null });
     setTimeout(() => vscode.commands.executeCommand('workbench.action.reloadWindow'), 100);
+    return;
+  }
+
+  // Run one of a few layout commands in **this** window. Zen Mode is kept per
+  // window, so a window left in it (no tabs, no activity bar) can only be fixed
+  // from inside that window — and Victor is usually not sitting in front of it.
+  // An allowlist, not any command id: the token gates the caller, the list
+  // gates what a caller can do.
+  if (req.method === 'POST' && url.pathname === '/command') {
+    const id = url.searchParams.get('id');
+    if (!COMMANDS.has(id)) return send(res, 400, { ok: false, error: `not allowed: ${id}` });
+    vscode.commands.executeCommand(id).then(
+      () => send(res, 200, { ok: true, folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null }),
+      (err) => send(res, 500, { ok: false, error: err.message }));
     return;
   }
 

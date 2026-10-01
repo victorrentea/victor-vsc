@@ -31,43 +31,56 @@ const SETTINGS = {
 };
 const STATE = 'victorVsc.presentation';
 
+// Pornit = setările globale chiar arată modul. Nu `globalState`: setarea de
+// context (bifa din View) e per fereastră, iar starea ținută de o fereastră nu
+// ajunge sigur și în celelalte. Așa, când o fereastră intra în mod, celelalte
+// rămâneau nebifate, iar „debifarea" din alta *intra* încă o dată — și ținea
+// minte ca „înainte" chiar setările de prezentare, din care nu mai ieșea.
+// Setările globale se schimbă în toate ferestrele deodată, deci și bifa.
+function isOn() {
+  return vscode.workspace.getConfiguration().inspect('workbench.editor.showTabs')?.globalValue === 'none';
+}
+
 function register(context) {
-  const saved = () => context.globalState.get(STATE);
+  const syncContext = () => vscode.commands.executeCommand('setContext', STATE, isOn());
   const apply = async (values) => {
     const config = vscode.workspace.getConfiguration();
     for (const [key, value] of Object.entries(values)) {
       await config.update(key, value ?? undefined, vscode.ConfigurationTarget.Global);
     }
   };
-  // Starea ținută minte fără setările care o confirmă (o intrare picată la
-  // jumătate, sau setările schimbate de mână) ar face ca următorul ⌘F12 să
-  // „iasă" dintr-un mod în care nu e — și să intre în full screen.
-  if (saved() && vscode.workspace.getConfiguration().inspect('workbench.editor.showTabs')?.globalValue !== 'none') {
-    context.globalState.update(STATE, undefined);
-  }
-  vscode.commands.executeCommand('setContext', STATE, !!saved());
+  syncContext();
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+    if (e.affectsConfiguration('workbench.editor.showTabs')) syncContext();
+  }));
 
   context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
     const config = vscode.workspace.getConfiguration();
-    const previous = saved();
-    if (previous) {
+    if (isOn()) {
       // Doar cheile de acum: o stare scrisă de o versiune mai veche poate avea
-      // chei pe care VS Code nu le mai acceptă.
-      await apply(Object.fromEntries(Object.keys(SETTINGS).map(k => [k, previous[k]])));
+      // chei pe care VS Code nu le mai acceptă. Fără stare ținută minte (sau cu
+      // una care e chiar prezentarea), scoatem cheile cu totul.
+      const previous = context.globalState.get(STATE) || {};
+      await apply(Object.fromEntries(Object.keys(SETTINGS).map(k =>
+        [k, previous[k] === SETTINGS[k] ? null : previous[k]])));
       await context.globalState.update(STATE, undefined);
+      // Zen Mode (F12) ascunde și el taburile și activity bar-ul, dar e ținut
+      // per fereastră: ieșind din prezentare cu Zen rămas pornit, fereastra
+      // arăta tot „blocată" în prezentare. Comanda nu face nimic fără Zen.
+      await vscode.commands.executeCommand('workbench.action.exitZenMode');
     } else {
       const before = {};
       for (const key of Object.keys(SETTINGS)) before[key] = config.inspect(key)?.globalValue ?? null;
+      await context.globalState.update(STATE, before);
       try {
         await apply(SETTINGS);
       } catch (err) {
         await apply(before).catch(() => {});
+        await context.globalState.update(STATE, undefined);
         vscode.window.showErrorMessage(`Vic Presentation: ${err.message}`);
-        return;
       }
-      await context.globalState.update(STATE, before);
     }
-    await vscode.commands.executeCommand('setContext', STATE, !previous);
+    await syncContext();
   }));
 }
 
