@@ -28,7 +28,6 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const name = document.createElement('span');
       name.className = 'victor-branch-name';
       pill.append(icon, name);
-      pill.title = 'Branch — click pentru lista de branch-uri';
 
       // Nu putem executa comenzi VS Code de aici, dar putem apăsa în locul
       // nostru intrarea de SCM din status bar, care deschide exact acel picker.
