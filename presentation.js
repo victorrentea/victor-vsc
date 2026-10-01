@@ -58,7 +58,9 @@ function register(context) {
 
   context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
     if (!(await vscode.commands.getCommands(true)).includes(MEMORY_CONFIG)) {
-      vscode.window.showErrorMessage('Vic Presentation: lipsește patch-ul din workbench — rulează vscode-patch/apply.sh și dă Reload Window.');
+      // Bundle-ul workbench-ului se servește din cache la Reload Window, deci
+      // după `apply.sh` comanda apare abia după ⌘Q + relansare.
+      vscode.window.showErrorMessage('Vic Presentation: comanda din patch nu e încărcată — repornește VS Code (⌘Q + relansare, Reload Window nu ajunge); dacă tot nu merge, rulează vscode-patch/apply.sh.');
       return;
     }
     on = !on;
