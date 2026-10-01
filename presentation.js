@@ -3,8 +3,9 @@ const vscode = require('vscode');
 // „Vic Presentation" (⌘F12, și în meniul View): doar codul și numerele de linie
 // pe ecran — fără taburi, activity bar, status bar și title bar.
 //
-// Zen Mode ar fi fost locul natural, dar Victor îl folosește zilnic cu activity
-// bar-ul vizibil (vezi `zenMode.*` din package.json), deci modul ăsta e separat.
+// Zen Mode (F12) e apropiat, dar Victor îl folosește zilnic cu propriile
+// `zenMode.*` din package.json (status bar, numere de linie, tabul curent),
+// deci modul ăsta e separat.
 // VS Code nu are o comandă care să ascundă părțile astea fără să scrie în
 // settings.json (nici toggle-urile lui din fabrică), așa că le scriem și noi,
 // dar ținem minte ce era înainte și punem înapoi exact aceea la ieșire —
