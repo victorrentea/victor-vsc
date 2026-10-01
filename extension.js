@@ -218,6 +218,19 @@ function activate(context) {
   // legăm de o comandă goală care înghite tasta.
   const noop = vscode.commands.registerCommand('victor-vsc.noop', () => {});
 
+  // ⌘⇧Enter în căsuța de commit = „Commit & Push", fără să alegi din dropdown.
+  // `git.commit(repo, 'git.push')` e exact ce rulează butonul din dropdown.
+  // Keybinding-ul n-ar putea da singur două argumente, de-aia comanda proprie.
+  // Repo-ul: cel cu mesaj scris în căsuță; la egalitate, cel selectat în SCM.
+  const commitAndPush = vscode.commands.registerCommand('victor-vsc.commitAndPush', async () => {
+    const git = vscode.extensions.getExtension('vscode.git')?.exports?.getAPI(1);
+    const repos = git?.repositories ?? [];
+    const typed = repos.filter(r => r.inputBox.value.trim());
+    const repo = typed.length === 1 ? typed[0]
+      : (typed.length ? typed : repos).find(r => r.ui.selected) ?? (typed[0] || repos[0]);
+    await vscode.commands.executeCommand('git.commit', repo?.rootUri, 'git.push');
+  });
+
   // Butonul de run din colțul din dreapta sus, ca la testele Java. Deleagă la
   // comenzile native de Testing, deci rulează ce furnizează oricine pentru
   // fișierul din față: scenariile noastre de cucumber, testele Playwright ale
@@ -256,6 +269,7 @@ function activate(context) {
     problems,
     claudeProfile,
     noop,
+    commitAndPush,
     runFile,
     debugFile,
     selectOpened,

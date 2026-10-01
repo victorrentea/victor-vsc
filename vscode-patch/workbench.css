@@ -123,7 +123,9 @@
   line-height: 20px;
   white-space: nowrap;
   color: var(--vscode-titleBar-activeForeground);
-  background-color: var(--vscode-commandCenter-background);
+  /* Fundalul e al title bar-ului, nu `commandCenter-background`: ăla iese mai
+     închis pe dark și alb pe light, deci pastila părea lipită peste bară. */
+  background-color: transparent;
   border: 1px solid var(--vscode-commandCenter-inactiveBorder);
   /* Title bar-ul are peste tot un strat `.titlebar-drag-region` întins pe toată
      suprafața; elementele native urcă peste el cu z-index 2500. Fără asta, doar
@@ -202,7 +204,9 @@
   line-height: normal;
   cursor: pointer;
   color: var(--vscode-titleBar-activeForeground);
-  background-color: var(--vscode-commandCenter-background);
+  /* Fundalul e al title bar-ului, nu `commandCenter-background`: ăla iese mai
+     închis pe dark și alb pe light, deci pastila părea lipită peste bară. */
+  background-color: transparent;
   border: 1px solid var(--vscode-commandCenter-inactiveBorder);
   position: relative;
   z-index: 2500;

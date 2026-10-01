@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.120",
+  "version": "0.0.121",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -248,6 +248,11 @@
         "category": "victor-vsc"
       },
       {
+        "command": "victor-vsc.commitAndPush",
+        "title": "Commit & Push",
+        "category": "victor-vsc"
+      },
+      {
         "command": "victor-vsc.noop",
         "title": "Do Nothing",
         "category": "victor-vsc"
@@ -288,6 +293,11 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "victor-vsc.commitAndPush",
+        "key": "cmd+shift+enter",
+        "when": "scmRepository"
+      },
       {
         "command": "git.pull",
         "key": "cmd+t",
