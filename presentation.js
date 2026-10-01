@@ -42,7 +42,17 @@ function isOn() {
 }
 
 function register(context) {
-  const syncContext = () => vscode.commands.executeCommand('setContext', STATE, isOn());
+  // Semnalul pentru patch-ul din workbench (vscode-patch/workbench.css): cât e
+  // pornit modul, intrarea asta există în DOM, iar CSS-ul pune fundalul peste
+  // editor. Extensia n-are acces la DOM, deci nu poate pune ea o clasă.
+  const marker = vscode.window.createStatusBarItem('presentation', vscode.StatusBarAlignment.Right, -2000002);
+  marker.name = 'Vic Presentation';
+  marker.text = '$(device-desktop)';
+  context.subscriptions.push(marker);
+  const syncContext = () => {
+    if (isOn()) marker.show(); else marker.hide();
+    return vscode.commands.executeCommand('setContext', STATE, isOn());
+  };
   const apply = async (values) => {
     const config = vscode.workspace.getConfiguration();
     for (const [key, value] of Object.entries(values)) {

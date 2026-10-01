@@ -72,12 +72,15 @@ open(os.path.join(wb, 'victor-workbench.css'), 'w', encoding='utf8').write(css)
 js = open(os.path.join(src, 'workbench.js'), encoding='utf8').read()
 js = js.replace('const VICTOR_WATCH = false;', f'const VICTOR_WATCH = {"true" if watch else "false"};')
 open(os.path.join(wb, 'victor-workbench.js'), 'w', encoding='utf8').write(js)
+#    Fundalul din „Vic Presentation" — tot lângă workbench.html, din același motiv.
+bg = open(os.path.join(src, 'presentation-bg.jpg'), 'rb').read()
+open(os.path.join(wb, 'victor-presentation-bg.jpg'), 'wb').write(bg)
 
 # 1b. amprenta conținutului, pusă în URL. Fără ea renderer-ul servea CSS-ul din
 #     cache la Reload Window (URL identic = același fișier pentru el), așa că
 #     regulile noi „nu se aplicau" deși pe disc erau — ore pierdute căutând în
 #     selectoare o problemă care era de cache.
-stamp = hashlib.sha256((css + js).encode()).hexdigest()[:8]
+stamp = hashlib.sha256((css + js).encode() + bg).hexdigest()[:8]
 
 # 2. injectare idempotentă: întâi scoatem blocul vechi (dacă e), apoi îl punem la loc.
 #    Așa nu ținem un backup care s-ar învechi la primul update de VS Code.

@@ -381,3 +381,32 @@
 .victor-update-ai:hover {
   background-color: var(--vscode-button-hoverBackground);
 }
+
+/* ------------------------------------- fundalul din „Vic Presentation" (⌘F12) */
+
+/* Intrarea de status bar există doar cât e pornit modul (presentation.js) — e
+   semnalul după care se aprinde fundalul de mai jos, n-are ce căuta în bară.
+   Bara oricum e ascunsă în prezentare, dar intrarea rămâne în DOM. */
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.presentation"] {
+  display: none;
+}
+
+/* Poza stă PESTE editor, nu sub el: fundalul editorului e pictat de câteva
+   straturi opace (`.monaco-editor`, `.monaco-editor-background`, margin-ul cu
+   numerele), deci dedesubt nu s-ar vedea. `screen` doar luminează — textul
+   deschis rămâne cât era, iar pe fondul închis se vede poza, la 15%.
+   `pointer-events: none` lasă click-urile și selecția să treacă prin ea. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .part.editor > .content {
+  position: relative;
+}
+
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .part.editor > .content::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: url('./victor-presentation-bg.jpg') right center / cover no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0.15;
+}

@@ -19,7 +19,7 @@ doc = open(html, encoding='utf8').read()
 doc = re.sub(r'<!-- victor-vsc:start -->.*?<!-- victor-vsc:end -->\n?', '', doc, flags=re.S)
 open(html, 'w', encoding='utf8').write(doc)
 
-for f in ('victor-workbench.css', 'victor-workbench.js'):
+for f in ('victor-workbench.css', 'victor-workbench.js', 'victor-presentation-bg.jpg'):
     p = os.path.join(wb, f)
     if os.path.exists(p): os.remove(p)
 
