@@ -4,7 +4,7 @@ const vscode = require('vscode');
 // pe ecran — fără taburi, activity bar, status bar și title bar.
 //
 // Zen Mode (F12) e apropiat, dar Victor îl folosește zilnic cu propriile
-// `zenMode.*` din package.json (status bar, numere de linie, tabul curent),
+// `zenMode.*` din package.json (status bar, numere de linie, fără taburi),
 // deci modul ăsta e separat.
 // VS Code nu are o comandă care să ascundă părțile astea fără să scrie în
 // settings.json (nici toggle-urile lui din fabrică), așa că le scriem și noi,
