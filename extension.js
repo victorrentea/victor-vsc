@@ -250,6 +250,16 @@ function activate(context) {
   const selectOpened = vscode.commands.registerCommand('victor-vsc.selectOpenedFile',
     () => vscode.commands.executeCommand('workbench.files.action.showActiveFileInExplorer'));
 
+  // ⇧⇧ ca în IntelliJ: Quick Open cu textul selectat deja în căsuță. VS Code
+  // știe nativ `shift shift` (două apăsări în 300 ms), dar argumentul unui
+  // keybinding e fix, deci selecția trebuie citită de o comandă proprie.
+  // Doar primul rând: o selecție pe mai multe rânduri n-are ce căuta acolo.
+  const quickOpenSelection = vscode.commands.registerCommand('victor-vsc.quickOpenSelection', () => {
+    const editor = vscode.window.activeTextEditor;
+    const text = editor ? editor.document.getText(editor.selection).split(/\r?\n/)[0].trim() : '';
+    return vscode.commands.executeCommand('workbench.action.quickOpen', text || undefined);
+  });
+
   // „Open in Draw.io App" pe *.drawio.png/svg: macOS alege aplicația doar după
   // ultima extensie, deci un .drawio.png ar merge în Preview. Din Explorer vin
   // (item-ul pe care s-a dat click, toată selecția), din tab doar item-ul.
@@ -273,6 +283,7 @@ function activate(context) {
     runFile,
     debugFile,
     selectOpened,
+    quickOpenSelection,
     openInDrawio,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.window.onDidChangeTextEditorSelection(debounced),
