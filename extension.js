@@ -254,7 +254,11 @@ function activate(context) {
   // știe nativ `shift shift` (două apăsări în 300 ms), dar argumentul unui
   // keybinding e fix, deci selecția trebuie citită de o comandă proprie.
   // Doar primul rând: o selecție pe mai multe rânduri n-are ce căuta acolo.
-  const quickOpenSelection = vscode.commands.registerCommand('victor-vsc.quickOpenSelection', () => {
+  // Id-ul NU e `victor-vsc.*` intenționat: k--kato.intellij-idea-keybindings
+  // leagă și el ⇧⇧ de `workbench.action.quickOpen`, iar între două extensii
+  // VS Code sortează keybinding-urile după id-ul comenzii și câștigă ultimul.
+  // `victor-vsc.…` ieșea înainte de `workbench.…` și pierdea mereu.
+  const quickOpenSelection = vscode.commands.registerCommand('workbench.action.victor.quickOpenSelection', () => {
     const editor = vscode.window.activeTextEditor;
     const text = editor ? editor.document.getText(editor.selection).split(/\r?\n/)[0].trim() : '';
     return vscode.commands.executeCommand('workbench.action.quickOpen', text || undefined);
