@@ -47,6 +47,16 @@ Numele fișierelor/folderelor cu erori nu mai sunt roșii
 VS Code colorează eticheta **și** badge-ul din același token, deci badge-ul își
 pierde și el roșul — nu se pot separa fără CSS. Culorile git rămân.
 
+Decorațiile de Problems sunt de tot oprite în arbore
+(`problems.decorations.enabled: false`). Motivul: au `weight` (100 × severitate),
+cele git n-au, și ambele urcă la folderele părinte; pe un folder VS Code ia
+culoarea decorației cu greutatea cea mai mare. Deci orice folder care conține
+un warning oriunde dedesubt (ex. `src/test`) ieșea „alb" (culoarea neutralizată
+de mai sus) în loc de albastrul schimbării git — calea până la fișierul modificat
+se rupea exact la primul strămoș comun cu un warning. Badge-urile erau deja
+oprite (`explorer.decorations.badges: false`), deci decorația de Problems nu mai
+aducea nimic vizibil în afară de acest bug.
+
 ## Culorile VCS
 
 Luate din `DefaultColorSchemesManager.xml` din intellij-community — sursa pe
