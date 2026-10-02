@@ -42,8 +42,17 @@ function symbolChain(symbols, pos) {
 // versionată aici, iar fișierul de setări e doar locul unde main-ul o poate
 // citi. `inspect().globalValue` (nu `get()`) ca să vedem valoarea scrisă
 // efectiv de utilizator, nu default-ul.
+//
+// `zenMode.restore: false` din același motiv, deși o citește renderer-ul: o
+// citește la restaurarea layout-ului, înainte să fie înregistrate default-urile
+// extensiilor. Cu `true` (implicit), o fereastră închisă în Zen (F12, apăsat și
+// din greșeală) se redeschidea în Zen zile mai târziu — fără taburi și activity
+// bar, adică o „Vic Presentation" pe jumătate, fără fundal (2 oct 2026:
+// petclinic-main și petclinic-clone aveau `workbench.zenMode.active: true`
+// salvat din 31 aug / 4 sep).
 const MAIN_PROCESS_SETTINGS = {
   'window.openFoldersInNewWindow': 'on',
+  'zenMode.restore': false,
 };
 
 function enforceMainProcessSettings() {

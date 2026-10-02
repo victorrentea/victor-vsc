@@ -56,6 +56,18 @@ function register(context) {
   };
   sync();
 
+  // Stratul MEMORY trăiește în workbench, `on` în extension host. Un restart doar
+  // de extension host (fără Reload Window) reactivează extensia cu `on = false`,
+  // dar lasă setările de prezentare aplicate: taburi și activity bar ascunse, fără
+  // fundal, iar ⌘F12 *pornea* modul în loc să-l oprească. Deci la activare
+  // aliniem fereastra la `on = false`; după un Reload Window stratul e gol oricum.
+  vscode.commands.getCommands(true).then((ids) => {
+    if (ids.includes(MEMORY_CONFIG)) {
+      vscode.commands.executeCommand(MEMORY_CONFIG,
+        Object.fromEntries(Object.keys(SETTINGS).map((k) => [k, null])));
+    }
+  });
+
   context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
     if (!(await vscode.commands.getCommands(true)).includes(MEMORY_CONFIG)) {
       // Bundle-ul workbench-ului se servește din cache la Reload Window, deci
