@@ -28,6 +28,7 @@ const os = require('os');
 const path = require('path');
 
 const { openDiff, ownedHere, REF_RE } = require('./diff');
+const { openReviewed } = require('./review-open');
 
 const REGISTRY = path.join(os.homedir(), '.walkie-talkie', 'ide');
 
@@ -164,6 +165,22 @@ async function openPlain(file, line) {
   } catch (_) { /* the file moved; the warning above already said something */ }
 }
 
+/** A guide read off disk has nowhere to show "no window has this", so it is said here, in
+ *  the window the OS handed the URI to — with the prompt one click away. */
+async function handleReviewOpen(query) {
+  const ref = {
+    file: query.get('file') || '', line: query.get('line'), sha: query.get('sha') || '',
+    root: query.get('root') || '', branch: query.get('branch') || '',
+  };
+  const done = await openReviewed(ref);
+  if (done.ok) return;
+  // A guide built before it carried its commit cannot be checked; it opens as it always did.
+  if (done.error === 'bad-request') return openPlainRouted(ref.file, Math.max(1, Number(ref.line) || 1));
+  if (!done.prompt) return vscode.window.showWarningMessage(`victor-vsc: ${done.message}`);
+  const pick = await vscode.window.showErrorMessage(done.message, 'Copy prompt');
+  if (pick === 'Copy prompt') await vscode.env.clipboard.writeText(done.prompt);
+}
+
 function register(context) {
   context.subscriptions.push(vscode.window.registerUriHandler({
     handleUri(uri) {
@@ -172,6 +189,7 @@ function register(context) {
       const query = new URLSearchParams(uri.query || '');
       if (uri.path === '/diff') return handleDiff(query);
       if (uri.path === '/open') return openPlainRouted(query.get('file') || '', Math.max(1, Number(query.get('line')) || 1));
+      if (uri.path === '/review-open') return handleReviewOpen(query);
       vscode.window.showWarningMessage(`victor-vsc: nothing handles ${uri.path || '/'}`);
     },
   }));

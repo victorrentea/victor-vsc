@@ -57,6 +57,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `open-in-browser.py` | deschide un URL în browserul embedded al ferestrei care are folderul curent — vezi mai jos |
 | `open-in-editor.py` | deschide un fișier în fereastra care **conține** calea (nu cea din față) și o ridică — vezi mai jos |
 | `uri-handler.js` | handler pentru `vscode://victorrentea.victor-vsc/…` — canalul pe care îl are o pagină `file://`, fără server |
+| `review-open.js` | deschide o referință din Human Review în fereastra care are **versiunea revizuită** a fișierului (blob-ul de la HEAD-ul ferestrei = blob-ul de la commit-ul review-ului); altfel refuză cu un mesaj și un prompt pentru agent. Fișier modificat local → avertisment pe linia pe care aterizezi. Nu face niciodată checkout |
 | `diff.js` | deschide un fișier ca **diff** (o revizie în stânga, working tree-ul în dreapta), folosit și de `/open-diff` și de handler |
 | `update-patch.js` | butonul „🤖Update" din title bar, care îl înlocuiește pe cel albastru al VS Code (ăla rămâne în DOM, ascuns, și „🤖Update" îl apasă după armare): armează un marker, iar după repornire reaplică singur `vscode-patch/apply.sh` (și cheamă Claude dacă o ancoră s-a rupt). Îl reaplică și fără marker, când vede la pornire că patch-ul lipsește (update instalat la quit) — vezi `VSCODE-UPDATE.md` |
 | `git-lines.js` | numără liniile schimbate pe grup de SCM și le publică într-o intrare de status bar ascunsă, de unde le ia `vscode-patch/workbench.js` |
@@ -172,7 +173,9 @@ dădea în tăcere un fișier simplu, și feature-ul părea stricat, nu indispon
 (`vscode://vscode.github-authentication/…`) merg mai departe, LaunchServices nu e atins.
 Suntem doar încă o extensie către care VS Code rutează o autoritate.
 
-Rute: `/diff?file=<abs>&base=<sha>&line=<n>` și `/open?file=<abs>&line=<n>`.
+Rute: `/diff?file=<abs>&base=<sha>&line=<n>`, `/open?file=<abs>&line=<n>` și
+`/review-open?file=<abs>&line=<n>&sha=<sha>&root=<checkout>&branch=<b>` (aceeași logică e și
+`POST /review-open` pe listener, pentru pagina servită).
 
 Ce a costat timp și trebuie știut:
 
