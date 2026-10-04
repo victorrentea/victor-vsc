@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.134",
+  "version": "0.0.135",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -66,6 +66,19 @@
       ]
     },
     "configurationDefaults": {
+      "cucumber.features": [
+        "src/test/**/*.feature",
+        "features/**/*.feature",
+        "*/src/**/*.feature",
+        "*/features/**/*.feature"
+      ],
+      "cucumber.glue": [
+        "src/test/**/*.java",
+        "features/**/*.ts",
+        "*/src/test/**/*.java",
+        "*/src/**/*.ts",
+        "*/features/**/*.ts"
+      ],
       "chat.agent.maxRequests": 1000,
       "problems.decorations.enabled": false,
       "java.configuration.updateBuildConfiguration": "automatic",
