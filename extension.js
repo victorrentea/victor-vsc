@@ -111,6 +111,18 @@ const QUICK_OPEN_KEYBINDINGS = [
 ];
 const QUICK_OPEN_MARKER = '// victor-vsc: ⇧⇧ = Quick Open cu selecția — scris automat la activare';
 
+// ⇧⌘. NU mai repornește breadcrumb-ul de sus. Din fabrică e legat de
+// `breadcrumbs.toggleToOn` (`when: !config.breadcrumbs.enabled`), care nu doar îl
+// arată: scrie `"breadcrumbs.enabled": true` în settings.json, iar setarea
+// utilizatorului bate `configurationDefaults` de aici — deci breadcrumb-ul rămânea
+// pornit pentru totdeauna, în toate ferestrele. Așa „reapărea spontan" (4 oct 2026:
+// linia stătea la finalul settings.json, scrisă pe 2 oct). Cel de jos, din status
+// bar, e singurul pe care-l vrem.
+const BREADCRUMB_KEYBINDINGS = [
+  { key: 'shift+cmd+.', command: '-breadcrumbs.toggleToOn' },
+];
+const BREADCRUMB_MARKER = '// victor-vsc: ⇧⌘. nu mai pornește breadcrumb-ul de sus — scris automat la activare';
+
 function enforceKeybindings(context, marker, bindings) {
   // globalStorageUri e <userData>/User/globalStorage/<id>, deci de la el două nivele
   // în sus ajungem la User/ — fără să codăm calea de macOS.
@@ -131,6 +143,7 @@ function activate(context) {
   enforceKeybindings(context, KEYBINDINGS_MARKER, TERMINAL_KEYBINDINGS);
   enforceKeybindings(context, PRESENTATION_MARKER, PRESENTATION_KEYBINDINGS);
   enforceKeybindings(context, QUICK_OPEN_MARKER, QUICK_OPEN_KEYBINDINGS);
+  enforceKeybindings(context, BREADCRUMB_MARKER, BREADCRUMB_KEYBINDINGS);
 
   // A tools button that opens the Command Palette on click. It lives in the
   // status bar rather than up next to the four layout controls because that
