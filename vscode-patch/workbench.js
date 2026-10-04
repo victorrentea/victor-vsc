@@ -57,7 +57,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // rămâne în status bar (ascunsă din CSS), deci handler-ul ei e mereu cel viu:
   // dacă patch-ul nu e aplicat, butonul se vede pur și simplu jos, ca înainte.
   // Id-ul EXACT, nu un prefix: VS Code numerotează intrările fără id explicit
-  // tot sub numele extensiei (`victorrentea.victor-vsc.0` e breadcrumb-ul), iar
+  // tot sub numele extensiei, cu un contor comun tuturor extensiilor, iar
   // un `[id^=…]` prindea prima intrare din bară, adică Go to Symbol — de-aia se
   // deschidea lista de simboluri în loc de Command Palette.
   const TOOLS_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.tools"]';

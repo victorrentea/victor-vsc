@@ -162,9 +162,8 @@
 /* ------------------------------------- breadcrumb-ul de jos, cât încape */
 
 /* VS Code plafonează orice intrare din status bar la `max-width: 40vw`, deci
-   breadcrumb-ul (`victorrentea.victor-vsc.0`, prima intrare fără id explicit)
-   se tăia cu „…" la ~690px pe ecranul de 1728px, cu jumătate de bară goală în
-   dreapta lui. Fără plafon, dar cu voie să se strângă: `left-items` primește
+   breadcrumb-ul (`victorrentea.victor-vsc.breadcrumb`) se tăia la ~690px pe
+   ecranul de 1728px, cu jumătate de bară goală în dreapta lui. Fără plafon, dar cu voie să se strângă: `left-items` primește
    `min-width: 0` (altfel un item flex nu coboară sub conținut și ar împinge
    intrările din dreapta afară din bară), iar ellipsis-ul label-ului din fabrică
    intră abia când chiar nu mai încape. */
@@ -172,7 +171,7 @@
   min-width: 0;
 }
 
-.monaco-workbench .part.statusbar > .left-items > .statusbar-item[id="victorrentea.victor-vsc.0"] {
+.monaco-workbench .part.statusbar > .left-items > .statusbar-item[id="victorrentea.victor-vsc.breadcrumb"] {
   max-width: none;
   min-width: 0;
   flex: 0 1 auto;

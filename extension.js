@@ -16,16 +16,6 @@ const presentation = require('./presentation');
 
 const SEP = '  ›  ';
 
-/** Deepest-first chain of symbols containing `pos`, outermost first. */
-function symbolChain(symbols, pos) {
-  for (const s of symbols || []) {
-    if (s.range && s.range.contains(pos)) {
-      return [s, ...symbolChain(s.children, pos)];
-    }
-  }
-  return [];
-}
-
 // Setări pe care extensia NU le poate livra prin `configurationDefaults`.
 //
 // `window.openFoldersInNewWindow` e citită exclusiv de procesul **main** al
@@ -164,7 +154,11 @@ function activate(context) {
   // `breadcrumbs.enabled` turns the top one off and this redraws it at the
   // bottom. Left-aligned with a priority above every other entry so it comes
   // first; only the remote indicator, which VS Code pins, stays to its left.
-  const trail = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1000000);
+  // An explicit id, so vscode-patch/workbench.css can address the node as
+  // `victorrentea.victor-vsc.breadcrumb`: without one the suffix comes from a
+  // counter shared by EVERY extension in the host, so it depends on activation
+  // order — the CSS aimed at `.0` and never matched.
+  const trail = vscode.window.createStatusBarItem('breadcrumb', vscode.StatusBarAlignment.Left, 1000000);
   trail.name = 'Victor Breadcrumb';
   trail.command = 'workbench.action.gotoSymbol';
   trail.tooltip = 'Go to Symbol in Editor…';
@@ -194,32 +188,18 @@ function activate(context) {
     problems.show();
   }
 
-  let seq = 0;
-  async function render() {
-    const mine = ++seq;                       // a slower symbol query must never
-    const ed = vscode.window.activeTextEditor; // overwrite a newer one
+  // Only the path, down to the file name. The symbol chain after it (class ›
+  // method, as IntelliJ shows it) is gone: Victor wants the trail to stop at the
+  // file — and without it the footer no longer reacts to every caret move.
+  function render() {
+    const ed = vscode.window.activeTextEditor;
     if (!ed) { trail.hide(); return; }
 
     const folder = vscode.workspace.getWorkspaceFolder(ed.document.uri);
     const rel = folder
       ? path.relative(path.dirname(folder.uri.fsPath), ed.document.uri.fsPath)
       : ed.document.uri.fsPath;
-    const parts = rel.split(path.sep);
-
-    let symbols = [];
-    try {
-      symbols = await vscode.commands.executeCommand(
-        'vscode.executeDocumentSymbolProvider', ed.document.uri) || [];
-    } catch { /* no provider for this language — path alone is still useful */ }
-    if (mine !== seq) return;
-
-    // DocumentSymbol has .children; SymbolInformation (the flat, older shape)
-    // does not — only the former can produce a nested trail.
-    const chain = symbols.length && symbols[0].children !== undefined
-      ? symbolChain(symbols, ed.selection.active).map(s => s.name)
-      : [];
-
-    trail.text = [...parts, ...chain].join(SEP);
+    trail.text = rel.split(path.sep).join(SEP);
     trail.show();
   }
 
@@ -320,8 +300,6 @@ function activate(context) {
     quickOpenSelection,
     openInDrawio,
     vscode.window.onDidChangeActiveTextEditor(debounced),
-    vscode.window.onDidChangeTextEditorSelection(debounced),
-    vscode.workspace.onDidChangeTextDocument(debounced),
     vscode.languages.onDidChangeDiagnostics(debouncedProblems),
   );
   // PlantUML: editorul custom care desenează diagrama.
