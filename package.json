@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.147",
+  "version": "0.0.149",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -392,6 +392,11 @@
         "title": "Select Opened File",
         "category": "victor-vsc",
         "icon": "$(victor-crosshair)"
+      },
+      {
+        "command": "victor-vsc.addCommentOnThreadLine",
+        "title": "Add Comment on This Line",
+        "icon": "$(add)"
       }
     ],
     "keybindings": [
@@ -462,6 +467,10 @@
         {
           "command": "victor-vsc.noop",
           "when": "false"
+        },
+        {
+          "command": "victor-vsc.addCommentOnThreadLine",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -504,6 +513,12 @@
           "command": "victor-vsc.toggleRender",
           "group": "navigation@9",
           "when": "(resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/ && !isInDiffEditor) || activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/ || (victorVsc.openapiFile && !isInDiffEditor) || activeCustomEditorId == 'victor-vsc.openapiPreview'"
+        }
+      ],
+      "comments/commentThread/title": [
+        {
+          "command": "victor-vsc.addCommentOnThreadLine",
+          "group": "2_add@0"
         }
       ]
     },

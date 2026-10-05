@@ -52,11 +52,12 @@ const KEYBOARD = 1, MOUSE = 2;
 
 /** Is this selection change the reader's own move? A click or a key always is. Anything
  *  else (a command, or no kind at all, which is what a programmatic set reports) is ours
- *  while it lands on the selection we set or falls inside the guard, and the reader's
- *  after that — Go to Line, a Find jump. */
-function readerMoved({ kind, sinceArmMs, sameAsOurs }) {
+ *  while it lands on the selection we set, falls inside the guard or inside a `hold()` —
+ *  the bridge walking the caret to a PR comment thread (comment-focus.js) — and the
+ *  reader's after that — Go to Line, a Find jump. */
+function readerMoved({ kind, sinceArmMs, sameAsOurs, held }) {
   if (kind === MOUSE || kind === KEYBOARD) return true;
-  if (sameAsOurs) return false;
+  if (sameAsOurs || held) return false;
   return sinceArmMs >= GUARD_MS;
 }
 
@@ -115,7 +116,8 @@ function focus(editor, line, endLine) {
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.textEditor !== editor) return;
       const sameAsOurs = e.selections.length === 1 && e.selections[0].isEqual(sel);
-      if (readerMoved({ kind: e.kind, sinceArmMs: Date.now() - armedAt, sameAsOurs })) clear();
+      const held = !!current && Date.now() < current.heldUntil;
+      if (readerMoved({ kind: e.kind, sinceArmMs: Date.now() - armedAt, sameAsOurs, held })) clear();
     }),
     vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document === doc && e.contentChanges.length) clear();
@@ -127,8 +129,15 @@ function focus(editor, line, endLine) {
       if (!eds.includes(editor)) clear();
     }),
   ];
-  current = { editor, subs };
+  current = { editor, subs, heldUntil: 0 };
   return true;
 }
 
-module.exports = { focus, clear, span, fadeSpans, readerMoved, GUARD_MS, MAX_SPAN };
+/** For the next `ms`, a selection change that is not a click or a key is the bridge's own
+ *  (it is about to move the caret to a comment thread and back), not the reader's. Extends,
+ *  never shortens; a no-op when nothing is focused. */
+function hold(ms) {
+  if (current) current.heldUntil = Math.max(current.heldUntil, Date.now() + ms);
+}
+
+module.exports = { focus, clear, hold, span, fadeSpans, readerMoved, GUARD_MS, MAX_SPAN };

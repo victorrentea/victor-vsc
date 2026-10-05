@@ -48,3 +48,10 @@ test('our own selection, or anything inside the guard, is not', () => {
 test('a command moving the selection after the guard is the reader', () => {
   assert.strictEqual(readerMoved({ kind: 3, sinceArmMs: GUARD_MS, sameAsOurs: false }), true);
 });
+
+test('a hold keeps the bridge\'s own moves from clearing the fade, never a click or a key', () => {
+  assert.strictEqual(readerMoved({ kind: 3, sinceArmMs: 5000, sameAsOurs: false, held: true }), false);
+  assert.strictEqual(readerMoved({ kind: undefined, sinceArmMs: 5000, sameAsOurs: false, held: true }), false);
+  assert.strictEqual(readerMoved({ kind: 2, sinceArmMs: 5000, sameAsOurs: false, held: true }), true);
+  assert.strictEqual(readerMoved({ kind: 1, sinceArmMs: 5000, sameAsOurs: false, held: true }), true);
+});

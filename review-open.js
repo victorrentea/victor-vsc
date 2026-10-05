@@ -19,6 +19,7 @@ const os = require('os');
 const path = require('path');
 const { execFile } = require('child_process');
 const rangeFocus = require('./range-focus');
+const commentFocus = require('./comment-focus');
 
 const REGISTRY = path.join(os.homedir(), '.walkie-talkie', 'ide');
 const SHA_RE = /^[0-9a-f]{7,40}$/i;
@@ -180,7 +181,7 @@ function markEdited(editor, line0, text) {
 
 const editedText = (short) => `⚠ Edited since the reviewed commit ${short}: lines may have moved`;
 
-async function revealHere(file, line, warn, endLine) {
+async function revealHere(file, line, warn, endLine, commentLine) {
   const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
   const at = new vscode.Range(line - 1, 0, line - 1, 0);
   const editor = await vscode.window.showTextDocument(doc, { selection: at, preserveFocus: false, viewColumn: vscode.ViewColumn.One });
@@ -188,6 +189,9 @@ async function revealHere(file, line, warn, endLine) {
   markEdited(editor, line - 1, warn);
   rangeFocus.focus(editor, line, endLine);
   try { await vscode.commands.executeCommand('workbench.action.focusWindow'); } catch (_) { /* opened regardless */ }
+  // A card posted to the PR: its thread too, expanded and focused (comment-focus.js).
+  if (commentLine) return (await commentFocus.focusThread(editor, line, commentLine, { hold: rangeFocus.hold })).comment;
+  return undefined;
 }
 
 /** Locate, then open in the window that qualified. Never throws; the result says what
@@ -196,16 +200,23 @@ async function openReviewed(ref) {
   const line = Math.max(1, Number(ref.line) || 1);
   // Passed on as given: range-focus.js decides whether it is a range worth focusing.
   const endLine = ref.endLine == null || ref.endLine === '' ? undefined : Number(ref.endLine);
+  // `comment`: the card has a PR thread on this file; `commentLine` is the line GitHub
+  // anchored it on, the reference's own first line when not given.
+  const at = Number(ref.commentLine);
+  const commentLine = ref.comment === true ? (Number.isInteger(at) && at >= 1 ? at : line) : undefined;
   const found = await locate(ref);
   if (!found.ok) return found;
   const { w, target, edited, folder } = found.hit;
   const warn = edited ? editedText(found.short) : '';
   if (w.self) {
-    try { await revealHere(target, line, warn, endLine); } catch (e) { return { ok: false, error: 'open-failed', message: e.message }; }
-    return { ok: true, folder, path: target, edited };
+    let comment;
+    try { comment = await revealHere(target, line, warn, endLine, commentLine); } catch (e) { return { ok: false, error: 'open-failed', message: e.message }; }
+    return { ok: true, folder, path: target, edited, ...(comment ? { comment } : {}) };
   }
-  const res = await call(w.entry, 'POST', '/open-file', { path: target, line, endLine, focus: true, warn });
-  if (res && res.body && res.body.ok) return { ok: true, folder, path: target, edited };
+  const res = await call(w.entry, 'POST', '/open-file', { path: target, line, endLine, focus: true, warn,
+    ...(commentLine ? { comment: true, commentLine } : {}) });
+  if (res && res.body && res.body.ok) return { ok: true, folder, path: target, edited,
+    ...(res.body.comment ? { comment: res.body.comment } : {}) };
   return { ok: false, error: 'open-failed', message: `${folder} did not open ${path.basename(target)}` };
 }
 

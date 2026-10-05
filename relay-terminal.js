@@ -37,6 +37,7 @@ const vscode = require('vscode');
 const { openDiff } = require('./diff');
 const { openReviewed, markEdited } = require('./review-open');
 const rangeFocus = require('./range-focus');
+const commentFocus = require('./comment-focus');
 
 /** Where the relay looks for us. Fixed, and deliberately not under the relay's
  *  `--home`: that flag moves the outbox for testing, and an extension has no
@@ -238,6 +239,26 @@ function handle(req, res) {
     return send(res, 200, { ok: true, name: term.name, cwd: cwdOf(term) });
   }
 
+  // What this window's editor is showing, for a caller checking that an open landed —
+  // read-only, nothing here can change anything. The file, the selection, and what the last
+  // comment-thread focus did (comment-focus.js). Whether the thread widget *holds* DOM focus
+  // is not readable from an extension (`commentFocused` is a context key, and context-key
+  // values are not exposed), so `lastComment` reports the observable proxy: the reveal ran
+  // on the thread on that line, which is what moves the focus there.
+  if (req.method === 'GET' && url.pathname === '/editor-state') {
+    const ed = vscode.window.activeTextEditor;
+    const sel = ed && ed.selection;
+    return send(res, 200, {
+      ok: true,
+      folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null,
+      focused: vscode.window.state.focused,
+      activeFile: ed ? ed.document.uri.fsPath : null,
+      selection: sel ? { start: { line: sel.start.line + 1, character: sel.start.character },
+        end: { line: sel.end.line + 1, character: sel.end.character } } : null,
+      lastComment: commentFocus.lastResult(),
+    });
+  }
+
   // Reload this window. Installing a new build of this very extension does
   // nothing until the extension host restarts, and the only way to ask for that
   // used to be Victor pressing ⌘⇧P himself — so every change ended with a "give
@@ -404,8 +425,21 @@ function handle(req, res) {
             // part that matters. Never fail the request over the raise.
           }
         }
+        // `comment`: the reference is a Human Review card posted to the PR, so the thread
+        // GitHub put on it is brought up too — expanded and focused, ready for Reply or
+        // Resolve Conversation (comment-focus.js). After the raise, so the focus lands in a
+        // window that is in front. No thread (no active PR here, threads still loading past
+        // the retry) leaves the range exactly as above, and the reply says which.
+        let comment;
+        if (parsed.comment === true) {
+          const at = Number(parsed.commentLine);
+          const commentLine = Number.isInteger(at) && at >= 1 ? at : line + 1;
+          comment = (await commentFocus.focusThread(editor, line + 1, commentLine,
+            { hold: rangeFocus.hold })).comment;
+        }
         send(res, 200, { ok: true, path: doc.uri.fsPath, line: line + 1,
-          ...(ranged ? { endLine: Number(parsed.endLine) } : {}) });
+          ...(ranged ? { endLine: Number(parsed.endLine) } : {}),
+          ...(comment ? { comment } : {}) });
       } catch (e) {
         send(res, 404, { ok: false, error: e.message, path: file });
       }
@@ -457,6 +491,7 @@ function handle(req, res) {
       }
       const result = await openReviewed({
         file: String(parsed.file || ''), line: parsed.line, endLine: parsed.endLine,
+        comment: parsed.comment === true, commentLine: parsed.commentLine,
         sha: String(parsed.sha || ''),
         root: String(parsed.root || ''), branch: String(parsed.branch || ''),
       });

@@ -15,6 +15,7 @@ const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
 const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
+const commentAdd = require('./comment-add');
 
 const SEP = '  ›  ';
 
@@ -342,6 +343,7 @@ function activate(context) {
   // fereastra asta (amber: servit, dar HEAD-ul e pe alt commit). Vezi review-status.js.
   reviewStatus.register(context);
   quickDefinition.register(context);
+  commentAdd.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur
