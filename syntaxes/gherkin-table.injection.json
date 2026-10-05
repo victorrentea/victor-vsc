@@ -1,0 +1,10 @@
+{
+  "$comment": "Table cells for alexkrechik.cucumberautocomplete's grammar, whose table rule paints the whole row as keyword.control. Cells only: its own end pattern needs the last pipe.",
+  "scopeName": "text.gherkin.victor.table",
+  "injectionSelector": "L:text.gherkin.feature keyword.control.cucumber.table -markup.table.cell",
+  "patterns": [
+    {
+      "include": "text.gherkin.victor#table-cell"
+    }
+  ]
+}

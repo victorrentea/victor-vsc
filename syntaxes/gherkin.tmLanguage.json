@@ -1,0 +1,228 @@
+{
+  "$comment": "Gherkin for the `cucumber` language of CucumberOpen.cucumber-official, which ships no TextMate grammar at all and colours .feature files only through semantic tokens. See COLORS.md, section Gherkin.",
+  "name": "Gherkin (victor-vsc)",
+  "scopeName": "text.gherkin.victor",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#tag"
+    },
+    {
+      "include": "#examples-header"
+    },
+    {
+      "include": "#section"
+    },
+    {
+      "include": "#step"
+    },
+    {
+      "include": "#docstring"
+    },
+    {
+      "include": "#table-row"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^\\s*(#).*$",
+      "name": "comment.line.number-sign.gherkin.victor",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.comment.gherkin.victor"
+        }
+      }
+    },
+    "tag": {
+      "match": "(?<=^|\\s)@[^\\s@]+",
+      "name": "entity.name.type.tag.gherkin.victor"
+    },
+    "section": {
+      "match": "^\\s*(Feature|Rule|Background|Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios)\\s*(:)(.*)$",
+      "captures": {
+        "1": {
+          "name": "keyword.control.section.gherkin.victor"
+        },
+        "2": {
+          "name": "punctuation.separator.key-value.gherkin.victor"
+        },
+        "3": {
+          "name": "meta.section.title.gherkin.victor"
+        }
+      }
+    },
+    "examples-header": {
+      "$comment": "From `Examples:` to the end of the table's first row: that row names the columns the <placeholders> refer to. The rows after it are plain #table-row.",
+      "begin": "^\\s*(Examples|Scenarios)\\s*(:)(.*)$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.section.gherkin.victor"
+        },
+        "2": {
+          "name": "punctuation.separator.key-value.gherkin.victor"
+        },
+        "3": {
+          "name": "meta.section.title.gherkin.victor"
+        }
+      },
+      "end": "(?<=\\|)\\s*$|^(?!\\s*(?:\\||#|$))",
+      "patterns": [
+        {
+          "include": "#comment"
+        },
+        {
+          "include": "#table-pipe"
+        },
+        {
+          "match": "((?:[^|\\\\\\s]|\\\\.)(?:(?:[^|\\\\]|\\\\.)*(?:[^|\\\\\\s]|\\\\.))?)",
+          "name": "markup.table.cell.header.gherkin.victor"
+        }
+      ]
+    },
+    "step": {
+      "begin": "^\\s*(Given|When|Then|And|But|\\*)(?=\\s)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.step.gherkin.victor"
+        }
+      },
+      "end": "$",
+      "name": "meta.step.gherkin.victor",
+      "patterns": [
+        {
+          "include": "#quoted"
+        },
+        {
+          "include": "#placeholder"
+        },
+        {
+          "include": "#number"
+        }
+      ]
+    },
+    "quoted": {
+      "patterns": [
+        {
+          "begin": "\"",
+          "end": "\"|$",
+          "name": "string.quoted.double.gherkin.victor",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.gherkin.victor"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.gherkin.victor"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.gherkin.victor"
+            },
+            {
+              "include": "#placeholder"
+            }
+          ]
+        },
+        {
+          "begin": "(?<![\\w'])'",
+          "end": "'(?!\\w)|$",
+          "name": "string.quoted.single.gherkin.victor",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.gherkin.victor"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.gherkin.victor"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.gherkin.victor"
+            },
+            {
+              "include": "#placeholder"
+            }
+          ]
+        }
+      ]
+    },
+    "placeholder": {
+      "match": "(<)([^<>\\r\\n]+)(>)",
+      "name": "variable.parameter.placeholder.gherkin.victor",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.placeholder.begin.gherkin.victor"
+        },
+        "3": {
+          "name": "punctuation.definition.placeholder.end.gherkin.victor"
+        }
+      }
+    },
+    "docstring": {
+      "begin": "^\\s*(\"\"\"|```)(.*)$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.begin.gherkin.victor"
+        },
+        "2": {
+          "name": "entity.name.type.media-type.gherkin.victor"
+        }
+      },
+      "end": "^\\s*(\\1)\\s*$",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.end.gherkin.victor"
+        }
+      },
+      "contentName": "string.unquoted.docstring.gherkin.victor",
+      "patterns": [
+        {
+          "include": "#placeholder"
+        }
+      ]
+    },
+    "table-row": {
+      "begin": "^\\s*(?=\\|)",
+      "end": "$",
+      "name": "markup.table.row.gherkin.victor",
+      "patterns": [
+        {
+          "include": "#table-pipe"
+        },
+        {
+          "include": "#table-cell"
+        }
+      ]
+    },
+    "table-pipe": {
+      "match": "\\|",
+      "name": "punctuation.separator.table.gherkin.victor"
+    },
+    "table-cell": {
+      "match": "((?:[^|\\\\\\s]|\\\\.)(?:(?:[^|\\\\]|\\\\.)*(?:[^|\\\\\\s]|\\\\.))?)",
+      "captures": {
+        "1": {
+          "name": "markup.table.cell.gherkin.victor",
+          "patterns": [
+            {
+              "include": "#placeholder"
+            }
+          ]
+        }
+      }
+    },
+    "number": {
+      "$comment": "A bare number in a step is almost always an {int}/{float} the glue captures; coloured like a matched parameter.",
+      "match": "(?<![\\w.])-?\\d+(?:\\.\\d+)?(?![\\w.])",
+      "name": "constant.numeric.gherkin.victor"
+    }
+  }
+}

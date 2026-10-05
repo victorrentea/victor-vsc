@@ -1,0 +1,13 @@
+{
+  "$comment": "The same parameter scopes, injected into alexkrechik.cucumberautocomplete's grammar for when a .feature file is in its `feature` language mode instead of `cucumber`.",
+  "scopeName": "text.gherkin.victor.params",
+  "injectionSelector": "L:text.gherkin.feature -comment -string",
+  "patterns": [
+    {
+      "include": "text.gherkin.victor#quoted"
+    },
+    {
+      "include": "text.gherkin.victor#placeholder"
+    }
+  ]
+}

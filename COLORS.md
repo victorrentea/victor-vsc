@@ -203,3 +203,31 @@ Dock — un reload de fereastră nu schimbă mediul procesului main.
 `null` înseamnă „șterge variabila", nu „setează pe gol", deci terminalele ies
 curate indiferent cum a fost pornit VS Code. Se aplică doar terminalelor **noi**;
 cele deja deschise păstrează mediul cu care au pornit.
+
+---
+
+## Gherkin: parametrii pașilor, ca-n IntelliJ
+
+În `.feature`, valorile (`"Potter"`, celulele de tabel, numerele din pași) ies
+**verzi**, iar `<placeholder>`-ele din Scenario Outline și capul tabelului din
+Examples ies **mov** — aceeași culoare pe ambele capete, ca să se vadă că
+`<search>` din pas e coloana `search` din tabel. Pipe-urile sunt gri stins.
+Verdele și movul sunt culorile de string și de câmp din tema Islands.
+
+Extensia oficială (`CucumberOpen.cucumber-official`) **n-are gramatică
+TextMate deloc**: limbajul `cucumber` e colorat doar prin semantic tokens de la
+language server. Fără gramatică, ghilimelele dintr-un pas nu erau nimic, iar
+`<search>` venea ca `variable`, pe care tema îl vopsește cu culoarea textului.
+Deci:
+
+- `syntaxes/gherkin.tmLanguage.json` e o gramatică întreagă pentru `cucumber`
+  (scope `text.gherkin.victor`), culorile ei în
+  `editor.tokenColorCustomizations`;
+- `editor.semanticTokenColorCustomizations` suprascrie `variable:cucumber`
+  (mov) și `parameter:cucumber` (verde — argumentele potrivite cu glue-ul, prin
+  `cucumber.glue`), altfel semantic tokens-urile ar acoperi gramatica cu
+  culoarea textului;
+- `gherkin-params.injection.json` / `gherkin-table.injection.json` pun aceleași
+  scope-uri în gramatica lui `alexkrechik.cucumberautocomplete`, pentru când un
+  fișier e în modul `feature`. Injecția de tabel exclude `markup.table.cell`:
+  fără asta se re-aplica în propria captură, la infinit.

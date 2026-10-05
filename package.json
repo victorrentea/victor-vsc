@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.140",
+  "version": "0.0.141",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -79,6 +79,88 @@
         "*/src/**/*.ts",
         "*/features/**/*.ts"
       ],
+      "editor.tokenColorCustomizations": {
+        "[IntelliJ IDEA Islands Light]": {
+          "textMateRules": [
+            {
+              "scope": [
+                "string.quoted.double.gherkin.victor",
+                "string.quoted.single.gherkin.victor",
+                "markup.table.cell.gherkin.victor",
+                "constant.numeric.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#067D17"
+              }
+            },
+            {
+              "scope": [
+                "variable.parameter.placeholder.gherkin.victor",
+                "punctuation.definition.placeholder",
+                "markup.table.cell.header.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#871094"
+              }
+            },
+            {
+              "scope": [
+                "punctuation.separator.table.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#B4B8BF"
+              }
+            }
+          ]
+        },
+        "[IntelliJ IDEA Islands Dark]": {
+          "textMateRules": [
+            {
+              "scope": [
+                "string.quoted.double.gherkin.victor",
+                "string.quoted.single.gherkin.victor",
+                "markup.table.cell.gherkin.victor",
+                "constant.numeric.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#6AAB73"
+              }
+            },
+            {
+              "scope": [
+                "variable.parameter.placeholder.gherkin.victor",
+                "punctuation.definition.placeholder",
+                "markup.table.cell.header.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#C77DBB"
+              }
+            },
+            {
+              "scope": [
+                "punctuation.separator.table.gherkin.victor"
+              ],
+              "settings": {
+                "foreground": "#55585E"
+              }
+            }
+          ]
+        }
+      },
+      "editor.semanticTokenColorCustomizations": {
+        "[IntelliJ IDEA Islands Light]": {
+          "rules": {
+            "parameter:cucumber": "#067D17",
+            "variable:cucumber": "#871094"
+          }
+        },
+        "[IntelliJ IDEA Islands Dark]": {
+          "rules": {
+            "parameter:cucumber": "#6AAB73",
+            "variable:cucumber": "#C77DBB"
+          }
+        }
+      },
       "chat.agent.maxRequests": 1000,
       "problems.decorations.enabled": false,
       "java.configuration.updateBuildConfiguration": "automatic",
@@ -459,7 +541,28 @@
           "description": "După ce „Update with AI\" reaplică patch-urile, repornește singur aplicația (patch-ul nu se vede fără repornire completă — vezi UPDATE-LESSONS.md). Notificarea lasă câteva secunde pentru „Nu reporni\"."
         }
       }
-    }
+    },
+    "grammars": [
+      {
+        "language": "cucumber",
+        "scopeName": "text.gherkin.victor",
+        "path": "./syntaxes/gherkin.tmLanguage.json"
+      },
+      {
+        "scopeName": "text.gherkin.victor.params",
+        "path": "./syntaxes/gherkin-params.injection.json",
+        "injectTo": [
+          "text.gherkin.feature"
+        ]
+      },
+      {
+        "scopeName": "text.gherkin.victor.table",
+        "path": "./syntaxes/gherkin-table.injection.json",
+        "injectTo": [
+          "text.gherkin.feature"
+        ]
+      }
+    ]
   },
   "license": "Unlicense",
   "repository": {
