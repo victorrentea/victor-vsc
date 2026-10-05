@@ -133,6 +133,16 @@ const COMMANDS = new Set([
   'workbench.action.focusWindow',
 ]);
 
+/** What `/command` will run on a folder or file, named by `&uri=` — never without one.
+ * Kept apart from COMMANDS so a URI-taking command cannot be called bare (it would act on
+ * whatever happens to be selected), and so the URI is checked before anything runs: a
+ * `file:` URI inside one of this window's workspace folders, nothing else. */
+const URI_COMMANDS = new Set([
+  // Human Review's Structure tab: a click on a package or a Maven module box shows that
+  // folder selected in this window's Explorer.
+  'revealInExplorer',
+]);
+
 function handle(req, res) {
   const url = new URL(req.url, 'http://127.0.0.1');
   if (req.headers['x-relay-token'] !== global.__wisprRelayToken) {
@@ -250,8 +260,18 @@ function handle(req, res) {
   // gates what a caller can do.
   if (req.method === 'POST' && url.pathname === '/command') {
     const id = url.searchParams.get('id');
-    if (!COMMANDS.has(id)) return send(res, 400, { ok: false, error: `not allowed: ${id}` });
-    vscode.commands.executeCommand(id).then(
+    const args = [];
+    if (URI_COMMANDS.has(id)) {
+      let uri;
+      try { uri = vscode.Uri.parse(url.searchParams.get('uri') || '', true); } catch (_) { uri = null; }
+      if (!uri || uri.scheme !== 'file' || !vscode.workspace.getWorkspaceFolder(uri)) {
+        return send(res, 400, { ok: false, error: `${id} needs a file: uri inside this window's folders` });
+      }
+      args.push(uri);
+    } else if (!COMMANDS.has(id)) {
+      return send(res, 400, { ok: false, error: `not allowed: ${id}` });
+    }
+    vscode.commands.executeCommand(id, ...args).then(
       () => send(res, 200, { ok: true, folder: (vscode.workspace.workspaceFolders || [])[0]?.name || null }),
       (err) => send(res, 500, { ok: false, error: err.message }));
     return;
