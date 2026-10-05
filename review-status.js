@@ -152,9 +152,9 @@ function serveCommand() {
 
 function register(context) {
   const vscode = require('vscode');
-  // Stânga, imediat după intrările native de SCM (branch + sync, prioritatea 10000):
-  // „PR" stă lângă branch-ul pe care îl revizuiește.
-  const item = vscode.window.createStatusBarItem('humanreview', vscode.StatusBarAlignment.Left, 9999);
+  // Primul din stânga, înaintea breadcrumb-ului (1000000, extension.js): Victor vrea
+  // să-l vadă mereu în același loc, oricât de lung e drumul până la fișier.
+  const item = vscode.window.createStatusBarItem('humanreview', vscode.StatusBarAlignment.Left, 1000001);
   item.name = 'Human Review';
   context.subscriptions.push(item);
 
