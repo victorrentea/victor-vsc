@@ -14,6 +14,7 @@ const gitLines = require('./git-lines');
 const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
 const reviewStatus = require('./review-status');
+const quickDefinition = require('./quick-definition');
 
 const SEP = '  ›  ';
 
@@ -340,6 +341,7 @@ function activate(context) {
   // „PR" în footer, verde cât un serve-review.py servește review-ul checkout-ului din
   // fereastra asta (amber: servit, dar HEAD-ul e pe alt commit). Vezi review-status.js.
   reviewStatus.register(context);
+  quickDefinition.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur

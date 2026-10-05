@@ -393,9 +393,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // DOM, iar `hasTriggerModifier` se uită la `metaKey`-ul evenimentului. Deci
   // retrimitem exact secvența pe care ar fi produs-o un ⌘-click adevărat:
   // mousemove (ca să apară link-ul sub cursor), apoi down / up / click.
-  // ⌘-click adevărat deschide peek (`editor.definitionLinkOpensInPeek`); rotița
-  // sare direct: flag-ul e citit de `gotoDefinition`, patch-uit în apply.sh (3i),
-  // care rulează sincron în dispatch-ul de mai jos.
+  // ⌘-click adevărat deschide Quick Definition (quick-definition.js); rotița sare
+  // direct: flag-ul e citit de `gotoDefinition`, patch-uit în apply.sh (3i), care
+  // rulează sincron în dispatch-ul de mai jos.
   function replayAsCmdClick(e) {
     const target = document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;

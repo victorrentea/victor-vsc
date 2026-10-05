@@ -363,26 +363,31 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   comanda victor-vsc.memoryConfig (setări per fereastră)')
 
-# 3i. click pe rotiță = salt direct la definiție, chiar dacă ⌘-click deschide peek.
-#     `editor.definitionLinkOpensInPeek` (pornit din package.json) trimite ORICE
-#     click de link în peek, iar click-ul pe rotiță e un ⌘-click retrimis de
-#     workbench.js. Decizia e o singură linie în `gotoDefinition` al lui
-#     GotoDefinitionAtPositionEditorContribution: `i=!openToSide&&getOption(peek)&&
-#     !this.isInPeekEditor(t)`. O condiționăm de `globalThis.__vicDirectDef`, pe care
-#     workbench.js îl ține aprins exact cât dispecerizează click-ul retrimis
-#     (`onExecute` → `gotoDefinition` → linia asta rulează sincron).
-DIRECT = '!globalThis.__vicDirectDef&&'
-if DIRECT in src_js:
+# 3i. ⌘-click = Quick Definition (hover plutitor, ca în IntelliJ), click pe rotiță =
+#     salt la definiție. Ambele ajung în `gotoDefinition` al lui
+#     GotoDefinitionAtPositionEditorContribution — rotița e un ⌘-click retrimis de
+#     workbench.js. Le despărțim cu `globalThis.__vicDirectDef`, pe care workbench.js îl
+#     ține aprins exact cât dispecerizează click-ul retrimis (`onExecute` →
+#     `gotoDefinition` rulează sincron): fără flag (⌘-click adevărat) rulăm comanda
+#     extensiei `victor-vsc.quickDefinition` (quick-definition.js) prin ICommandService,
+#     luat din accesorul pe care `invokeWithinContext` îl dă oricum. ⌘⌥-click (openToSide)
+#     rămâne cum era. Alias-ul lui ICommandService vine din string-ul decoratorului.
+QUICK = '"victor-vsc.quickDefinition"'
+if QUICK in src_js:
     pass                       # deja aplicat
 else:
-    m = re.search(r'(gotoDefinition\([\w$]+,([\w$]+)\)\{return this\.editor\.setPosition\([\w$]+\),this\.editor\.invokeWithinContext\('
-                  r'[\w$]+=>\{let [\w$]+=!\2&&)(this\.editor\.getOption\(\d+\)&&!this\.isInPeekEditor\()', src_js)
-    if not m:
-        print('   ATENȚIE: nu găsesc gotoDefinition — click-ul pe rotiță va deschide și el peek')
+    src_js = src_js.replace('!globalThis.__vicDirectDef&&', '')   # varianta de dinainte, cu peek
+    m = re.search(r'gotoDefinition\([\w$]+,([\w$]+)\)\{return this\.editor\.setPosition\([\w$]+\),'
+                  r'this\.editor\.invokeWithinContext\(([\w$]+)=>\{(?=let [\w$]+=!\1&&this\.editor\.getOption\(\d+\)&&!this\.isInPeekEditor\()', src_js)
+    cmd = re.findall(r'(?:^|[^\w$.])([\w$]+)=[\w$]+\("commandService"\)', src_js)
+    if not m or len(cmd) != 1:
+        print('   ATENȚIE: nu găsesc gotoDefinition / ICommandService — ⌘-click sare în fișier ca înainte')
     else:
-        src_js = src_js[:m.end(1)] + DIRECT + src_js[m.end(1):]
+        side, acc = m.group(1), m.group(2)
+        hook = f'if(!{side}&&!globalThis.__vicDirectDef)return {acc}.get({cmd[0]}).executeCommand({QUICK});'
+        src_js = src_js[:m.end()] + hook + src_js[m.end():]
         open(bundle, 'w', encoding='utf8').write(src_js)
-        print('   click pe rotiță: salt direct la definiție, ocolind peek-ul')
+        print('   ⌘-click: Quick Definition; click pe rotiță: salt la definiție')
 
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
