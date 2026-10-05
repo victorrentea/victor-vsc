@@ -428,3 +428,15 @@
   mix-blend-mode: screen;
   opacity: 0.15;
 }
+
+/* ------------------------------------------ Quick Definition (⌘-click, quick-definition.js) */
+
+/* Codul din hover-ul de Quick Definition rămâne pe liniile lui, ca în editor: fără
+   word wrap, cu scroll pe ambele axe. Din fabrică blocurile de cod din hover au
+   `white-space: pre-wrap` și rupeau orice linie mai lungă de ~750px la jumătatea unui
+   apel. Scroll-ul orizontal vine singur: scrollbar-ul custom al hover-ului
+   (DomScrollableElement, orizontal pe `auto`) măsoară `scrollWidth`, care acum crește.
+   Doar hover-ul nostru: îl recunoaștem după link-ul din antet, a cărui comandă e a lui. */
+.monaco-hover-content:has(a[data-href^="command:victor-vsc.quickDefinition.open"]) .monaco-tokenized-source {
+  white-space: pre;
+}

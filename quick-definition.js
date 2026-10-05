@@ -21,6 +21,8 @@ const MAX_LINES = 150;
 /** How far below the definition line a `{` may open the body (annotations, wrapped params). */
 const BRACE_LOOKAHEAD = 12;
 
+const OPEN = 'victor-vsc.quickDefinition.open';
+
 let pending = null;   // { uri, line, hover }
 
 /** 0-based [start, end] of the definition that starts at `start`: a brace block when one
@@ -82,11 +84,11 @@ async function quickDefinition() {
   const code = dedent(lines.slice(start, to + 1)).join('\n');
 
   const where = `${vscode.workspace.asRelativePath(uri)}:${range.start.line + 1}`;
-  const open = `command:vscode.open?${encodeURIComponent(JSON.stringify([
-    uri, { selection: new vscode.Range(range.start, range.start) }
-  ]))}`;
+  // Our own command id, not `vscode.open` directly: the link's `data-href` is what
+  // vscode-patch/workbench.css keys on to give only this hover unwrapped, two-axis scroll.
+  const open = `command:${OPEN}?${encodeURIComponent(JSON.stringify([uri.toString(), range.start.line]))}`;
   const md = new vscode.MarkdownString(`[${where}](${open})\n`);
-  md.isTrusted = { enabledCommands: ['vscode.open'] };
+  md.isTrusted = { enabledCommands: [OPEN] };
   md.appendCodeblock(code, doc.languageId);
 
   pending = { uri: editor.document.uri.toString(), line: at.line, hover: new vscode.Hover(md) };
@@ -102,6 +104,10 @@ async function quickDefinition() {
 function register(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('victor-vsc.quickDefinition', quickDefinition),
+    vscode.commands.registerCommand(OPEN, (uri, line) => {
+      const at = new vscode.Range(line, 0, line, 0);
+      return vscode.window.showTextDocument(vscode.Uri.parse(uri), { selection: at });
+    }),
     vscode.languages.registerHoverProvider({ scheme: 'file' }, {
       provideHover(document, position) {
         if (pending && pending.uri === document.uri.toString() && pending.line === position.line) {
