@@ -64,7 +64,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 | `git.js` | helper-e de git (rădăcină, remote, branșă) folosite de `github-link.js` și `open-file-reporter.js` |
 | `github-link.js` | „Copy GitHub Link" din click-dreapta în Explorer, pe branșa curentă |
 | `open-file-reporter.js` | raportează fișierul privit către Victor Addons — port al `OpenFileReporter.kt` din plugin-ul `live-coding` |
-| `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul. `POST /command?id=…` rulează în fereastra aia o comandă dintr-un allowlist (Zen Mode, Vic Presentation) — așa se repară/testează o fereastră fără să-i atingi mouse-ul |
+| `relay-terminal.js` | listener pe loopback prin care Walkie Talkie livrează dictarea în EXACT terminalul legat (`sendText`), în loc de clipboard + ⌘V care ateriza unde e cursorul. `POST /command?id=…` rulează în fereastra aia o comandă dintr-un allowlist (Zen Mode, Vic Presentation, ridicarea ferestrei — `workbench.action.focusWindow`, pentru badge-ul VSC din Human Review) — așa se repară/testează o fereastră fără să-i atingi mouse-ul |
 | `build-flower-font.py` | generează `icons/victor-icons.woff` (floarea din dropdown-ul de terminale) |
 | `intellij-icon-theme.json`, `icons/` | icon theme-ul expui |
 | `app-icon/` | iconița aplicației (negru + margine subțire colorată, în cheia IntelliJ); o instalează `vscode-patch/apply.sh` |

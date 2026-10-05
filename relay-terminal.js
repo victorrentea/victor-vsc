@@ -126,6 +126,11 @@ const COMMANDS = new Set([
   'workbench.action.exitZenMode',
   'workbench.action.toggleZenMode',
   'victor-vsc.togglePresentation',
+  // Raise this window. Human Review's VSC badge asks the window that has the reviewed
+  // checkout to come forward: `open -a "Visual Studio Code" <folder>` reuses a window
+  // only when its folder is exactly that path, so a window opened on ~/workspace or on a
+  // multi-root workspace holding the checkout got a duplicate beside it instead.
+  'workbench.action.focusWindow',
 ]);
 
 function handle(req, res) {
