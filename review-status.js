@@ -171,13 +171,13 @@ function register(context) {
     const title = s.title ? `**${s.title.replace(/[\\`*_[\]<>]/g, '\\$&')}**\n\n` : '';
     const reviewed = where(s.reviewed && s.reviewed.branch, s.reviewed && s.reviewed.sha);
     if (s.state === 'off') {
-      item.text = '👱🏻‍♂️review';
+      item.text = 'human-review';
       item.color = new vscode.ThemeColor('disabledForeground');
       md.appendMarkdown(`$(circle-outline) Human Review — not served\n\n${title}`
         + `${name}/${DIR}/${PAGE} reviews ${reviewed}, but no review server is serving it.\n\n`
         + 'Click: how to serve it.');
     } else {
-      item.text = '👱🏻‍♂️review $(circle-filled)';
+      item.text = 'human-review $(circle-filled)';
       const co = s.checkout ? where(s.checkout.branch, s.checkout.head) : 'unknown';
       if (s.state === 'on') {
         item.color = new vscode.ThemeColor('testing.iconPassed');
