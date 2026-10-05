@@ -240,7 +240,8 @@ function handle(req, res) {
   }
 
   // What this window's editor is showing, for a caller checking that an open landed —
-  // read-only, nothing here can change anything. The file, the selection, and what the last
+  // read-only, nothing here can change anything. The file, the selection, the range still
+  // highlighted with the rest faded (range-focus.js, null once cleared), and what the last
   // comment-thread focus did (comment-focus.js). Whether the thread widget *holds* DOM focus
   // is not readable from an extension (`commentFocused` is a context key, and context-key
   // values are not exposed), so `lastComment` reports the observable proxy: the reveal ran
@@ -256,6 +257,7 @@ function handle(req, res) {
       selection: sel ? { start: { line: sel.start.line + 1, character: sel.start.character },
         end: { line: sel.end.line + 1, character: sel.end.character } } : null,
       lastComment: commentFocus.lastResult(),
+      rangeFocus: rangeFocus.active(),
     });
   }
 

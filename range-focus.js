@@ -129,8 +129,16 @@ function focus(editor, line, endLine) {
       if (!eds.includes(editor)) clear();
     }),
   ];
-  current = { editor, subs, heldUntil: 0 };
+  current = { editor, subs, heldUntil: 0, range: [start, end] };
   return true;
+}
+
+/** Which range is focused right now (1-based, inclusive), or null — for the bridge's
+ *  read-only `/editor-state`, so a caller can check the fade survived what came after. */
+function active() {
+  if (!current) return null;
+  const r = current.range;
+  return { path: current.editor.document.uri.fsPath, line: r[0] + 1, endLine: r[1] + 1 };
 }
 
 /** For the next `ms`, a selection change that is not a click or a key is the bridge's own
@@ -140,4 +148,4 @@ function hold(ms) {
   if (current) current.heldUntil = Math.max(current.heldUntil, Date.now() + ms);
 }
 
-module.exports = { focus, clear, hold, span, fadeSpans, readerMoved, GUARD_MS, MAX_SPAN };
+module.exports = { focus, clear, hold, active, span, fadeSpans, readerMoved, GUARD_MS, MAX_SPAN };
