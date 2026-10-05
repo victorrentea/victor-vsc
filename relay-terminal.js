@@ -36,6 +36,7 @@ const vscode = require('vscode');
 
 const { openDiff } = require('./diff');
 const { openReviewed, markEdited } = require('./review-open');
+const rangeFocus = require('./range-focus');
 
 /** Where the relay looks for us. Fixed, and deliberately not under the relay's
  *  `--home`: that flag moves the outbox for testing, and an extension has no
@@ -379,6 +380,10 @@ function handle(req, res) {
         // A caller that found the file edited since the commit it is quoting says so, and
         // the reader sees it on the line they land on rather than in a toast elsewhere.
         if (parsed.warn) markEdited(editor, line, String(parsed.warn));
+        // `endLine`: the reference names a range (`File.java:49-51`) — select it, highlight
+        // it and fade the rest until the reader moves (range-focus.js). Without one this
+        // only clears an earlier focus, and the open is the caret on `line` it always was.
+        const ranged = rangeFocus.focus(editor, line + 1, parsed.endLine);
         // `showTextDocument` focuses the editor *within* this window; it does not
         // raise the window. Measured: with the caller in Terminal and this window
         // behind it, the file opened correctly and the frontmost app never changed
@@ -399,7 +404,8 @@ function handle(req, res) {
             // part that matters. Never fail the request over the raise.
           }
         }
-        send(res, 200, { ok: true, path: doc.uri.fsPath, line: line + 1 });
+        send(res, 200, { ok: true, path: doc.uri.fsPath, line: line + 1,
+          ...(ranged ? { endLine: Number(parsed.endLine) } : {}) });
       } catch (e) {
         send(res, 404, { ok: false, error: e.message, path: file });
       }
@@ -450,7 +456,8 @@ function handle(req, res) {
         return send(res, 400, { ok: false, error: 'expected JSON' });
       }
       const result = await openReviewed({
-        file: String(parsed.file || ''), line: parsed.line, sha: String(parsed.sha || ''),
+        file: String(parsed.file || ''), line: parsed.line, endLine: parsed.endLine,
+        sha: String(parsed.sha || ''),
         root: String(parsed.root || ''), branch: String(parsed.branch || ''),
       });
       send(res, result.ok ? 200 : result.error === 'bad-request' ? 400 : 409, result);
