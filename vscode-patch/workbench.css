@@ -440,3 +440,16 @@
 .monaco-hover-content:has(a[data-href^="command:victor-vsc.quickDefinition.open"]) .monaco-tokenized-source {
   white-space: pre;
 }
+
+/* ------------------------------------------------- comentariu posibil vs. comentariu existent */
+
+/* În gutter, pe hover, VS Code arată unde POȚI pune un comentariu cu exact aceeași
+   cutie plină ca un comentariu care EXISTĂ deja (`.comment-thread*`, de dedesubt) —
+   nu se distingeau. Cutia de „aici ai putea" devine goală, cu margine punctată: încă
+   nu e acolo. Comentariile existente rămân pline. */
+.monaco-editor .margin-view-overlays > div:hover > .comment-range-glyph.comment-diff-added::before,
+.monaco-editor .margin-view-overlays .comment-range-glyph.line-hover::before {
+  background: transparent !important;
+  border: 1px dashed var(--vscode-editorGutter-commentRangeForeground);
+  box-sizing: border-box;
+}
