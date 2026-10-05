@@ -363,6 +363,27 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   comanda victor-vsc.memoryConfig (setări per fereastră)')
 
+# 3i. click pe rotiță = salt direct la definiție, chiar dacă ⌘-click deschide peek.
+#     `editor.definitionLinkOpensInPeek` (pornit din package.json) trimite ORICE
+#     click de link în peek, iar click-ul pe rotiță e un ⌘-click retrimis de
+#     workbench.js. Decizia e o singură linie în `gotoDefinition` al lui
+#     GotoDefinitionAtPositionEditorContribution: `i=!openToSide&&getOption(peek)&&
+#     !this.isInPeekEditor(t)`. O condiționăm de `globalThis.__vicDirectDef`, pe care
+#     workbench.js îl ține aprins exact cât dispecerizează click-ul retrimis
+#     (`onExecute` → `gotoDefinition` → linia asta rulează sincron).
+DIRECT = '!globalThis.__vicDirectDef&&'
+if DIRECT in src_js:
+    pass                       # deja aplicat
+else:
+    m = re.search(r'(gotoDefinition\([\w$]+,([\w$]+)\)\{return this\.editor\.setPosition\([\w$]+\),this\.editor\.invokeWithinContext\('
+                  r'[\w$]+=>\{let [\w$]+=!\2&&)(this\.editor\.getOption\(\d+\)&&!this\.isInPeekEditor\()', src_js)
+    if not m:
+        print('   ATENȚIE: nu găsesc gotoDefinition — click-ul pe rotiță va deschide și el peek')
+    else:
+        src_js = src_js[:m.end(1)] + DIRECT + src_js[m.end(1):]
+        open(bundle, 'w', encoding='utf8').write(src_js)
+        print('   click pe rotiță: salt direct la definiție, ocolind peek-ul')
+
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
 #    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),

@@ -393,6 +393,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // DOM, iar `hasTriggerModifier` se uită la `metaKey`-ul evenimentului. Deci
   // retrimitem exact secvența pe care ar fi produs-o un ⌘-click adevărat:
   // mousemove (ca să apară link-ul sub cursor), apoi down / up / click.
+  // ⌘-click adevărat deschide peek (`editor.definitionLinkOpensInPeek`); rotița
+  // sare direct: flag-ul e citit de `gotoDefinition`, patch-uit în apply.sh (3i),
+  // care rulează sincron în dispatch-ul de mai jos.
   function replayAsCmdClick(e) {
     const target = document.elementFromPoint(e.clientX, e.clientY);
     if (!target) return;
@@ -401,10 +404,15 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY,
       button: 0, metaKey: true, ctrlKey: false, altKey: false, shiftKey: false
     };
-    target.dispatchEvent(new MouseEvent('mousemove', { ...base, buttons: 0 }));
-    target.dispatchEvent(new MouseEvent('mousedown', { ...base, buttons: 1 }));
-    target.dispatchEvent(new MouseEvent('mouseup', { ...base, buttons: 0 }));
-    target.dispatchEvent(new MouseEvent('click', { ...base, buttons: 0 }));
+    globalThis.__vicDirectDef = true;
+    try {
+      target.dispatchEvent(new MouseEvent('mousemove', { ...base, buttons: 0 }));
+      target.dispatchEvent(new MouseEvent('mousedown', { ...base, buttons: 1 }));
+      target.dispatchEvent(new MouseEvent('mouseup', { ...base, buttons: 0 }));
+      target.dispatchEvent(new MouseEvent('click', { ...base, buttons: 0 }));
+    } finally {
+      globalThis.__vicDirectDef = false;
+    }
   }
 
   // Capture, ca să ajungem înaintea editorului, care altfel ar trata butonul
