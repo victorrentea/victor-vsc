@@ -13,6 +13,7 @@ const javaTestOutput = require('./java-test-output');
 const gitLines = require('./git-lines');
 const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
+const reviewStatus = require('./review-status');
 
 const SEP = '  ›  ';
 
@@ -335,6 +336,10 @@ function activate(context) {
   // din Source Control. Extensia doar publică cifrele; desenatul îl face
   // vscode-patch/workbench.js. Vezi git-lines.js.
   gitLines.register(context);
+
+  // „PR" în footer, verde cât un serve-review.py servește review-ul checkout-ului din
+  // fereastra asta (amber: servit, dar HEAD-ul e pe alt commit). Vezi review-status.js.
+  reviewStatus.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur
