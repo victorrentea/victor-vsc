@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.149",
+  "version": "0.0.150",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -394,9 +394,9 @@
         "icon": "$(victor-crosshair)"
       },
       {
-        "command": "victor-vsc.addCommentOnThreadLine",
-        "title": "Add Comment on This Line",
-        "icon": "$(add)"
+        "command": "victor-vsc.closeCommentThread",
+        "title": "Close",
+        "icon": "$(close)"
       }
     ],
     "keybindings": [
@@ -469,7 +469,7 @@
           "when": "false"
         },
         {
-          "command": "victor-vsc.addCommentOnThreadLine",
+          "command": "victor-vsc.closeCommentThread",
           "when": "false"
         }
       ],
@@ -517,8 +517,8 @@
       ],
       "comments/commentThread/title": [
         {
-          "command": "victor-vsc.addCommentOnThreadLine",
-          "group": "2_add@0"
+          "command": "victor-vsc.closeCommentThread",
+          "group": "2_close@0"
         }
       ]
     },

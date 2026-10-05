@@ -453,3 +453,9 @@
   border: 1px dashed var(--vscode-editorGutter-commentRangeForeground);
   box-sizing: border-box;
 }
+
+/* ^-ul nativ (Collapse) din bara unui thread de comentarii: îl înlocuiește „×"-ul din
+   comment-close.js, care face același lucru dar arată ca o închidere. */
+.monaco-editor .review-widget .head .action-label[aria-label="Collapse"] {
+  display: none;
+}
