@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.158",
+  "version": "0.0.159",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -178,20 +178,40 @@
       "workbench.browser.openLocalhostLinks": true,
       "workbench.browser.showInTitleBar": true,
       "workbench.tree.expandMode": "doubleClick",
+      "[plaintext]": {
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
+      },
       "[markdown]": {
-        "editor.wordWrap": "off"
+        "editor.wordWrap": "off",
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
       },
       "[prompt]": {
-        "editor.wordWrap": "off"
+        "editor.wordWrap": "off",
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
       },
       "[instructions]": {
-        "editor.wordWrap": "off"
+        "editor.wordWrap": "off",
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
       },
       "[chatagent]": {
-        "editor.wordWrap": "off"
+        "editor.wordWrap": "off",
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
       },
       "[skill]": {
-        "editor.wordWrap": "off"
+        "editor.wordWrap": "off",
+        "editor.occurrencesHighlight": "off",
+        "editor.selectionHighlight": false,
+        "editor.matchBrackets": "never"
       },
       "workbench.colorCustomizations": {
         "[IntelliJ IDEA Islands Light]": {
