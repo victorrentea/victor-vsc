@@ -46,10 +46,11 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   }
 
   // Cu titlu custom, pastila din mijlocul title bar-ului afișează window.title
-  // întreg — iar `⑂` e text literal în format, deci rămâne și când
-  // ${activeRepositoryBranchName} e gol (fereastră fără folder sau folder fără
-  // git): „⑂ — Fișier.txt". window.title n-are condiționale, așa că scoatem
-  // simbolul orfan din etichetă.
+  // întreg, deci și segmentul „⑂ branch". Branch-ul are însă pastila lui în
+  // stânga (mai sus), iar în fereastra fără git `⑂` rămânea orfan („⑂ — Fișier"),
+  // fiindcă e text literal în format și window.title n-are condiționale. Așa că
+  // scoatem segmentul cu `⑂` din etichetă, oricare ar fi el. document.title
+  // rămâne neatins — din el citește branchFromTitle().
   //
   // Pastila e a controlului de agenți (`.agent-status-label`), care își
   // RECONSTRUIEȘTE eticheta la fiecare randare, iar cu el oprit e cea clasică
@@ -59,15 +60,18 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // propria noastră scriere nu reaprinde bucla.
   const TITLE_LABELS = '.agent-status-label, .command-center .search-label';
 
-  function withoutOrphanBranch(text) {
-    if (!/⑂\s*(?:—|$)/.test(text)) return text;
-    const clean = text.replace(/⑂\s*(?:—\s*|$)/, '').replace(/\s*—\s*$/, '').trim();
+  function withoutBranch(text) {
+    if (!text.includes('⑂')) return text;
+    const clean = text.split(/\s+—\s+/)
+      .map(part => part.trim())
+      .filter(part => part && !part.startsWith('⑂'))
+      .join(' — ');
     return clean || 'Search';   // fallback-ul VS Code pentru titlu gol
   }
 
   function cleanTitleLabels(root) {
     for (const label of root.querySelectorAll(TITLE_LABELS)) {
-      const clean = withoutOrphanBranch(label.textContent || '');
+      const clean = withoutBranch(label.textContent || '');
       if (clean !== label.textContent) label.textContent = clean;
     }
   }
