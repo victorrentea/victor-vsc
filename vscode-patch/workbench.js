@@ -45,32 +45,43 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
-  // Cu titlu custom, command center-ul afișează window.title întreg — iar `⑂` e
-  // text literal în format, deci rămâne și când ${activeRepositoryBranchName} e gol
-  // (fereastră fără folder sau folder fără git): „⑂ — Fișier.txt". window.title
-  // n-are condiționale, așa că scoatem simbolul orfan din etichetă. VS Code
-  // rescrie eticheta la fiecare schimbare de titlu, deci ascultăm DOAR nodul ei
-  // (nu documentul) și curățăm imediat, fără să aștepte tick-ul de 2s.
+  // Cu titlu custom, pastila din mijlocul title bar-ului afișează window.title
+  // întreg — iar `⑂` e text literal în format, deci rămâne și când
+  // ${activeRepositoryBranchName} e gol (fereastră fără folder sau folder fără
+  // git): „⑂ — Fișier.txt". window.title n-are condiționale, așa că scoatem
+  // simbolul orfan din etichetă.
+  //
+  // Pastila e a controlului de agenți (`.agent-status-label`), care își
+  // RECONSTRUIEȘTE eticheta la fiecare randare, iar cu el oprit e cea clasică
+  // (`.command-center .search-label`). Deci nu ascultăm un nod anume, ci
+  // `.titlebar-center` — mic, nu documentul — și curățăm imediat, fără să
+  // așteptăm tick-ul de 2s. Scriem doar când textul chiar se schimbă, deci
+  // propria noastră scriere nu reaprinde bucla.
+  const TITLE_LABELS = '.agent-status-label, .command-center .search-label';
+
   function withoutOrphanBranch(text) {
     if (!/⑂\s*(?:—|$)/.test(text)) return text;
     const clean = text.replace(/⑂\s*(?:—\s*|$)/, '').replace(/\s*—\s*$/, '').trim();
     return clean || 'Search';   // fallback-ul VS Code pentru titlu gol
   }
 
-  function cleanCommandCenterLabel(label) {
-    const clean = withoutOrphanBranch(label.textContent || '');
-    if (clean !== label.textContent) label.textContent = clean;
+  function cleanTitleLabels(root) {
+    for (const label of root.querySelectorAll(TITLE_LABELS)) {
+      const clean = withoutOrphanBranch(label.textContent || '');
+      if (clean !== label.textContent) label.textContent = clean;
+    }
   }
 
-  const watchedLabels = new WeakSet();
+  let watchedCenter = null;
   function ensureCommandCenterLabel() {
-    const label = document.querySelector('.command-center .search-label');
-    if (!label) return;
-    cleanCommandCenterLabel(label);
-    if (watchedLabels.has(label)) return;
-    watchedLabels.add(label);
-    new MutationObserver(() => cleanCommandCenterLabel(label))
-      .observe(label, { childList: true, characterData: true, subtree: true });
+    const center = document.querySelector('.titlebar-container > .titlebar-center');
+    if (!center) return;
+    cleanTitleLabels(center);
+    if (center === watchedCenter) return;
+    watchedCenter = center;
+    new MutationObserver(() => {
+      try { cleanTitleLabels(center); } catch { /* idem */ }
+    }).observe(center, { childList: true, characterData: true, subtree: true });
   }
 
   // Butonul de unelte (Command Palette) urcă în title bar, în stânga pastilei
@@ -726,6 +737,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   let lastTitle = null;
 
   function tick() {
+    // Separat și primul: o excepție din pașii de mai jos (ex. SCM într-o fereastră
+    // fără folder) n-are voie să lase simbolul orfan în titlu.
+    try { ensureCommandCenterLabel(); } catch { /* idem */ }
     try {
       // Ieșire rapidă: cât timp titlul n-a mișcat și pastila e la locul ei, nu
       // atingem DOM-ul deloc.
@@ -735,7 +749,6 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();
-      ensureCommandCenterLabel();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();
