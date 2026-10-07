@@ -45,6 +45,34 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     pill.classList.toggle('victor-empty', !branch);
   }
 
+  // Cu titlu custom, command center-ul afișează window.title întreg — iar `⑂` e
+  // text literal în format, deci rămâne și când ${activeRepositoryBranchName} e gol
+  // (fereastră fără folder sau folder fără git): „⑂ — Fișier.txt". window.title
+  // n-are condiționale, așa că scoatem simbolul orfan din etichetă. VS Code
+  // rescrie eticheta la fiecare schimbare de titlu, deci ascultăm DOAR nodul ei
+  // (nu documentul) și curățăm imediat, fără să aștepte tick-ul de 2s.
+  function withoutOrphanBranch(text) {
+    if (!/⑂\s*(?:—|$)/.test(text)) return text;
+    const clean = text.replace(/⑂\s*(?:—\s*|$)/, '').replace(/\s*—\s*$/, '').trim();
+    return clean || 'Search';   // fallback-ul VS Code pentru titlu gol
+  }
+
+  function cleanCommandCenterLabel(label) {
+    const clean = withoutOrphanBranch(label.textContent || '');
+    if (clean !== label.textContent) label.textContent = clean;
+  }
+
+  const watchedLabels = new WeakSet();
+  function ensureCommandCenterLabel() {
+    const label = document.querySelector('.command-center .search-label');
+    if (!label) return;
+    cleanCommandCenterLabel(label);
+    if (watchedLabels.has(label)) return;
+    watchedLabels.add(label);
+    new MutationObserver(() => cleanCommandCenterLabel(label))
+      .observe(label, { childList: true, characterData: true, subtree: true });
+  }
+
   // Butonul de unelte (Command Palette) urcă în title bar, în stânga pastilei
   // de command center — în `.titlebar-center`, care e singurul rând flex de pe
   // acolo, deci centrarea pe verticală vine de la sine.
@@ -707,6 +735,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();
+      ensureCommandCenterLabel();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();
