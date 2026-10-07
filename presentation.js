@@ -33,14 +33,114 @@ const SETTINGS = {
   // numere, iar `lineDecorationsWidth`, care ar fi dat spațiul direct, nu e nici
   // ea setare înregistrată.
   'editor.glyphMargin': false,
+  // Fără cuvintele colorate în gri peste tot unde apare cel de sub cursor: pe
+  // proiector par selecții, iar sala se uită la ele în loc de linia curentă.
+  'editor.occurrencesHighlight': 'off',
+  'editor.selectionHighlight': false,
 };
+
+// Secțiunea = liniile ne-goale lipite de cea a cursorului (până la prima linie
+// goală în sus și în jos) — blocurile din notițele de curs. Restul fișierului
+// se estompează la 50%. Albe de tot sunt linia cursorului și „părinții" ei din
+// secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
+// ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală nu e
+// nicio secțiune, deci se estompează tot fișierul.
+const FADE = '0.5';
+const CURSOR_COLOR = '#ffffff';
+
+/** Lățimea indentării, cu tab-ul cât `tabSize` coloane. */
+function indentOf(text, tabSize) {
+  let width = 0;
+  for (const ch of text) {
+    if (ch === ' ') width++;
+    else if (ch === '\t') width += tabSize - (width % tabSize);
+    else break;
+  }
+  return width;
+}
+
+const isBlank = (text) => text.trim() === '';
+
+/** Liniile [start, end] (0-based, inclusiv) ale secțiunii care conține `line`,
+ *  sau null când `line` e goală. `textAt(i)` dă textul liniei i. */
+function sectionAround(line, lineCount, textAt) {
+  if (line < 0 || line >= lineCount || isBlank(textAt(line))) return null;
+  let start = line, end = line;
+  while (start > 0 && !isBlank(textAt(start - 1))) start--;
+  while (end < lineCount - 1 && !isBlank(textAt(end + 1))) end++;
+  return [start, end];
+}
+
+/** Linia `line` plus părinții ei din secțiune, de sus în jos. */
+function lineWithParents(line, sectionStart, textAt, tabSize = 4) {
+  const out = [line];
+  let indent = indentOf(textAt(line), tabSize);
+  for (let i = line - 1; i >= sectionStart && indent > 0; i--) {
+    const own = indentOf(textAt(i), tabSize);
+    if (own < indent) { out.unshift(i); indent = own; }
+  }
+  return out;
+}
+
 const STATE = 'victorVsc.presentation';
+
+// Inline, nu `isWholeLine`: un decor pe toată linia se desenează pe stratul din
+// spatele textului, deci opacitatea și culoarea lui n-ar atinge literele (vezi
+// și range-focus.js). Pe span-urile de text, da.
+let cursorDeco = null;
+let fadeDeco = null;
+
+function lineRange(doc, a, b) {
+  return new vscode.Range(a, 0, b, doc.lineAt(b).text.length);
+}
+
+function paint(editor) {
+  if (!editor) return;
+  const doc = editor.document;
+  const textAt = (i) => doc.lineAt(i).text;
+  const tabSize = typeof editor.options.tabSize === 'number' ? editor.options.tabSize : 4;
+  const cursor = editor.selection.active.line;
+  const section = sectionAround(cursor, doc.lineCount, textAt);
+  if (!section) {
+    editor.setDecorations(cursorDeco, []);
+    editor.setDecorations(fadeDeco, [lineRange(doc, 0, doc.lineCount - 1)]);
+    return;
+  }
+  const bright = new Set(editor.selections.map((sel) => sel.active.line));
+  const fade = [];
+  const [start, end] = section;
+  for (const l of lineWithParents(cursor, start, textAt, tabSize)) bright.add(l);
+  if (start > 0) fade.push(lineRange(doc, 0, start - 1));
+  if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
+  editor.setDecorations(cursorDeco, [...bright].map((l) => lineRange(doc, l, l)));
+  editor.setDecorations(fadeDeco, fade);
+}
+
+function unpaint() {
+  for (const editor of vscode.window.visibleTextEditors) {
+    try {
+      editor.setDecorations(cursorDeco, []);
+      editor.setDecorations(fadeDeco, []);
+    } catch { /* editorul s-a închis */ }
+  }
+}
 const MEMORY_CONFIG = 'victor-vsc.memoryConfig';
 
 function register(context) {
   // Extension host-ul e unul per fereastră, deci o variabilă e exact starea
   // ferestrei ăsteia.
   let on = false;
+
+  cursorDeco = vscode.window.createTextEditorDecorationType({ color: CURSOR_COLOR });
+  fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
+  context.subscriptions.push(cursorDeco, fadeDeco,
+    vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),
+    vscode.window.onDidChangeActiveTextEditor((ed) => { if (on) paint(ed); }),
+    // Un rând gol scris sau șters mută granițele secțiunii.
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      const ed = vscode.window.activeTextEditor;
+      if (on && ed && ed.document === e.document) paint(ed);
+    }));
 
   // Semnalul pentru patch-ul din workbench (vscode-patch/workbench.css): cât e
   // pornit modul, intrarea asta există în DOM, iar CSS-ul pune fundalul peste
@@ -82,8 +182,9 @@ function register(context) {
     // „blocată" în prezentare — Zen ascunde și el taburile și activity bar-ul.
     // Comanda nu face nimic fără Zen.
     if (!on) await vscode.commands.executeCommand('workbench.action.exitZenMode');
+    if (on) paint(vscode.window.activeTextEditor); else unpaint();
     await sync();
   }));
 }
 
-module.exports = { register };
+module.exports = { register, sectionAround, lineWithParents, indentOf };
