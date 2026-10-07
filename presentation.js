@@ -37,6 +37,8 @@ const SETTINGS = {
   // proiector par selecții, iar sala se uită la ele în loc de linia curentă.
   'editor.occurrencesHighlight': 'off',
   'editor.selectionHighlight': false,
+  // Din același motiv, fără chenarele de lângă cursor pe perechea de paranteze.
+  'editor.matchBrackets': 'never',
 };
 
 // Secțiunea = liniile ne-goale lipite de cea a cursorului (până la prima linie
