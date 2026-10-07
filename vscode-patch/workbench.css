@@ -198,8 +198,9 @@
    intrări de status bar, ci una singură (`$(symbol-color) 228 tok (GPT)`),
    fiindcă prioritățile din jurul lui 100 sunt ocupate de item-ele native — deci
    o regulă pe item-ul părinte ascundea și numărul, adică exact ce vrem să
-   rămână. */
-.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon {
+   rămână. Și doar glifa paletei: `$(claude)` din template (package.json) stă
+   în același label și trebuie să se vadă. */
+.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon:not(.codicon-claude) {
   display: none;
 }
 
