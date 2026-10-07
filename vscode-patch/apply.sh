@@ -337,6 +337,22 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   meniul View: + Vic Presentation')
 
+# 3g-bis. „Centered Layout" scos din View › Appearance. E o acțiune din workbench,
+#     cu meniul declarat în registerAction2, deci nicio extensie nu-l poate ascunde
+#     (nu există `when` pe care să-l controlăm din afară). Golim doar `menu:[…]`
+#     al acțiunii: comanda rămâne în paletă și în Customize Layout. Originalul îl
+#     ținem lângă, într-un comentariu, ca `restore.sh` să-l pună la loc exact cum
+#     era — fără să copiem de mână un `when` care se schimbă de la un release la altul.
+m = None if '/*victor-vsc:menu:[' in src_js else re.search(
+    r'("workbench\.action\.toggleCenteredLayout",title:.{0,400}?)'
+    r'(menu:\[\{id:[\w$]+\.MenubarAppearanceMenu,[^\]]*\])', src_js, re.S)
+if m:
+    src_js = src_js[:m.start(2)] + 'menu:[]/*victor-vsc:' + m.group(2) + '*/' + src_js[m.end(2):]
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print('   meniul View › Appearance: - Centered Layout')
+elif '/*victor-vsc:menu:[' not in src_js:
+    print('   ATENȚIE: nu găsesc Centered Layout în View › Appearance — rămâne în meniu')
+
 # 3h. stratul de configurare MEMORY, deschis pentru extensie. Fiecare fereastră
 #     are în renderer și un strat MEMORY peste setările utilizatorului: per
 #     fereastră, nescris pe disc, pierdut la Reload Window. API-ul de extensii

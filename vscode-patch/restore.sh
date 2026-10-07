@@ -42,6 +42,12 @@ if m and m.group(1) != '10':
     src = src[:m.start(1)] + '10' + src[m.end(1):]
     dirty.append(f'margine status bar: {m.group(1)} -> 10')
 
+# „Centered Layout" înapoi în View › Appearance (vezi 3g-bis din apply.sh).
+m = re.search(r'menu:\[\]/\*victor-vsc:(menu:\[.*?\])\*/', src)
+if m:
+    src = src[:m.start()] + m.group(1) + src[m.end():]
+    dirty.append('Centered Layout, înapoi în View › Appearance')
+
 if dirty:
     open(bundle, 'w', encoding='utf8').write(src)
     for d in dirty: print('  ', d)
