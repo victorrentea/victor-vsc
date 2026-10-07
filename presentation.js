@@ -39,6 +39,10 @@ const SETTINGS = {
   'editor.selectionHighlight': false,
   // Din același motiv, fără chenarele de lângă cursor pe perechea de paranteze.
   'editor.matchBrackets': 'never',
+  // Antetul lipit sus de sticky scroll e desenat separat de text, fără
+  // decorațiile noastre: titlul unui bloc estompat apărea acolo la luminozitate
+  // plină. Blocul cursorului își are oricum titlul aprins.
+  'editor.stickyScroll.enabled': false,
 };
 
 // Secțiunea = liniile ne-goale lipite de cea a cursorului (până la prima linie
