@@ -41,11 +41,11 @@ const SETTINGS = {
 
 // Secțiunea = liniile ne-goale lipite de cea a cursorului (până la prima linie
 // goală în sus și în jos) — blocurile din notițele de curs. Restul fișierului
-// se estompează la 50%. Albe de tot sunt linia cursorului și „părinții" ei din
+// se estompează la 30%. Albe de tot sunt linia cursorului și „părinții" ei din
 // secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
 // ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală nu e
 // nicio secțiune, deci se estompează tot fișierul.
-const FADE = '0.5';
+const FADE = '0.3';
 const CURSOR_COLOR = '#ffffff';
 
 /** Lățimea indentării, cu tab-ul cât `tabSize` coloane. */
