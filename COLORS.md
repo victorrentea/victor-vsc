@@ -40,6 +40,12 @@ non-albe ies `#F5F8FE` (linia curentă) și `#EDEBFB` (identificatorul de sub
 cursor). Al treilea din IntelliJ, `#EBFCEE` (highlight de limbaj injectat),
 n-are echivalent în VS Code.
 
+Numărul liniei cursorului e alb de tot pe Islands Dark
+(`editorLineNumber.activeForeground: #FFFFFF`), mereu, nu doar în Vic Presentation:
+pe proiector restul numerelor sunt gri, iar Victor vrea ca sala să găsească
+imediat linia despre care vorbește. Pe Islands Light rămâne cel din temă — albul
+n-ar avea contrast.
+
 ## Roșul de erori din arbore
 
 Numele fișierelor/folderelor cu erori nu mai sunt roșii
