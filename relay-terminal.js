@@ -133,6 +133,9 @@ const COMMANDS = new Set([
   // only when its folder is exactly that path, so a window opened on ~/workspace or on a
   // multi-root workspace holding the checkout got a duplicate beside it instead.
   'workbench.action.focusWindow',
+  // The status-bar „human-review" click: serves this window's review when nothing does,
+  // then opens the page — so it can be exercised without anybody's mouse.
+  'victor-vsc.humanReviewStatus',
 ]);
 
 /** What `/command` will run on a folder or file, named by `&uri=` — never without one.

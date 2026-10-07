@@ -21,10 +21,14 @@
 // Un singur timer per fereastră: 10 s cât e servit, apoi 5 → 10 → 20 → 30 s când nu e
 // nimic; un FileSystemWatcher pe `.server.json`/`review.html`, focusul ferestrei și orice
 // schimbare de HEAD din extensia git dau refresh imediat.
+//
+// Click pe gri pornește serverul (`serve-review.py … --no-open`, care refolosește unul viu
+// pe același folder), apoi deschide pagina exact ca un click pe verde.
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const os = require('os');
+const { execFile } = require('child_process');
 const { git } = require('./git');
 
 const DIR = '.human-review';
@@ -145,9 +149,57 @@ async function probeFolders(folders, memo) {
 const short = (sha) => (sha || '').slice(0, 8);
 const where = (b, sha) => `${b ? b + ' @ ' : ''}${short(sha) || '?'}`;
 
-function serveCommand() {
-  const local = path.join(os.homedir(), 'workspace/human-review/skills/human-review/scripts/serve-review.py');
-  return `${fs.existsSync(local) ? 'python3 ' + local : 'serve-review.py'} ${DIR}`;
+// serve-review.py: întâi copia pluginului instalat (cea pe care o rulează și skill-ul),
+// apoi cea mai nouă din cache, apoi checkout-ul din ~/workspace. Fără hash scris de mână —
+// fiecare update al pluginului îl schimbă.
+function serveScript() {
+  const home = os.homedir();
+  const rel = path.join('skills', 'human-review', 'scripts', 'serve-review.py');
+  const cands = [];
+  const installed = readJson(path.join(home, '.claude/plugins/installed_plugins.json'));
+  const rec = installed && (installed.plugins || installed)['human-review@human-review'];
+  if (Array.isArray(rec)) rec.forEach((r) => r && r.installPath && cands.push(path.join(r.installPath, rel)));
+  const cache = path.join(home, '.claude/plugins/cache/human-review/human-review');
+  let cached = [];
+  try {
+    cached = fs.readdirSync(cache).map((h) => path.join(cache, h, rel))
+      .map((f) => { try { return { f, t: fs.statSync(f).mtimeMs }; } catch { return null; } })
+      .filter(Boolean).sort((a, b) => b.t - a.t).map((x) => x.f);
+  } catch { /* fără plugin instalat */ }
+  cands.push(...cached, path.join(home, 'workspace/human-review', rel));
+  return cands.find((f) => fs.existsSync(f)) || null;
+}
+
+// python3 din PATH-ul extension host-ului, cu rezerve pentru un PATH sărac (pornit din Dock).
+function python() {
+  const dirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean)
+    .concat(['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']);
+  for (const d of dirs) {
+    const f = path.join(d, 'python3');
+    try { fs.accessSync(f, fs.constants.X_OK); return f; } catch { /* următorul */ }
+  }
+  return 'python3';
+}
+
+/**
+ * Pornește (sau refolosește) serverul pentru `<folder>/.human-review` și dă URL-ul paginii.
+ * Scriptul se demonizează singur (`--_child`, sesiune nouă) și iese după ce portul răspunde,
+ * deci `execFile` nu ține extension host-ul — doar așteaptă părintele, ~1 s. `--no-open`:
+ * pagina o deschide apelantul, la fel ca la click pe starea servită.
+ */
+function startServer(folder) {
+  const script = serveScript();
+  if (!script) return Promise.reject(new Error('serve-review.py not found — is the human-review plugin installed?'));
+  const args = [script, path.join(folder, DIR), '--idle-minutes', '240', '--no-open'];
+  return new Promise((resolve, reject) => {
+    execFile(python(), args, { timeout: 30000 }, (err, stdout, stderr) => {
+      const url = String(stdout || '').trim().split('\n').pop().trim();
+      if (!err && /^http:\/\/127\.0\.0\.1:\d+\//.test(url)) return resolve(url);
+      const tail = String(stderr || '').trim().split('\n').slice(-5).join('\n')
+        || (err && err.message) || `unexpected output: ${url}`;
+      reject(new Error(tail));
+    });
+  });
 }
 
 function register(context) {
@@ -160,7 +212,7 @@ function register(context) {
 
   const memo = { verified: new Set(), rejected: new Set() };
   let current = { state: 'none' };
-  let timer, idle = 0, running = false, again = false, disposed = false;
+  let timer, idle = 0, running = false, again = false, disposed = false, starting = null;
 
   function paint(s) {
     current = s;
@@ -171,11 +223,11 @@ function register(context) {
     const title = s.title ? `**${s.title.replace(/[\\`*_[\]<>]/g, '\\$&')}**\n\n` : '';
     const reviewed = where(s.reviewed && s.reviewed.branch, s.reviewed && s.reviewed.sha);
     if (s.state === 'off') {
-      item.text = 'human-review';
+      item.text = starting ? 'human-review $(sync~spin)' : 'human-review';
       item.color = new vscode.ThemeColor('disabledForeground');
       md.appendMarkdown(`$(circle-outline) Human Review — not served\n\n${title}`
         + `${name}/${DIR}/${PAGE} reviews ${reviewed}, but no review server is serving it.\n\n`
-        + 'Click: how to serve it.');
+        + (starting ? '$(sync~spin) Starting the review server…' : 'Click to serve it.'));
     } else {
       item.text = 'human-review $(circle-filled)';
       const co = s.checkout ? where(s.checkout.branch, s.checkout.head) : 'unknown';
@@ -236,14 +288,21 @@ function register(context) {
         await vscode.env.openExternal(vscode.Uri.parse(s.url));
         return;
       }
-      if (s.state !== 'off') return;
-      const cmd = serveCommand();
-      const pick = await vscode.window.showInformationMessage(
-        `No review server is serving ${path.basename(s.folder)}/${DIR}. `
-        + `From the checkout, run: ${cmd} — or ask the agent to serve the review.`,
-        'Copy command', 'Open from disk');
-      if (pick === 'Copy command') await vscode.env.clipboard.writeText(`cd ${s.folder} && ${cmd}`);
-      if (pick === 'Open from disk') await vscode.env.openExternal(vscode.Uri.file(path.join(s.dir, PAGE)));
+      if (s.state !== 'off' || starting) return;
+      starting = startServer(s.folder);
+      paint(current);
+      try {
+        const url = await starting;
+        starting = null;
+        idle = 0;
+        tick();  // marker verificat acum → verde/amber fără să aștepte timer-ul
+        await vscode.env.openExternal(vscode.Uri.parse(url));
+      } catch (e) {
+        starting = null;
+        paint(current);
+        vscode.window.showErrorMessage(
+          `Could not serve ${path.basename(s.folder)}/${DIR}: ${e.message}`);
+      }
     }),
     vscode.window.onDidChangeWindowState((st) => { if (st.focused) soon(); }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => { rewatch(); soon(); }),
@@ -270,4 +329,4 @@ function register(context) {
   tick();
 }
 
-module.exports = { register, probeFolder, probeFolders, readStamp };
+module.exports = { register, probeFolder, probeFolders, readStamp, serveScript, startServer };
