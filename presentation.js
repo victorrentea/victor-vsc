@@ -50,8 +50,11 @@ const SETTINGS = {
 // se estompează la 30%. Albe de tot sunt linia cursorului și „părinții" ei din
 // secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
 // ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală nu e
-// nicio secțiune, deci se estompează tot fișierul.
+// nicio secțiune, deci se estompează tot fișierul. Restul liniilor din
+// secțiune sunt un pic mai închise decât textul normal (70%): trei trepte —
+// alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest.
 const FADE = '0.3';
+const DIM = '0.7';
 const CURSOR_COLOR = '#ffffff';
 
 /** Lățimea indentării, cu tab-ul cât `tabSize` coloane. */
@@ -95,6 +98,7 @@ const STATE = 'victorVsc.presentation';
 // și range-focus.js). Pe span-urile de text, da.
 let cursorDeco = null;
 let fadeDeco = null;
+let dimDeco = null;
 
 function lineRange(doc, a, b) {
   return new vscode.Range(a, 0, b, doc.lineAt(b).text.length);
@@ -109,6 +113,7 @@ function paint(editor) {
   const section = sectionAround(cursor, doc.lineCount, textAt);
   if (!section) {
     editor.setDecorations(cursorDeco, []);
+    editor.setDecorations(dimDeco, []);
     editor.setDecorations(fadeDeco, [lineRange(doc, 0, doc.lineCount - 1)]);
     return;
   }
@@ -118,7 +123,10 @@ function paint(editor) {
   for (const l of lineWithParents(cursor, start, textAt, tabSize)) bright.add(l);
   if (start > 0) fade.push(lineRange(doc, 0, start - 1));
   if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
+  const dim = [];
+  for (let l = start; l <= end; l++) if (!bright.has(l)) dim.push(lineRange(doc, l, l));
   editor.setDecorations(cursorDeco, [...bright].map((l) => lineRange(doc, l, l)));
+  editor.setDecorations(dimDeco, dim);
   editor.setDecorations(fadeDeco, fade);
 }
 
@@ -127,6 +135,7 @@ function unpaint() {
     try {
       editor.setDecorations(cursorDeco, []);
       editor.setDecorations(fadeDeco, []);
+      editor.setDecorations(dimDeco, []);
     } catch { /* editorul s-a închis */ }
   }
 }
@@ -139,7 +148,8 @@ function register(context) {
 
   cursorDeco = vscode.window.createTextEditorDecorationType({ color: CURSOR_COLOR });
   fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
-  context.subscriptions.push(cursorDeco, fadeDeco,
+  dimDeco = vscode.window.createTextEditorDecorationType({ opacity: DIM });
+  context.subscriptions.push(cursorDeco, fadeDeco, dimDeco,
     vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),
     vscode.window.onDidChangeActiveTextEditor((ed) => { if (on) paint(ed); }),
     // Un rând gol scris sau șters mută granițele secțiunii.
