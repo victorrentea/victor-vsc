@@ -140,6 +140,46 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // Collapse All / Expand All lângă semafoare, doar în Vic Presentation: pentru
+  // notițele indentate (titlu → puncte → sub-puncte). Comenzile le rulează
+  // intrările de status bar din presentation.js (`editor.foldAll` /
+  // `editor.unfoldAll`), pe care le apăsăm noi — aceeași manevră ca la unelte.
+  // Intrările există doar cât e pornit modul, iar CSS-ul arată butoanele după
+  // același semnal, deci în afara prezentării nu se vede nimic.
+  const FOLD_BUTTONS = [
+    ['foldall', 'collapse-all', 'Collapse All'],
+    ['unfoldall', 'expand-all', 'Expand All'],
+  ];
+
+  function ensureFoldButtons() {
+    const left = document.querySelector('.titlebar-container > .titlebar-left');
+    if (!left) return;
+    let group = left.querySelector('.victor-fold');
+    if (!group) {
+      group = document.createElement('div');
+      group.className = 'victor-fold';
+      for (const [id, icon, title] of FOLD_BUTTONS) {
+        const btn = document.createElement('div');
+        btn.className = 'victor-fold-btn';
+        btn.title = title;
+        btn.setAttribute('role', 'button');
+        const glyph = document.createElement('span');
+        glyph.className = 'codicon codicon-' + icon;
+        btn.appendChild(glyph);
+        // Fără mousedown, focusul pleacă din editor și fold-ul n-ar avea pe ce lucra.
+        btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const item = document.querySelector(`.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.${id}"]`);
+          if (item) (item.querySelector('a.statusbar-item-label') || item).click();
+        });
+        group.appendChild(btn);
+      }
+    }
+    if (group.parentElement !== left) left.appendChild(group);
+  }
+
   // Liniile schimbate, în capul grupului din Source Control.
   //
   // Badge-ul de acolo numără FIȘIERE (`group.resources.length`), iar rândul e
@@ -750,6 +790,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
+      ensureFoldButtons();
       ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();

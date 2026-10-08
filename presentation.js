@@ -217,8 +217,22 @@ function register(context) {
   marker.text = '$(device-desktop)';
   context.subscriptions.push(marker);
 
+  // Fold All / Unfold All pentru notițele indentate: butoanele le desenează
+  // `vscode-patch/workbench.js` în title bar, lângă semafoare, și la click apasă
+  // intrările astea (ascunse din CSS) — din renderer nu se pot rula comenzi.
+  // Există doar cât e pornit modul, deci și butoanele.
+  const folds = [['foldall', 'editor.foldAll', 'Collapse All'],
+                 ['unfoldall', 'editor.unfoldAll', 'Expand All']].map(([id, command, name]) => {
+    const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000003);
+    item.name = name;
+    item.text = name;
+    item.command = command;
+    context.subscriptions.push(item);
+    return item;
+  });
+
   const sync = () => {
-    if (on) marker.show(); else marker.hide();
+    for (const item of [marker, ...folds]) if (on) item.show(); else item.hide();
     return vscode.commands.executeCommand('setContext', STATE, on);
   };
   sync();

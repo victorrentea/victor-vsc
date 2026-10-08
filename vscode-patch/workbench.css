@@ -410,6 +410,65 @@
   display: none;
 }
 
+/* Collapse All / Expand All lângă semafoare (workbench.js → `ensureFoldButtons`).
+   Ascunse în afara prezentării; intrările de status bar pe care le apasă sunt
+   doar sursa comenzii, n-au ce căuta în bară. Discrete: fără chenar, glifa
+   estompată, se aprinde doar la hover. Marginea de 78px e cea a pastilei de
+   branch (semafoarele nu-și rezervă loc), care vine după ele și se lipește. */
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldall"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"] {
+  display: none;
+}
+
+.titlebar-container > .titlebar-left > .victor-fold {
+  display: none;
+  order: 2;
+  align-items: center;
+  gap: 2px;
+  margin-left: 78px;
+  z-index: 2500;
+  -webkit-app-region: no-drag;
+}
+
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .titlebar-container > .titlebar-left > .victor-fold {
+  display: flex;
+}
+
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .titlebar-container > .titlebar-left > .victor-branch {
+  margin-left: 6px;
+}
+
+.monaco-workbench.fullscreen .titlebar-container > .titlebar-left > .victor-fold {
+  margin-left: 10px;
+}
+
+.victor-fold-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--vscode-titleBar-activeForeground);
+  -webkit-app-region: no-drag;
+}
+
+.victor-fold-btn > .codicon {
+  font-size: 14px;
+  opacity: .45;
+  pointer-events: none;
+  transition: opacity .15s;
+}
+
+.victor-fold-btn:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.victor-fold-btn:hover > .codicon {
+  opacity: .9;
+}
+
 /* Poza stă PESTE editor, nu sub el: fundalul editorului e pictat de câteva
    straturi opace (`.monaco-editor`, `.monaco-editor-background`, margin-ul cu
    numerele), deci dedesubt nu s-ar vedea. `screen` doar luminează — textul
