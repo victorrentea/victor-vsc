@@ -1,4 +1,5 @@
 const vscode = require('vscode');
+const bullets = require('./bullets');
 
 // „Vic Presentation" (⌘F12, și în meniul View): doar codul și numerele de linie
 // pe ecran — fără taburi, activity bar și status bar. Doar în fereastra în care
@@ -138,6 +139,7 @@ function lineRange(doc, a, b) {
 
 function paint(editor) {
   if (!editor) return;
+  bullets.paint(editor);
   const doc = editor.document;
   const textAt = (i) => doc.lineAt(i).text;
   const tabSize = typeof editor.options.tabSize === 'number' ? editor.options.tabSize : 4;
@@ -178,6 +180,7 @@ function paint(editor) {
 }
 
 function unpaint() {
+  bullets.clear();
   for (const editor of vscode.window.visibleTextEditors) {
     try {
       editor.setDecorations(cursorDeco, []);
@@ -196,6 +199,8 @@ function register(context) {
   cursorDeco = vscode.window.createTextEditorDecorationType({ color: CURSOR_COLOR });
   fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
   dimDeco = vscode.window.createTextEditorDecorationType({ opacity: DIM });
+  // După cursorDeco: pe un rând aprins, culoarea marcajului trebuie să bată albul.
+  bullets.register(context);
   context.subscriptions.push(cursorDeco, fadeDeco, dimDeco,
     vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),
     vscode.window.onDidChangeActiveTextEditor((ed) => { if (on) paint(ed); }),

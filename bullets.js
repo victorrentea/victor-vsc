@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 
-// Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
+// Doar în Vic Presentation: presentation.js cheamă `paint`/`clear` din paint/unpaint
+// ale lui, pe editorul activ. Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
 // spune ce fel de punct e. `+` verde (pro), `-` roșu (contra), `*` neutru
 // (rămâne în culoarea textului), `i` = informație: un „i" alb pe un cerc albastru,
 // ca un punct de informare.
@@ -46,6 +47,15 @@ function paint(editor) {
   for (const kind of Object.keys(types)) editor.setDecorations(types[kind], ranges[kind]);
 }
 
+function clear() {
+  if (!types) return;
+  for (const editor of vscode.window.visibleTextEditors) {
+    try {
+      for (const t of Object.values(types)) editor.setDecorations(t, []);
+    } catch { /* editorul s-a închis */ }
+  }
+}
+
 function register(context) {
   types = {
     plus: vscode.window.createTextEditorDecorationType({ textDecoration: `none; color: ${PLUS} !important` }),
@@ -55,13 +65,7 @@ function register(context) {
       textDecoration: `none; color: #ffffff !important; background-color: ${INFO_BG}; border-radius: 50%; padding: 0.05em 0.4em; margin: 0 -0.4em`,
     }),
   };
-  context.subscriptions.push(...Object.values(types),
-    vscode.window.onDidChangeVisibleTextEditors((eds) => eds.forEach(paint)),
-    vscode.workspace.onDidChangeTextDocument((e) => {
-      for (const ed of vscode.window.visibleTextEditors) if (ed.document === e.document) paint(ed);
-    }),
-    vscode.workspace.onDidOpenTextDocument(() => vscode.window.visibleTextEditors.forEach(paint)));
-  vscode.window.visibleTextEditors.forEach(paint);
+  context.subscriptions.push(...Object.values(types));
 }
 
-module.exports = { register, markerOf };
+module.exports = { register, paint, clear, markerOf };
