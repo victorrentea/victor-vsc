@@ -50,10 +50,13 @@ const SETTINGS = {
 // se estompează la 30%. Albe de tot sunt linia cursorului și „părinții" ei din
 // secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
 // ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală rămâne
-// vizibilă secțiunea de deasupra (gri, cu doar capitolul ei alb — linia de
-// sus din lanțul de părinți al ultimei linii): acolo se scrie punctul
-// următor, iar blocul la care se adaugă nu trebuie să dispară cât linia e
-// încă goală, nici sala să nu piardă sub ce titlu e. Restul liniilor din
+// vizibilă secțiunea de deasupra (gri): acolo se scrie punctul următor, iar
+// blocul la care se adaugă nu trebuie să dispară cât linia e încă goală. Albi
+// sunt părinții punctului pe care urmează să-l scrii, după coloana cursorului:
+// urcând din ultima linie, fiecare linie mai puțin indentată decât cursorul — cursorul
+// sub „- !AI Colleagues", dar mai la dreapta, îl aprinde; la aceeași coloană e
+// frate, deci nu. Pe coloana 0 rămâne alb capitolul (linia de sus din lanțul
+// de părinți al ultimei linii), ca sala să nu piardă sub ce titlu e. Restul liniilor din
 // secțiune sunt un pic mai închise decât textul normal (70%): trei trepte —
 // alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest.
 const FADE = '0.3';
@@ -92,15 +95,27 @@ function sectionAbove(line, lineCount, textAt) {
   return null;
 }
 
-/** Linia `line` plus părinții ei din secțiune, de sus în jos. */
-function lineWithParents(line, sectionStart, textAt, tabSize = 4) {
-  const out = [line];
-  let indent = indentOf(textAt(line), tabSize);
-  for (let i = line - 1; i >= sectionStart && indent > 0; i--) {
+/** Părinții unei linii indentate cu `indent`, căutați urcând de la `from`
+ *  până la `sectionStart`, de sus în jos. */
+function parentsOf(indent, from, sectionStart, textAt, tabSize = 4) {
+  const out = [];
+  for (let i = from; i >= sectionStart && indent > 0; i--) {
     const own = indentOf(textAt(i), tabSize);
     if (own < indent) { out.unshift(i); indent = own; }
   }
   return out;
+}
+
+/** Linia `line` plus părinții ei din secțiune, de sus în jos. */
+function lineWithParents(line, sectionStart, textAt, tabSize = 4) {
+  return [...parentsOf(indentOf(textAt(line), tabSize), line - 1, sectionStart, textAt, tabSize), line];
+}
+
+/** Ce rămâne alb din secțiunea [start, end] când cursorul stă pe o linie goală
+ *  sub ea, la coloana (lățimea de indentare) `column`. */
+function whiteOnBlank([start, end], column, textAt, tabSize = 4) {
+  if (column === 0) return [chapterOf([start, end], textAt, tabSize)];
+  return parentsOf(column, end, start, textAt, tabSize);
 }
 
 /** Capitolul secțiunii [start, end]: cel mai de sus părinte al ultimei linii. */
@@ -135,9 +150,11 @@ function paint(editor) {
     const white = [];
     if (above) {
       const [start, end] = above;
-      const chapter = chapterOf(above, textAt, tabSize);
+      const active = editor.selection.active;
+      const column = indentOf(textAt(cursor).slice(0, active.character), tabSize);
+      const lit = new Set(whiteOnBlank(above, column, textAt, tabSize));
       if (start > 0) fade.push(lineRange(doc, 0, start - 1));
-      for (let l = start; l <= end; l++) (l === chapter ? white : dim).push(lineRange(doc, l, l));
+      for (let l = start; l <= end; l++) (lit.has(l) ? white : dim).push(lineRange(doc, l, l));
       if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
     } else {
       fade.push(lineRange(doc, 0, doc.lineCount - 1));
@@ -233,4 +250,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, sectionAround, sectionAbove, chapterOf, lineWithParents, indentOf };
+module.exports = { register, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf };

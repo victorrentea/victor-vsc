@@ -8,7 +8,7 @@ const Module = require('node:module');
 // presentation.js requires 'vscode' at the top; the pure helpers don't touch it.
 const load = Module._load;
 Module._load = (req, ...rest) => (req === 'vscode' ? {} : load(req, ...rest));
-const { sectionAround, sectionAbove, chapterOf, lineWithParents, indentOf } = require('../presentation');
+const { sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf } = require('../presentation');
 Module._load = load;
 
 const doc = [
@@ -63,4 +63,15 @@ test('tabs count up to the next tab stop', () => {
   assert.strictEqual(indentOf('\t- x', 4), 4);
   assert.strictEqual(indentOf('  \tx', 4), 4);
   assert.deepStrictEqual(lineWithParents(8, 7, textAt), [7, 8]);
+});
+
+test('on a blank line the cursor column decides which lines above are its parents', () => {
+  const notes = [
+    '- You',               // 0
+    '  - !AI Colleagues',  // 1
+  ];
+  const at = (i) => notes[i];
+  assert.deepStrictEqual(whiteOnBlank([0, 1], 4, at), [0, 1]); // child of AI Colleagues
+  assert.deepStrictEqual(whiteOnBlank([0, 1], 2, at), [0]);    // sibling of AI Colleagues
+  assert.deepStrictEqual(whiteOnBlank([0, 1], 0, at), [0]);    // column 0: the chapter
 });
