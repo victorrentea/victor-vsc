@@ -199,7 +199,6 @@ function register(context) {
   cursorDeco = vscode.window.createTextEditorDecorationType({ color: CURSOR_COLOR });
   fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
   dimDeco = vscode.window.createTextEditorDecorationType({ opacity: DIM });
-  // După cursorDeco: pe un rând aprins, culoarea marcajului trebuie să bată albul.
   bullets.register(context);
   context.subscriptions.push(cursorDeco, fadeDeco, dimDeco,
     vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),

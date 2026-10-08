@@ -1,26 +1,29 @@
 const vscode = require('vscode');
 
 // Doar în Vic Presentation: presentation.js cheamă `paint`/`clear` din paint/unpaint
-// ale lui, pe editorul activ. Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
-// spune ce fel de punct e. `+` verde (pro), `-` roșu (contra), `*` neutru
-// (rămâne în culoarea textului), `i` = informație: un „i" alb pe un cerc albastru,
-// ca un punct de informare.
+// ale lui, pe editorul activ.
+//
+// Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
+// spune ce fel de punct e, desenat alb pe un cerc colorat: `+` verde (pro), `-`
+// roșu (contra), `i` albastru (informație, ca un punct de informare). `*` rămâne
+// neutru, neatins.
 //
 // Totul rămâne monospace și nimic nu se mută: cercul e fundalul span-ului
-// literei, lărgit cu padding orizontal și strâns înapoi cu margin negativ egal —
+// semnului, lărgit cu padding orizontal și strâns înapoi cu margin negativ egal —
 // un span inline cu `padding: 0 X; margin: 0 -X` ocupă exact cât litera. Padding-ul
 // vertical pe un inline nu împinge rândurile. API-ul de decorații n-are padding,
 // margin sau background pe span-ul de text (backgroundColor merge pe stratul de
 // sub text, unde nu-l atinge opacitatea din Vic Presentation), deci CSS-ul intră
 // prin `textDecoration`, pe care VS Code îl lipește ca `text-decoration:{0};`.
+// Măsurat la 14px: semnul următor rămâne la exact o literă distanță, cercul are
+// ~19.6×19.9px. Fără `fontWeight`: cu el, VS Code nu mai desena deloc decorația
+// (span-ul semnului nici nu se mai despărțea de restul rândului) — măsurat.
 //
-// Culorile au `!important`: pe liniile aprinse din Vic Presentation decorația
-// cursorului pune tot rândul pe alb, pe același span și cu aceeași specificitate.
-// Tot prin `textDecoration`: în câmpul `color` VS Code aruncă valoarea întreagă
-// dacă nu e doar o culoare, și regula iese goală.
-const PLUS = '#5fc35f';
-const MINUS = '#f0625a';
-const INFO_BG = '#2f74d0';
+// Semnul e alb, ca linia cursorului din Vic Presentation: VS Code pune singur
+// `!important` pe orice `color` de decorație, deci pe rândul aprins două culori
+// `!important` pe același span se băteau pe ordinea din stylesheet — un semn
+// colorat ieșea uneori alb.
+const DOT = { plus: '#2e9e4f', minus: '#d64541', info: '#2f74d0' };
 
 /** Pentru textul unei linii: [kind, coloana] a marcajului de la început, sau null.
  *  Marcajul e primul caracter ne-alb, urmat de spațiu sau de capătul liniei. */
@@ -57,14 +60,10 @@ function clear() {
 }
 
 function register(context) {
-  types = {
-    plus: vscode.window.createTextEditorDecorationType({ textDecoration: `none; color: ${PLUS} !important` }),
-    minus: vscode.window.createTextEditorDecorationType({ textDecoration: `none; color: ${MINUS} !important` }),
-    info: vscode.window.createTextEditorDecorationType({
-      fontWeight: 'bold',
-      textDecoration: `none; color: #ffffff !important; background-color: ${INFO_BG}; border-radius: 50%; padding: 0.05em 0.4em; margin: 0 -0.4em`,
-    }),
-  };
+  types = Object.fromEntries(Object.entries(DOT).map(([kind, bg]) => [kind,
+    vscode.window.createTextEditorDecorationType({
+      textDecoration: `none; color: #ffffff !important; background-color: ${bg}; border-radius: 50%; padding: 0.05em 0.4em; margin: 0 -0.4em`,
+    })]));
   context.subscriptions.push(...Object.values(types));
 }
 
