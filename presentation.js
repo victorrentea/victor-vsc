@@ -50,9 +50,10 @@ const SETTINGS = {
 // se estompează la 30%. Albe de tot sunt linia cursorului și „părinții" ei din
 // secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
 // ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală rămâne
-// vizibilă secțiunea de deasupra (gri, fără nimic alb): acolo se scrie
-// punctul următor, iar blocul la care se adaugă nu trebuie să dispară cât
-// linia e încă goală. Restul liniilor din
+// vizibilă secțiunea de deasupra (gri, cu doar capitolul ei alb — linia de
+// sus din lanțul de părinți al ultimei linii): acolo se scrie punctul
+// următor, iar blocul la care se adaugă nu trebuie să dispară cât linia e
+// încă goală, nici sala să nu piardă sub ce titlu e. Restul liniilor din
 // secțiune sunt un pic mai închise decât textul normal (70%): trei trepte —
 // alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest.
 const FADE = '0.3';
@@ -102,6 +103,11 @@ function lineWithParents(line, sectionStart, textAt, tabSize = 4) {
   return out;
 }
 
+/** Capitolul secțiunii [start, end]: cel mai de sus părinte al ultimei linii. */
+function chapterOf([start, end], textAt, tabSize = 4) {
+  return lineWithParents(end, start, textAt, tabSize)[0];
+}
+
 const STATE = 'victorVsc.presentation';
 
 // Inline, nu `isWholeLine`: un decor pe toată linia se desenează pe stratul din
@@ -126,15 +132,17 @@ function paint(editor) {
     const above = sectionAbove(cursor, doc.lineCount, textAt);
     const fade = [];
     const dim = [];
+    const white = [];
     if (above) {
       const [start, end] = above;
+      const chapter = chapterOf(above, textAt, tabSize);
       if (start > 0) fade.push(lineRange(doc, 0, start - 1));
-      dim.push(lineRange(doc, start, end));
+      for (let l = start; l <= end; l++) (l === chapter ? white : dim).push(lineRange(doc, l, l));
       if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
     } else {
       fade.push(lineRange(doc, 0, doc.lineCount - 1));
     }
-    editor.setDecorations(cursorDeco, []);
+    editor.setDecorations(cursorDeco, white);
     editor.setDecorations(dimDeco, dim);
     editor.setDecorations(fadeDeco, fade);
     return;
@@ -225,4 +233,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, sectionAround, sectionAbove, lineWithParents, indentOf };
+module.exports = { register, sectionAround, sectionAbove, chapterOf, lineWithParents, indentOf };
