@@ -49,8 +49,10 @@ const SETTINGS = {
 // goală în sus și în jos) — blocurile din notițele de curs. Restul fișierului
 // se estompează la 30%. Albe de tot sunt linia cursorului și „părinții" ei din
 // secțiune: urcând, fiecare linie mai puțin indentată decât ultima găsită —
-// ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală nu e
-// nicio secțiune, deci se estompează tot fișierul. Restul liniilor din
+// ca sala să vadă și sub ce titlu e punctul curent. Pe o linie goală rămâne
+// vizibilă secțiunea de deasupra (gri, fără nimic alb): acolo se scrie
+// punctul următor, iar blocul la care se adaugă nu trebuie să dispară cât
+// linia e încă goală. Restul liniilor din
 // secțiune sunt un pic mai închise decât textul normal (70%): trei trepte —
 // alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest.
 const FADE = '0.3';
@@ -78,6 +80,15 @@ function sectionAround(line, lineCount, textAt) {
   while (start > 0 && !isBlank(textAt(start - 1))) start--;
   while (end < lineCount - 1 && !isBlank(textAt(end + 1))) end++;
   return [start, end];
+}
+
+/** Secțiunea de deasupra liniei goale `line` (prima ne-goală urcând), sau
+ *  null când deasupra e doar gol. */
+function sectionAbove(line, lineCount, textAt) {
+  for (let i = Math.min(line, lineCount) - 1; i >= 0; i--) {
+    if (!isBlank(textAt(i))) return sectionAround(i, lineCount, textAt);
+  }
+  return null;
 }
 
 /** Linia `line` plus părinții ei din secțiune, de sus în jos. */
@@ -112,9 +123,20 @@ function paint(editor) {
   const cursor = editor.selection.active.line;
   const section = sectionAround(cursor, doc.lineCount, textAt);
   if (!section) {
+    const above = sectionAbove(cursor, doc.lineCount, textAt);
+    const fade = [];
+    const dim = [];
+    if (above) {
+      const [start, end] = above;
+      if (start > 0) fade.push(lineRange(doc, 0, start - 1));
+      dim.push(lineRange(doc, start, end));
+      if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
+    } else {
+      fade.push(lineRange(doc, 0, doc.lineCount - 1));
+    }
     editor.setDecorations(cursorDeco, []);
-    editor.setDecorations(dimDeco, []);
-    editor.setDecorations(fadeDeco, [lineRange(doc, 0, doc.lineCount - 1)]);
+    editor.setDecorations(dimDeco, dim);
+    editor.setDecorations(fadeDeco, fade);
     return;
   }
   const bright = new Set(editor.selections.map((sel) => sel.active.line));
@@ -203,4 +225,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, sectionAround, lineWithParents, indentOf };
+module.exports = { register, sectionAround, sectionAbove, lineWithParents, indentOf };

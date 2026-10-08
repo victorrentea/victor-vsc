@@ -8,7 +8,7 @@ const Module = require('node:module');
 // presentation.js requires 'vscode' at the top; the pure helpers don't touch it.
 const load = Module._load;
 Module._load = (req, ...rest) => (req === 'vscode' ? {} : load(req, ...rest));
-const { sectionAround, lineWithParents, indentOf } = require('../presentation');
+const { sectionAround, sectionAbove, lineWithParents, indentOf } = require('../presentation');
 Module._load = load;
 
 const doc = [
@@ -32,6 +32,13 @@ test('the section is the run of non-blank lines around the cursor', () => {
 
 test('a blank line has no section, so the whole file gets faded', () => {
   assert.strictEqual(sectionAround(1, doc.length, textAt), null);
+});
+
+test('on a blank line the section above stays visible', () => {
+  assert.deepStrictEqual(sectionAbove(6, doc.length, textAt), [2, 5]);
+  assert.deepStrictEqual(sectionAbove(1, doc.length, textAt), [0, 0]);
+  assert.deepStrictEqual(sectionAbove(9, doc.length, textAt), [7, 8]);
+  assert.strictEqual(sectionAbove(0, 1, () => ''), null);
 });
 
 test('an indented line brings every less-indented parent above it', () => {
