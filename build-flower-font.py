@@ -1,6 +1,6 @@
 """Builds icons/victor-icons.woff: a six-petal flower (U+E001), two coins
-(U+E002) and a crosshair (U+E003), drawn on the same grid as VS Code's
-codicon.ttf (upem 300, ascent 300, glyph box 0..282) so they line up with the
+(U+E002), a crosshair (U+E003) and a picture (U+E004), drawn on the same grid
+as VS Code's codicon.ttf (upem 300, ascent 300, glyph box 0..282) so they line up with the
 built-in icons everywhere VS Code renders a ThemeIcon."""
 import math, sys
 from fontTools.fontBuilder import FontBuilder
@@ -89,6 +89,38 @@ def draw_crosshair(pen):
             rect(pen, C - CROSS_TICK_W, min(y0, y1), C + CROSS_TICK_W, max(y0, y1))
 
 
+PIC_X0, PIC_Y0, PIC_X1, PIC_Y1 = 18.0, 46.0, 264.0, 236.0   # rama, peisaj culcat
+PIC_W = 18.0         # grosimea ramei ≈ 1px la 16px, ca liniile codicon-urilor
+PIC_SUN = (196.0, 170.0, 20.0)
+
+
+def poly(pen, pts):
+    """Poligon dat în sensul acelor de ceas (y în sus) — deci umplut."""
+    pen.moveTo(pts[0])
+    for p in pts[1:]:
+        pen.lineTo(p)
+    pen.closePath()
+
+
+def draw_picture(pen):
+    """O poză și atât: ramă, soare, doi munți — forma randată, opusă lui
+    $(file-text) (forma textuală) pe butonul ⇄. Rama goală e un dreptunghi
+    plin cu o gaură bobinată invers; soarele și munții, bobinați ca rama, se
+    umplu în gaură. Baza munților coboară în latura de jos a ramei, ca să nu
+    rămână fantă între ei."""
+    rect(pen, PIC_X0, PIC_Y0, PIC_X1, PIC_Y1)
+    ix0, iy0, ix1, iy1 = PIC_X0 + PIC_W, PIC_Y0 + PIC_W, PIC_X1 - PIC_W, PIC_Y1 - PIC_W
+    pen.moveTo((round(ix0), round(iy0)))
+    pen.lineTo((round(ix1), round(iy0)))
+    pen.lineTo((round(ix1), round(iy1)))
+    pen.lineTo((round(ix0), round(iy1)))
+    pen.closePath()
+    ellipse(pen, *PIC_SUN[:2], PIC_SUN[2], PIC_SUN[2], 0, clockwise=True)
+    base = PIC_Y0 + PIC_W / 2
+    poly(pen, [(round(ix0), round(base)), (round(ix0), 96), (104, 160), (150, 112),
+               (186, 140), (round(ix1), 84), (round(ix1), round(base))])
+
+
 def glyph(fn):
     pen = TTGlyphPen(None)
     fn(pen)
@@ -96,12 +128,13 @@ def glyph(fn):
 
 
 fb = FontBuilder(UPEM, isTTF=True)
-order = [".notdef", "flower", "coins", "crosshair"]
+order = [".notdef", "flower", "coins", "crosshair", "picture"]
 fb.setupGlyphOrder(order)
-fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins", 0xE003: "crosshair"})
+fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins", 0xE003: "crosshair",
+                       0xE004: "picture"})
 fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(),
               "flower": glyph(draw), "coins": glyph(draw_coins),
-              "crosshair": glyph(draw_crosshair)})
+              "crosshair": glyph(draw_crosshair), "picture": glyph(draw_picture)})
 fb.setupHorizontalMetrics({g: (UPEM, 0) for g in order})
 fb.setupHorizontalHeader(ascent=UPEM, descent=0)
 fb.setupNameTable({"familyName": "victor-icons", "styleName": "Regular",
@@ -114,11 +147,11 @@ print("wrote", sys.argv[1])
 
 if len(sys.argv) > 2:      # proof sheet: the very contours that went into the font
     paths = []
-    for i, fn in enumerate((draw, draw_coins, draw_crosshair)):
+    for i, fn in enumerate((draw, draw_coins, draw_crosshair, draw_picture)):
         svg = SVGPathPen(None)
         fn(svg)
         paths.append(f'<g transform="translate({i * UPEM},{UPEM}) scale(1,-1)">'
                      f'<path fill="#D97757" fill-rule="nonzero" d="{svg.getCommands()}"/></g>')
     open(sys.argv[2], "w").write(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {3 * UPEM} {UPEM}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {4 * UPEM} {UPEM}">'
         + "".join(paths) + '</svg>')

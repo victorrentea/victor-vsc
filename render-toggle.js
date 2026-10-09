@@ -350,6 +350,12 @@ function register(context) {
     watchNewTabs(),
     ...watchContext(),
     vscode.commands.registerCommand('victor-vsc.toggleRender', toggleRender()),
+    // Același buton, două iconițe: `package.json` arată `showRendered` (o poză)
+    // pe forma textuală și `showSource` (o foaie cu text) pe cea randată, cu
+    // `when`-uri complementare pe același `navigation@9` — deci pixelul rămâne
+    // același, doar desenul spune unde te duce. Un ⇄ nu spunea nimic.
+    vscode.commands.registerCommand('victor-vsc.showRendered', toggleRender()),
+    vscode.commands.registerCommand('victor-vsc.showSource', toggleRender()),
   );
   refreshContext();
 }
