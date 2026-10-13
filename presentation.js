@@ -137,12 +137,65 @@ function lineRange(doc, a, b) {
   return new vscode.Range(a, 0, b, doc.lineAt(b).text.length);
 }
 
+/** Ce rămâne din [from, to) după ce scoți intervalele `cut` (sortate, [a, b)). */
+function subtract(from, to, cut) {
+  const out = [];
+  let at = from;
+  for (const [a, b] of cut) {
+    if (b <= at || a >= to) continue;
+    if (a > at) out.push([at, a]);
+    at = Math.max(at, b);
+  }
+  if (at < to) out.push([at, to]);
+  return out;
+}
+
+/** Cu text selectat, albă e selecția, nu linia cursorului: cursorul stă de obicei
+ *  la capătul selecției, pe linia de dedesubt (selecție de linie întreagă).
+ *  Albi rămân și părinții primei linii selectate, ca titlul să se vadă; restul
+ *  secțiunilor atinse e gri, inclusiv bucățile neselectate de pe liniile
+ *  selectate; în rest, estompat. */
+function paintSelection(editor, sels, textAt, tabSize) {
+  const doc = editor.document;
+  let first = Infinity, last = -1;
+  for (const sel of sels) {
+    first = Math.min(first, sel.start.line);
+    last = Math.max(last, sel.end.character === 0 && sel.end.line > sel.start.line ? sel.end.line - 1 : sel.end.line);
+  }
+  const a = sectionAround(first, doc.lineCount, textAt) || [first, first];
+  const b = sectionAround(last, doc.lineCount, textAt) || [last, last];
+  const start = Math.min(a[0], first), end = Math.max(b[1], last);
+  const parents = new Set(isBlank(textAt(first)) ? [] : parentsOf(indentOf(textAt(first), tabSize), first - 1, start, textAt, tabSize));
+  const white = [...parents].map((l) => lineRange(doc, l, l));
+  const dim = [];
+  for (let l = start; l <= end; l++) {
+    if (parents.has(l)) continue;
+    const len = doc.lineAt(l).text.length;
+    const cut = [];
+    for (const sel of sels) {
+      const piece = sel.intersection(new vscode.Range(l, 0, l, len));
+      if (piece && !piece.isEmpty) cut.push([piece.start.character, piece.end.character]);
+    }
+    cut.sort((x, y) => x[0] - y[0]);
+    for (const [x, y] of cut) white.push(new vscode.Range(l, x, l, y));
+    for (const [x, y] of subtract(0, len, cut)) dim.push(new vscode.Range(l, x, l, y));
+  }
+  const fade = [];
+  if (start > 0) fade.push(lineRange(doc, 0, start - 1));
+  if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
+  editor.setDecorations(cursorDeco, white);
+  editor.setDecorations(dimDeco, dim);
+  editor.setDecorations(fadeDeco, fade);
+}
+
 function paint(editor) {
   if (!editor) return;
   bullets.paint(editor);
   const doc = editor.document;
   const textAt = (i) => doc.lineAt(i).text;
   const tabSize = typeof editor.options.tabSize === 'number' ? editor.options.tabSize : 4;
+  const sels = editor.selections.filter((sel) => !sel.isEmpty);
+  if (sels.length) { paintSelection(editor, sels, textAt, tabSize); return; }
   const cursor = editor.selection.active.line;
   const section = sectionAround(cursor, doc.lineCount, textAt);
   if (!section) {
@@ -221,8 +274,9 @@ function register(context) {
   // `vscode-patch/workbench.js` în title bar, lângă semafoare, și la click apasă
   // intrările astea (ascunse din CSS) — din renderer nu se pot rula comenzi.
   // Există doar cât e pornit modul, deci și butoanele.
-  const folds = [['foldall', 'editor.foldAll', 'Collapse All'],
-                 ['unfoldall', 'editor.unfoldAll', 'Expand All']].map(([id, command, name]) => {
+  // Prin talk-notes.js, care află așa că s-a pliat tot fișierul, nu doar ce se vede.
+  const folds = [['foldall', 'victor-vsc.foldAll', 'Collapse All'],
+                 ['unfoldall', 'victor-vsc.unfoldAll', 'Expand All']].map(([id, command, name]) => {
     const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000003);
     item.name = name;
     item.text = name;
@@ -268,4 +322,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf };
+module.exports = { register, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };

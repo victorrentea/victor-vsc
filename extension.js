@@ -13,6 +13,7 @@ const javaTestOutput = require('./java-test-output');
 const gitLines = require('./git-lines');
 const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
+const talkNotes = require('./talk-notes');
 const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
@@ -313,6 +314,8 @@ function activate(context) {
   renderToggle.register(context);
   // ⌘F12 / View › Vic Presentation: doar codul și numerele de linie pe ecran.
   presentation.register(context);
+  // Notițele sesiunii, oglindite pe telefoanele din sală prin daemonul de training.
+  talkNotes.register(context);
 
   // Walkie Talkie: un listener pe loopback prin care relay-ul livrează dictarea
   // în EXACT terminalul pe care l-a legat. Din afară, o extensie de terminal

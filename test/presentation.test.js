@@ -8,7 +8,7 @@ const Module = require('node:module');
 // presentation.js requires 'vscode' at the top; the pure helpers don't touch it.
 const load = Module._load;
 Module._load = (req, ...rest) => (req === 'vscode' ? {} : load(req, ...rest));
-const { sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf } = require('../presentation');
+const { sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract } = require('../presentation');
 Module._load = load;
 
 const doc = [
@@ -74,4 +74,10 @@ test('on a blank line the cursor column decides which lines above are its parent
   assert.deepStrictEqual(whiteOnBlank([0, 1], 4, at), [0, 1]); // child of AI Colleagues
   assert.deepStrictEqual(whiteOnBlank([0, 1], 2, at), [0]);    // sibling of AI Colleagues
   assert.deepStrictEqual(whiteOnBlank([0, 1], 0, at), [0]);    // column 0: the chapter
+});
+
+test('with a selection, the unselected bits of a line stay grey', () => {
+  assert.deepStrictEqual(subtract(0, 20, [[4, 9]]), [[0, 4], [9, 20]]);
+  assert.deepStrictEqual(subtract(0, 20, [[0, 20]]), []);
+  assert.deepStrictEqual(subtract(0, 20, [[2, 5], [10, 30]]), [[0, 2], [5, 10]]);
 });
