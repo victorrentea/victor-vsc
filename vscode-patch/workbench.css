@@ -560,10 +560,9 @@
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
   content: '\eab6';
   font-family: codicon;
-  /* Cât `>`-ul din gutter: acolo e glifa temei de iconițe JetBrains, la 16px ×
-     scale(1.8) = 28.8px, iar desenul ei ocupă 68% din em; chevron-ul codicon ocupă
-     63%, deci 28.8 × 68/63 ≈ 31px. */
-  font-size: 31px;
+  /* Aceeași mărime ca `v`-ul din fold-marks.js (aceeași glifă codicon, rotită):
+     la 31px, cât `>`-ul din gutter, ieșea prea mare lângă text. */
+  font-size: 15.5px;
   margin: 0 0 0 0.3em;
   vertical-align: middle;
   -webkit-text-stroke: 0.9px currentColor;
