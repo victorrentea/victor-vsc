@@ -496,10 +496,49 @@
 
 /* Selecția în prezentare: cutie neagră opacă cu margine subțire, ca textul
    selectat (alb, din presentation.js) să iasă în față pe proiector. Albastrul
-   translucid de fabrică îl spăla — scădea contrastul exact pe ce arăți. */
+   translucid de fabrică îl spăla — scădea contrastul exact pe ce arăți.
+
+   VS Code desenează selecția ca o bucată pe rând; cu conturul pe fiecare bucată,
+   o selecție pe mai multe rânduri avea o linie între rânduri. Conturul trebuie să
+   fie al formei întregi, deci: inelul stă în ::before cu z-index -1 (cade în
+   contextul de stivuire al `.lines-content`, sub toate bucățile), umplutura
+   neagră în ::after, deasupra. Din fiecare inel se vede doar ce iese din umbra
+   tuturor umpluturilor — adică marginea exterioară a reuniunii. Inelul iese 1px
+   în sus, jos și dreapta, dar nu și în stânga: `.lines-content` are
+   `contain: strict` și ar tăia o margine pe coloana 0; latura stângă e ținută
+   înăuntru, iar umplutura începe de la 1px ca s-o lase vizibilă. */
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text {
-  background-color: #000 !important;
+  background-color: transparent !important;
+}
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text::before,
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text::after {
+  content: '';
+  position: absolute;
+  --w: 100%;
+}
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text::before {
+  z-index: -1;
+  top: -1px;
+  bottom: -1px;
+  left: 0;
+  width: calc(var(--w) + 1px);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text::after {
+  top: 0;
+  bottom: 0;
+  left: 1px;
+  width: calc(var(--w) - 1px);
+  background: #000;
+}
+/* Un rând care continuă pe următorul primește de la VS Code un spațiu în plus
+   la capăt (newline-ul selectat), iar cutia trecea de text. Rândul ăsta e cel al
+   cărui vecin de dedesubt are și el selecție; îi scădem spațiul (1ch = lățimea
+   unui spațiu, fontul e monospace). Un rând gol din selecție e doar spațiul ăla:
+   îl păstrăm, altfel forma s-ar rupe în două. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .view-overlays > div:has(+ div > .selected-text) > .selected-text::before,
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .view-overlays > div:has(+ div > .selected-text) > .selected-text::after {
+  --w: max(100% - 1ch, 1ch);
 }
 
 /* Săgețile de pliere, de ~2x și mai groase: de pe ultimul rând al sălii nu se
@@ -521,6 +560,10 @@
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
   content: '\eab6';
   font-family: codicon;
+  /* Cât `>`-ul din gutter: acolo e glifa temei de iconițe JetBrains, la 16px ×
+     scale(1.8) = 28.8px, iar desenul ei ocupă 68% din em; chevron-ul codicon ocupă
+     63%, deci 28.8 × 68/63 ≈ 31px. */
+  font-size: 31px;
   margin: 0 0 0 0.3em;
   vertical-align: middle;
   -webkit-text-stroke: 0.9px currentColor;

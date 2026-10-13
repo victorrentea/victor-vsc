@@ -58,8 +58,10 @@ function register(context) {
       contentText: CHEVRON_DOWN,
       color: new vscode.ThemeColor('editor.foldPlaceholderForeground'),
       // Fontul codicon și grosimea săgeților din gutter intră pe la textDecoration,
-      // ca în bullets.js — `after` n-are fontFamily.
-      textDecoration: 'none; font-family: codicon; -webkit-text-stroke: 0.9px currentColor; margin-left: 0.3em; vertical-align: middle; cursor: pointer',
+      // ca în bullets.js — `after` n-are fontFamily. 23px = cât `v`-ul din gutter:
+      // glifa JetBrains de acolo (16px × scale(1.8) = 28.8px) e lată de 50% din em,
+      // chevron-ul codicon de 63%, deci 28.8 × 50/63 ≈ 23px.
+      textDecoration: 'none; font-family: codicon; font-size: 23px; -webkit-text-stroke: 0.9px currentColor; margin-left: 0.3em; vertical-align: middle; cursor: pointer',
     },
   });
   context.subscriptions.push(type,

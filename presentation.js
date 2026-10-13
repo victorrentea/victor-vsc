@@ -35,6 +35,17 @@ const SETTINGS = {
   // numere, iar `lineDecorationsWidth`, care ar fi dat spațiul direct, nu e nici
   // ea setare înregistrată.
   'editor.glyphMargin': false,
+  // Săgeata `v` din gutter, pe antetele desfăcute, stă tot timpul, nu doar sub
+  // mouse: sala nu vede unde e mouse-ul, deci „aici se poate plia" trebuie să
+  // fie permanent, ca `>`-ul de pe cele pliate.
+  'editor.showFoldingControls': 'always',
+  // Colțurile rotunjite ale selecției sunt desenate cu bucăți în plus, de 10px,
+  // lângă colțurile interioare; peste cutia neagră cu contur din workbench.css ar
+  // ieși ca niște cutiuțe separate. Drepte, bucățile sunt exact rândurile.
+  'editor.roundedSelection': false,
+  // Fără punctele `·` pe care VS Code le pune în spațiile din textul selectat:
+  // pe cutia neagră ieșeau ca un zgomot între cuvinte.
+  'editor.renderWhitespace': 'none',
   // Fără cuvintele colorate în gri peste tot unde apare cel de sub cursor: pe
   // proiector par selecții, iar sala se uită la ele în loc de linia curentă.
   'editor.occurrencesHighlight': 'off',
