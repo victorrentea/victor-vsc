@@ -6,7 +6,8 @@ const vscode = require('vscode');
 // Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
 // spune ce fel de punct e, desenat alb pe un cerc colorat: `+` verde (pro), `-`
 // roșu (contra), orice alt caracter singur urmat de spațiu albastru — `i`
-// (informație), `=`, `*`, `?`… Aceeași regulă o are și pagina de talk de pe
+// (informație), `=`, `*`, `?`… Doar când după spațiu urmează text: un caracter
+// singur pe rând e doar începutul unui cuvânt pe care-l scrii. Aceeași regulă o are și pagina de talk de pe
 // telefoane (training-assistant: static/talk-notes.js), care oglindește notițele.
 //
 // Totul rămâne monospace și nimic nu se mută: cercul e fundalul span-ului
@@ -27,10 +28,10 @@ const vscode = require('vscode');
 const DOT = { plus: '#2e9e4f', minus: '#d64541', info: '#2f74d0' };
 
 /** Pentru textul unei linii: [kind, coloana, lungimea] a marcajului de la
- *  început, sau null. Marcajul e primul caracter ne-alb, urmat de spațiu sau de
- *  capătul liniei. Lungimea e în unități UTF-16 (2 pentru un caracter din afara BMP). */
+ *  început, sau null. Marcajul e primul caracter ne-alb, urmat de spațiu și apoi
+ *  de text. Lungimea e în unități UTF-16 (2 pentru un caracter din afara BMP). */
 function markerOf(text) {
-  const m = /^([ \t]*)(\S)(?=[ \t]|$)/u.exec(text);
+  const m = /^([ \t]*)(\S)(?=[ \t]+\S)/u.exec(text);
   if (!m) return null;
   const kind = m[2] === '+' ? 'plus' : m[2] === '-' ? 'minus' : 'info';
   return [kind, m[1].length, m[2].length];

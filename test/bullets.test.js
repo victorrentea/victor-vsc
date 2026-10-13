@@ -13,7 +13,6 @@ test('the first mark on the line, followed by a space', () => {
   assert.deepStrictEqual(markerOf('+ Tooling'), ['plus', 0, 1]);
   assert.deepStrictEqual(markerOf('  - MCP blocked'), ['minus', 2, 1]);
   assert.deepStrictEqual(markerOf('    i cheaper'), ['info', 4, 1]);
-  assert.deepStrictEqual(markerOf('i'), ['info', 0, 1]);
 });
 
 test('any other single character before a space is blue, like i', () => {
@@ -28,4 +27,10 @@ test('not a mark: glued to a word, or not the first thing on the line', () => {
   assert.strictEqual(markerOf('-1 point'), null);
   assert.strictEqual(markerOf('ab + c'), null);
   assert.strictEqual(markerOf(''), null);
+});
+
+test('not a mark: alone on the line, nothing after it yet', () => {
+  assert.strictEqual(markerOf('a'), null);
+  assert.strictEqual(markerOf('  +'), null);
+  assert.strictEqual(markerOf('- '), null);
 });
