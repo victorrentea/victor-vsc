@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const bullets = require('./bullets');
+const foldMarks = require('./fold-marks');
 
 // „Vic Presentation" (⌘F12, și în meniul View): doar codul și numerele de linie
 // pe ecran — fără taburi, activity bar și status bar. Doar în fereastra în care
@@ -191,6 +192,7 @@ function paintSelection(editor, sels, textAt, tabSize) {
 function paint(editor) {
   if (!editor) return;
   bullets.paint(editor);
+  foldMarks.paint(editor);
   const doc = editor.document;
   const textAt = (i) => doc.lineAt(i).text;
   const tabSize = typeof editor.options.tabSize === 'number' ? editor.options.tabSize : 4;
@@ -234,6 +236,7 @@ function paint(editor) {
 
 function unpaint() {
   bullets.clear();
+  foldMarks.clear();
   for (const editor of vscode.window.visibleTextEditors) {
     try {
       editor.setDecorations(cursorDeco, []);
@@ -253,6 +256,7 @@ function register(context) {
   fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
   dimDeco = vscode.window.createTextEditorDecorationType({ opacity: DIM });
   bullets.register(context);
+  foldMarks.register(context);
   context.subscriptions.push(cursorDeco, fadeDeco, dimDeco,
     vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),
     vscode.window.onDidChangeActiveTextEditor((ed) => { if (on) paint(ed); }),
@@ -275,8 +279,11 @@ function register(context) {
   // intrările astea (ascunse din CSS) — din renderer nu se pot rula comenzi.
   // Există doar cât e pornit modul, deci și butoanele.
   // Prin talk-notes.js, care află așa că s-a pliat tot fișierul, nu doar ce se vede.
+  // `foldline` o apasă tot workbench.js, la click pe `v`-ul de după un antet desfăcut
+  // (fold-marks.js).
   const folds = [['foldall', 'victor-vsc.foldAll', 'Collapse All'],
-                 ['unfoldall', 'victor-vsc.unfoldAll', 'Expand All']].map(([id, command, name]) => {
+                 ['unfoldall', 'victor-vsc.unfoldAll', 'Expand All'],
+                 ['foldline', 'victor-vsc.foldLine', 'Fold Here']].map(([id, command, name]) => {
     const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000003);
     item.name = name;
     item.text = name;

@@ -420,7 +420,8 @@
    estompată, se aprinde doar la hover. Marginea de 78px e cea a pastilei de
    branch (semafoarele nu-și rezervă loc), care vine după ele și se lipește. */
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldall"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldline"] {
   display: none;
 }
 
@@ -512,31 +513,23 @@
   -webkit-text-stroke: 0.9px currentColor;
 }
 
-/* „⋯"-ul de după un rând pliat: trei puncte care se aprind pe rând, în buclă —
-   „aici e ceva ascuns". Glifa nu poate anima puncte separate, deci punctele
-   sunt trei gradienți radiali ai căror culori sunt proprietăți animabile. */
-@property --victor-fold-dot1 { syntax: '<color>'; inherits: false; initial-value: #7d7d8a; }
-@property --victor-fold-dot2 { syntax: '<color>'; inherits: false; initial-value: #7d7d8a; }
-@property --victor-fold-dot3 { syntax: '<color>'; inherits: false; initial-value: #7d7d8a; }
-
-@keyframes victor-fold-glow {
-  0%, 100% { --victor-fold-dot1: #ffffff; --victor-fold-dot2: #7d7d8a; --victor-fold-dot3: #7d7d8a; }
-  33%      { --victor-fold-dot1: #7d7d8a; --victor-fold-dot2: #ffffff; --victor-fold-dot3: #7d7d8a; }
-  66%      { --victor-fold-dot1: #7d7d8a; --victor-fold-dot2: #7d7d8a; --victor-fold-dot3: #ffffff; }
+/* În notițe (text simplu) săgeata de pliere stă după textul antetului, nu în
+   gutter (fold-marks.js): `>` pe un rând pliat, `v` pe unul desfăcut. Aici `>`-ul,
+   adică `⋯`-ul lui VS Code redesenat ca chevron-right din codicon, gros ca
+   fostele săgeți din gutter; click-ul pe el deplică, nativ. Pe toate editoarele
+   din prezentare, nu doar pe notițe: `⋯`-ul înseamnă oriunde același lucru. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
+  content: '\eab6';
+  font-family: codicon;
+  margin: 0 0 0 0.3em;
+  vertical-align: middle;
+  -webkit-text-stroke: 0.9px currentColor;
 }
 
-.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
-  content: '';
-  display: inline-block;
-  width: 2.1em;
-  height: 0.9em;
-  margin: 0 0.3em;
-  vertical-align: middle;
-  background:
-    radial-gradient(circle at 16% 50%, var(--victor-fold-dot1) 0 0.12em, color-mix(in srgb, var(--victor-fold-dot1) 40%, transparent) 0.17em, transparent 0.3em),
-    radial-gradient(circle at 50% 50%, var(--victor-fold-dot2) 0 0.12em, color-mix(in srgb, var(--victor-fold-dot2) 40%, transparent) 0.17em, transparent 0.3em),
-    radial-gradient(circle at 84% 50%, var(--victor-fold-dot3) 0 0.12em, color-mix(in srgb, var(--victor-fold-dot3) 40%, transparent) 0.17em, transparent 0.3em);
-  animation: victor-fold-glow 1.8s ease-in-out infinite;
+/* …iar în gutter-ul notițelor, nimic. `visibility`, nu `display`: coloana de
+   pliere rămâne, ea e spațiul dintre numere și text (presentation.js). */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .editor-instance[data-mode-id="plaintext"] .margin-view-overlays .cldr[class*="codicon-folding-"] {
+  visibility: hidden;
 }
 
 /* ------------------------------------------ Quick Definition (⌘-click, quick-definition.js) */

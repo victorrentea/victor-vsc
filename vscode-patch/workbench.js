@@ -180,6 +180,37 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (group.parentElement !== left) left.appendChild(group);
   }
 
+  // Click pe `v`-ul de după un antet desfăcut din notițe (fold-marks.js): o
+  // decorație nu primește click, deci îl prindem aici și apăsăm intrarea
+  // `foldline`, care pliază rândul cursorului. `v`-ul e un span gol cu glifa în
+  // `::after` (așa desenează VS Code o decorație `after`), deci se recunoaște
+  // după `content` — chevron-down din zona privată a codicon-urilor, pe care nu-l
+  // pune nimeni altcineva acolo.
+  //
+  // Pe `mousedown`, nu pe `click`: mutarea cursorului redesenează decorațiile
+  // prezentării, span-ul e înlocuit între mousedown și mouseup, iar `click`-ul
+  // ajunge pe un părinte. Apăsăm intrarea abia după mouseup (+50 ms), când
+  // editorul a mutat cursorul pe rând și extension host-ul a aflat.
+  let foldClickInstalled = false;
+
+  function installFoldLineClick() {
+    if (foldClickInstalled) return;
+    foldClickInstalled = true;
+    let armed = false;
+    document.addEventListener('mousedown', (e) => {
+      const span = e.button === 0 && e.target instanceof Element && e.target.closest('.view-lines span');
+      armed = !!span && getComputedStyle(span, '::after').content === '"\ueab4"';
+    }, true);
+    document.addEventListener('mouseup', () => {
+      if (!armed) return;
+      armed = false;
+      setTimeout(() => {
+        const item = document.querySelector('.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldline"]');
+        if (item) (item.querySelector('a.statusbar-item-label') || item).click();
+      }, 50);
+    }, true);
+  }
+
   // Liniile schimbate, în capul grupului din Source Control.
   //
   // Badge-ul de acolo numără FIȘIERE (`group.resources.length`), iar rândul e
@@ -791,6 +822,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
       ensureFoldButtons();
+      installFoldLineClick();
       ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();
