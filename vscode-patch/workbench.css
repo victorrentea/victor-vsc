@@ -568,8 +568,9 @@
   content: '\eab6';
   font-family: codicon;
   /* Aceeași mărime ca `v`-ul din fold-marks.js și ca săgețile din gutter (aceeași
-     glifă codicon, rotită). */
+     glifă codicon, rotită), și aceeași culoare ca în gutter. */
   font-size: 15.5px;
+  color: var(--vscode-editorGutter-foldingControlForeground);
   margin: 0 0 0 0.3em;
   vertical-align: middle;
   -webkit-text-stroke: 0.9px currentColor;

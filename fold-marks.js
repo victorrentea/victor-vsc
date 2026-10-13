@@ -56,7 +56,9 @@ function register(context) {
   type = vscode.window.createTextEditorDecorationType({
     after: {
       contentText: CHEVRON_DOWN,
-      color: new vscode.ThemeColor('editor.foldPlaceholderForeground'),
+      // Culoarea săgeților din gutter, nu gri-ul de placeholder: aceeași săgeată,
+      // aceeași luminozitate în ambele locuri.
+      color: new vscode.ThemeColor('editorGutter.foldingControlForeground'),
       // Fontul codicon și grosimea săgeților din gutter intră pe la textDecoration,
       // ca în bullets.js — `after` n-are fontFamily. 15.5px, ca `>`-ul de pe rândurile
       // pliate (workbench.css): cele două săgeți de după text au aceeași mărime.
