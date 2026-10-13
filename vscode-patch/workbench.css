@@ -513,8 +513,8 @@
   -webkit-text-stroke: 0.9px currentColor;
 }
 
-/* În notițe (text simplu) săgeata de pliere stă după textul antetului, nu în
-   gutter (fold-marks.js): `>` pe un rând pliat, `v` pe unul desfăcut. Aici `>`-ul,
+/* În notițe (text simplu) săgeata de pliere stă și după textul antetului, nu doar
+   în gutter (fold-marks.js): `>` pe un rând pliat, `v` pe unul desfăcut. Aici `>`-ul,
    adică `⋯`-ul lui VS Code redesenat ca chevron-right din codicon, gros ca
    fostele săgeți din gutter; click-ul pe el deplică, nativ. Pe toate editoarele
    din prezentare, nu doar pe notițe: `⋯`-ul înseamnă oriunde același lucru. */
@@ -524,12 +524,6 @@
   margin: 0 0 0 0.3em;
   vertical-align: middle;
   -webkit-text-stroke: 0.9px currentColor;
-}
-
-/* …iar în gutter-ul notițelor, nimic. `visibility`, nu `display`: coloana de
-   pliere rămâne, ea e spațiul dintre numere și text (presentation.js). */
-.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .editor-instance[data-mode-id="plaintext"] .margin-view-overlays .cldr[class*="codicon-folding-"] {
-  visibility: hidden;
 }
 
 /* ------------------------------------------ Quick Definition (⌘-click, quick-definition.js) */

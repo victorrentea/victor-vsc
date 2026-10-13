@@ -2,9 +2,9 @@ const vscode = require('vscode');
 const { foldsFromVisible, shiftFolds } = require('./talk-notes');
 
 // Doar în Vic Presentation, în fișierele text simplu (notițele): săgeata de pliere
-// nu mai stă în gutter, ci după textul rândului-antet — `>` când e pliat, `v` când
-// e desfăcut. De pe ultimul rând al sălii se vede la capătul titlului, nu într-o
-// coloană îngustă lângă numere.
+// stă și după textul rândului-antet — `>` când e pliat, `v` când e desfăcut — pe
+// lângă cea din gutter. De pe ultimul rând al sălii se vede la capătul titlului,
+// nu doar într-o coloană îngustă lângă numere.
 //
 // `>`-ul e chiar `⋯`-ul lui VS Code de după un rând pliat, redesenat din
 // `vscode-patch/workbench.css`; click-ul pe el deplică, nativ. `v`-ul nu are
