@@ -1,8 +1,9 @@
 """Builds icons/victor-icons.woff: a six-petal flower (U+E001), two coins
-(U+E002), a crosshair (U+E003) and a picture (U+E004), drawn on the same grid
+(U+E002), a crosshair (U+E003), a picture (U+E004) and Clawd, the Claude Code
+mascot (U+E005), drawn on the same grid
 as VS Code's codicon.ttf (upem 300, ascent 300, glyph box 0..282) so they line up with the
 built-in icons everywhere VS Code renders a ThemeIcon."""
-import math, sys
+import math, re, sys
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -121,6 +122,36 @@ def draw_picture(pen):
                (186, 140), (round(ix1), 84), (round(ix1), round(base))])
 
 
+# Clawd, omulețul din Claude Code, copiat pixel cu pixel după cum îl desenează
+# CLI-ul în terminal, din sferturi de bloc:
+#    ▐▛███▜▌
+#   ▝▜█████▛▘
+#     ▘▘ ▝▝
+# Un sfert de celulă de terminal e de două ori mai înalt decât lat, deci pixelul
+# de aici e CLAWD_PX × 2·CLAWD_PX. Ochii sunt cele două sferturi lipsă din ▛ și ▜.
+CLAWD = [
+    "...############...",
+    "...##.######.##...",
+    ".################.",
+    "...############...",
+    "....#.#....#.#....",
+]
+CLAWD_PX = 16.0      # 18 coloane × 16 = 288 ≈ cutia de 282; rândurile au 32
+
+
+def draw_clawd(pen):
+    """Fiecare rând se umple în segmente orizontale; segmentele vecine pe
+    verticală se suprapun 1 unitate, ca să nu apară fante la rasterizare."""
+    w = len(CLAWD[0]) * CLAWD_PX
+    x_off = C - w / 2
+    y_top = C + len(CLAWD) * CLAWD_PX     # rândurile au 2·CLAWD_PX, centrate pe C
+    for r, row in enumerate(CLAWD):
+        y1 = y_top - r * 2 * CLAWD_PX
+        for m in re.finditer(r"#+", row):
+            rect(pen, x_off + m.start() * CLAWD_PX, y1 - 2 * CLAWD_PX - 1,
+                 x_off + m.end() * CLAWD_PX, y1)
+
+
 def glyph(fn):
     pen = TTGlyphPen(None)
     fn(pen)
@@ -128,13 +159,14 @@ def glyph(fn):
 
 
 fb = FontBuilder(UPEM, isTTF=True)
-order = [".notdef", "flower", "coins", "crosshair", "picture"]
+order = [".notdef", "flower", "coins", "crosshair", "picture", "clawd"]
 fb.setupGlyphOrder(order)
 fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins", 0xE003: "crosshair",
-                       0xE004: "picture"})
+                       0xE004: "picture", 0xE005: "clawd"})
 fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(),
               "flower": glyph(draw), "coins": glyph(draw_coins),
-              "crosshair": glyph(draw_crosshair), "picture": glyph(draw_picture)})
+              "crosshair": glyph(draw_crosshair), "picture": glyph(draw_picture),
+              "clawd": glyph(draw_clawd)})
 fb.setupHorizontalMetrics({g: (UPEM, 0) for g in order})
 fb.setupHorizontalHeader(ascent=UPEM, descent=0)
 fb.setupNameTable({"familyName": "victor-icons", "styleName": "Regular",
@@ -147,11 +179,12 @@ print("wrote", sys.argv[1])
 
 if len(sys.argv) > 2:      # proof sheet: the very contours that went into the font
     paths = []
-    for i, fn in enumerate((draw, draw_coins, draw_crosshair, draw_picture)):
+    FNS = (draw, draw_coins, draw_crosshair, draw_picture, draw_clawd)
+    for i, fn in enumerate(FNS):
         svg = SVGPathPen(None)
         fn(svg)
         paths.append(f'<g transform="translate({i * UPEM},{UPEM}) scale(1,-1)">'
                      f'<path fill="#D97757" fill-rule="nonzero" d="{svg.getCommands()}"/></g>')
     open(sys.argv[2], "w").write(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {4 * UPEM} {UPEM}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {len(FNS) * UPEM} {UPEM}">'
         + "".join(paths) + '</svg>')

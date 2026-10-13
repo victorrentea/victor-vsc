@@ -198,10 +198,14 @@
    intrări de status bar, ci una singură (`$(symbol-color) 228 tok (GPT)`),
    fiindcă prioritățile din jurul lui 100 sunt ocupate de item-ele native — deci
    o regulă pe item-ul părinte ascundea și numărul, adică exact ce vrem să
-   rămână. Și doar glifa paletei: `$(claude)` din template (package.json) stă
-   în același label și trebuie să se vadă. */
-.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon:not(.codicon-claude) {
+   rămână. Și doar glifa paletei: Clawd (`$(victor-claude-code)`, din
+   template-ul din package.json) stă în același label și trebuie să se vadă —
+   gri, ca să nu iasă în evidență lângă număr. */
+.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon:not(.codicon-victor-claude-code) {
   display: none;
+}
+.part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon-victor-claude-code {
+  color: var(--vscode-descriptionForeground);
 }
 
 /* Stă în `.titlebar-center`, imediat în stânga pastilei. Banda e flex cu

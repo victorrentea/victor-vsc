@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.174",
+  "version": "0.0.176",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -60,6 +60,13 @@
         "default": {
           "fontPath": "./icons/victor-icons.woff",
           "fontCharacter": "\\E004"
+        }
+      },
+      "victor-claude-code": {
+        "description": "Clawd, the Claude Code mascot",
+        "default": {
+          "fontPath": "./icons/victor-icons.woff",
+          "fontCharacter": "\\E005"
         }
       }
     },
@@ -333,7 +340,7 @@
       "editor.stickyScroll.maxLineCount": 8,
       "editor.stickyScroll.defaultModel": "outlineModel",
       "editor.stickyScroll.scrollWithEditor": true,
-      "gpt-token-counter-live.statusBarDisplayTemplate": "$(claude) {count}",
+      "gpt-token-counter-live.statusBarDisplayTemplate": "$(victor-claude-code) {count}",
       "gpt-token-counter-live.defaultModelFamily": "anthropic",
       "extensions.confirmedUriHandlerExtensionIds": [
         "victorrentea.victor-vsc"
