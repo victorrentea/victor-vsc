@@ -420,8 +420,7 @@
    estompată, se aprinde doar la hover. Marginea de 78px e cea a pastilei de
    branch (semafoarele nu-și rezervă loc), care vine după ele și se lipește. */
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldall"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldline"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"] {
   display: none;
 }
 
@@ -541,10 +540,9 @@
   --w: max(100% - 1ch, 1ch);
 }
 
-/* Săgețile de pliere din gutter, identice cu cele de după textul antetului: aceeași
-   glifă codicon, 15.5px, aceeași grosime. Tema de iconițe JetBrains le desena cu alt
-   desen — `>` și `v` de mărimi diferite între ele și altă grosime de linie — și
-   oricât le scalai nu ieșeau la fel cu cele de lângă text. */
+/* Săgețile de pliere din gutter, glifa codicon la 15.5px: tema de iconițe JetBrains
+   desena `>` și `v` de mărimi diferite între ele, iar la scale(1.8) săreau în ochi
+   mai tare decât textul. */
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .margin-view-overlays .cldr.codicon-folding-collapsed::before,
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .margin-view-overlays .cldr.codicon-folding-manual-collapsed::before {
   content: '\eab6';
@@ -559,21 +557,11 @@
   -webkit-text-stroke: 0.9px currentColor;
 }
 
-/* În notițe (text simplu) săgeata de pliere stă și după textul antetului, nu doar
-   în gutter (fold-marks.js): `>` pe un rând pliat, `v` pe unul desfăcut. Aici `>`-ul,
-   adică `⋯`-ul lui VS Code redesenat ca chevron-right din codicon, gros ca
-   săgețile din gutter; click-ul pe el deplică, nativ. Pe toate editoarele
-   din prezentare, nu doar pe notițe: `⋯`-ul înseamnă oriunde același lucru. */
-.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
-  content: '\eab6';
-  font-family: codicon;
-  /* Aceeași mărime ca `v`-ul din fold-marks.js și ca săgețile din gutter (aceeași
-     glifă codicon, rotită), și aceeași culoare ca în gutter. */
-  font-size: 15.5px;
-  color: var(--vscode-editorGutter-foldingControlForeground);
-  margin: 0 0 0 0.3em;
-  vertical-align: middle;
-  -webkit-text-stroke: 0.9px currentColor;
+/* Fără `⋯`-ul de după un rând pliat: săgeata de pliere stă doar în gutter. Un al
+   doilea marcaj lângă text (un `>` aici, plus un `v` pe antetele desfăcute) ducea la
+   bug-uri și dubla ce arată deja gutter-ul. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded {
+  display: none;
 }
 
 /* ------------------------------------------ Quick Definition (⌘-click, quick-definition.js) */
