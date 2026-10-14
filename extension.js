@@ -14,6 +14,7 @@ const gitLines = require('./git-lines');
 const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
 const talkNotes = require('./talk-notes');
+const viewLog = require('./view-log');
 const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
@@ -316,6 +317,8 @@ function activate(context) {
   presentation.register(context);
   // Notițele sesiunii, oglindite pe telefoanele din sală prin daemonul de training.
   talkNotes.register(context);
+  // Ce linii din ce fișier am avut pe ecran, și când — 8 zile, citit cu view-log.py.
+  viewLog.register(context, presentation.isPresenting);
 
   // Walkie Talkie: un listener pe loopback prin care relay-ul livrează dictarea
   // în EXACT terminalul pe care l-a legat. Din afară, o extensie de terminal

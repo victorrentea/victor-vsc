@@ -259,6 +259,10 @@ function unpaint() {
 }
 const MEMORY_CONFIG = 'victor-vsc.memoryConfig';
 
+// Citit și de view-log.js: în prezentare, fereastra se vede pe proiector chiar nefocusată.
+let presenting = false;
+const isPresenting = () => presenting;
+
 function register(context) {
   // Extension host-ul e unul per fereastră, deci o variabilă e exact starea
   // ferestrei ăsteia.
@@ -326,6 +330,7 @@ function register(context) {
       return;
     }
     on = !on;
+    presenting = on;
     await vscode.commands.executeCommand(MEMORY_CONFIG,
       Object.fromEntries(Object.entries(SETTINGS).map(([k, v]) => [k, on ? v : null])));
     // Ieșind din prezentare cu Zen (F12) rămas pornit, fereastra arăta tot
@@ -337,4 +342,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
+module.exports = { register, isPresenting, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
