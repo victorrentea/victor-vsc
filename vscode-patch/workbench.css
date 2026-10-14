@@ -200,12 +200,13 @@
    o regulă pe item-ul părinte ascundea și numărul, adică exact ce vrem să
    rămână. Și doar glifa paletei: Clawd (`$(victor-claude-code)`, din
    template-ul din package.json) stă în același label și trebuie să se vadă —
-   gri, ca să nu iasă în evidență lângă număr. */
+   portocaliul lui Claude Code (rgb(215,119,87), culoarea `claude` din tema lui),
+   ca să se recunoască dintr-o privire. */
 .part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon:not(.codicon-victor-claude-code) {
   display: none;
 }
 .part.statusbar .statusbar-item > a.statusbar-item-label[aria-label^="Toggle token highlighting"] > .codicon-victor-claude-code {
-  color: var(--vscode-descriptionForeground);
+  color: #d77757;
 }
 
 /* Stă în `.titlebar-center`, imediat în stânga pastilei. Banda e flex cu
