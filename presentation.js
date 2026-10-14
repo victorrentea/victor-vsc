@@ -38,10 +38,14 @@ const SETTINGS = {
   // mouse: sala nu vede unde e mouse-ul, deci „aici se poate plia" trebuie să
   // fie permanent, ca `>`-ul de pe cele pliate.
   'editor.showFoldingControls': 'always',
-  // Colțurile rotunjite ale selecției sunt desenate cu bucăți în plus, de 10px,
-  // lângă colțurile interioare; peste cutia neagră cu contur din workbench.css ar
-  // ieși ca niște cutiuțe separate. Drepte, bucățile sunt exact rândurile.
-  'editor.roundedSelection': false,
+  // Colțurile rotunjite ale selecției: VS Code pune pe fiecare bucată clase pentru
+  // colțurile EXTERIOARE ale formei (`top-left-radius`…), din care workbench.css
+  // rotunjește cutia neagră. Bucățile în plus, de 10px, pe care le adaugă lângă
+  // colțurile interioare le ascunde tot workbench.css.
+  'editor.roundedSelection': true,
+  // Fără banda albastră pe tot rândul unui antet pliat: pe proiector bătea la ochi
+  // mai tare decât selecția. Săgeata `>` din gutter arată deja că e pliat.
+  'editor.foldingHighlight': false,
   // Fără punctele `·` pe care VS Code le pune în spațiile din textul selectat:
   // pe cutia neagră ieșeau ca un zgomot între cuvinte.
   'editor.renderWhitespace': 'none',

@@ -514,6 +514,24 @@
   content: '';
   position: absolute;
   --w: 100%;
+  border-radius: var(--tl) var(--tr) var(--br) var(--bl);
+}
+/* Colțuri rotunjite doar pe exteriorul formei: VS Code (`editor.roundedSelection`,
+   pornit din presentation.js) pune clasele `*-radius` pe bucata unui rând exact pe
+   colțurile care ies în afară; cele interioare rămân drepte. Raza ajunge la ambele
+   pseudo-elemente, inel și umplutură, prin variabile. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text { --tl: 0; --tr: 0; --br: 0; --bl: 0; }
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text.top-left-radius { --tl: 6px; }
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text.top-right-radius { --tr: 6px; }
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text.bottom-right-radius { --br: 6px; }
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text.bottom-left-radius { --bl: 6px; }
+/* Lângă un colț interior VS Code mai pune două bucăți de 10px: una de selecție și,
+   imediat după ea, una cu fundalul editorului și rază inversă, care „scobește"
+   colțul. Peste cutia neagră ar ieși ca niște cutiuțe separate; le ascundem pe
+   amândouă, iar colțul interior rămâne drept. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .cslr.selected-text:has(+ .cslr.monaco-editor-background),
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .cslr.monaco-editor-background {
+  display: none;
 }
 .monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .selected-text::before {
   z-index: -1;
