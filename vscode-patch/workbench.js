@@ -778,6 +778,66 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }).observe(workbench, { attributes: true, attributeFilter: ['class'] });
   }
 
+  // Breadcrumb-ul de jos vine din extensie cu tot cu locul folderului în față
+  // („~/workspace/petclinic  ›  .github  ›  CODEOWNERS"). Prefixul, până la
+  // ultimul `/` dinaintea primului `›`, stă doar cât încape tot rândul; când nu,
+  // dispare întreg (nu ellipsis la mijloc de cale) și rămâne trail-ul scurt de
+  // dinainte, care la nevoie se taie mai departe cu ellipsis, ca până acum.
+  //
+  // VS Code rescrie conținutul label-ului de la zero la fiecare schimbare de
+  // text, deci împărțirea în span-uri se reface când span-ul nostru lipsește.
+  // Măsurarea: arăt prefixul, întreb dacă label-ul dă pe dinafară, îl ascund la
+  // nevoie — totul în același task, deci nimic nu apucă să se picteze.
+  const CRUMB_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.breadcrumb"]';
+  const CRUMB_SEP = '›';
+  let crumbWatched = null;
+
+  function splitCrumb(label) {
+    if (label.querySelector(':scope > .victor-crumb-rest')) return true;
+    const text = label.textContent || '';
+    const sep = text.indexOf(CRUMB_SEP);
+    const cut = sep < 0 ? -1 : text.lastIndexOf('/', sep) + 1;
+    if (cut <= 0) return false;
+    const prefix = document.createElement('span');
+    prefix.className = 'victor-crumb-prefix';
+    prefix.textContent = text.slice(0, cut);
+    const rest = document.createElement('span');
+    rest.className = 'victor-crumb-rest';
+    rest.textContent = text.slice(cut);
+    label.replaceChildren(prefix, rest);
+    return true;
+  }
+
+  function fitCrumb() {
+    const item = document.querySelector(CRUMB_ITEM);
+    const label = item && item.querySelector('a.statusbar-item-label');
+    if (!label || !splitCrumb(label)) return;
+    const prefix = label.querySelector(':scope > .victor-crumb-prefix');
+    const rest = label.querySelector(':scope > .victor-crumb-rest');
+    prefix.style.display = '';
+    const overflows = label.scrollWidth > label.clientWidth + 1 || rest.scrollWidth > rest.clientWidth + 1;
+    if (overflows) prefix.style.display = 'none';
+  }
+
+  function ensureCrumbFit() {
+    const item = document.querySelector(CRUMB_ITEM);
+    if (item && item !== crumbWatched) {
+      crumbWatched = item;
+      // Doar childList/characterData, nu atribute: `style.display` de mai sus
+      // n-are voie să trezească observatorul (buclă).
+      new MutationObserver(() => {
+        try { fitCrumb(); } catch { /* idem */ }
+      }).observe(item, { childList: true, characterData: true, subtree: true });
+      // Lățimea disponibilă se schimbă cu fereastra și cu intrările din dreapta.
+      const bar = item.closest('.part.statusbar');
+      const ro = new ResizeObserver(() => { try { fitCrumb(); } catch { /* idem */ } });
+      if (bar) ro.observe(bar);
+      const right = bar && bar.querySelector(':scope > .right-items');
+      if (right) ro.observe(right);
+    }
+    fitCrumb();
+  }
+
   let lastTitle = null;
 
   function tick() {
@@ -794,6 +854,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       ensureUpdateWithAi();
       installPanelSidebarSync();
       ensureScmLineCounts();
+      ensureCrumbFit();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();

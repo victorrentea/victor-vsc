@@ -177,6 +177,20 @@
   flex: 0 1 auto;
 }
 
+/* workbench.js împarte label-ul (flex) în locul folderului + trail; prefixul nu
+   se strânge — ori e întreg, ori lipsește — iar ellipsis-ul îl poartă trail-ul. */
+.statusbar-item[id="victorrentea.victor-vsc.breadcrumb"] .victor-crumb-prefix {
+  flex: none;
+  white-space: pre;
+}
+
+.statusbar-item[id="victorrentea.victor-vsc.breadcrumb"] .victor-crumb-rest {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
 /* ------------------------------- butonul de unelte, urcat în title bar */
 
 /* Intrarea din status bar rămâne sursa comenzii, dar se ascunde: butonul din

@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const puml = require('./puml');
 const openapi = require('./openapi');
 const renderToggle = require('./render-toggle');
@@ -20,6 +21,12 @@ const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
 
 const SEP = '  ›  ';
+
+// `/Users/victorrentea/workspace` → `~/workspace`, like a shell prompt.
+function tildify(p) {
+  const home = os.homedir();
+  return p === home || p.startsWith(home + path.sep) ? '~' + p.slice(home.length) : p;
+}
 
 // Setări pe care extensia NU le poate livra prin `configurationDefaults`.
 //
@@ -200,11 +207,18 @@ function activate(context) {
     const ed = vscode.window.activeTextEditor;
     if (!ed) { trail.hide(); return; }
 
+    // In front of the folder, where it lives (`~/workspace/`): the separators
+    // only start at the folder name, and vscode-patch/workbench.js drops
+    // everything up to the last `/` before the first one when the footer runs
+    // out of room — so a full bar shows exactly the short trail it showed before.
     const folder = vscode.workspace.getWorkspaceFolder(ed.document.uri);
-    const rel = folder
-      ? path.relative(path.dirname(folder.uri.fsPath), ed.document.uri.fsPath)
-      : ed.document.uri.fsPath;
-    trail.text = rel.split(path.sep).join(SEP);
+    if (folder) {
+      const parent = path.dirname(folder.uri.fsPath);
+      const rel = path.relative(parent, ed.document.uri.fsPath);
+      trail.text = tildify(parent).replace(/\/?$/, '/') + rel.split(path.sep).join(SEP);
+    } else {
+      trail.text = tildify(ed.document.uri.fsPath);
+    }
     trail.show();
   }
 
