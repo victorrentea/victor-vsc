@@ -313,29 +313,42 @@ if zoom_hits:
     open(bundle, 'w', encoding='utf8').write(src_js)
     print(f'   pas de zoom la terminal -> {zoom_step}px:', ', '.join(zoom_hits))
 
-# 3g. „Vic Presentation" în meniul View, lângă Appearance și Editor Layout.
+# 3g. Submeniul „Vic Presentation" în meniul View, lângă Appearance și Editor Layout:
+#     înăuntru modul însuși (bifat cât e pornit) și „Circle Bullets" (bifa e setarea
+#     `victorVsc.presentationCircleBullets`, citită de bullets.js).
 #     Extensiile nu pot contribui în meniul View (singurul `menuBar/*` deschis lor
-#     e `menuBar/home`, și acela propus), deci intrarea se adaugă direct în
-#     registry, imediat după submeniul Appearance. Comanda e a extensiei
-#     (extension.js), iar bifa urmează cheia de context pe care o setează ea.
+#     e `menuBar/home`, și acela propus), deci submeniul se adaugă direct în
+#     registry, imediat după submeniul Appearance. Comenzile sunt ale extensiei
+#     (presentation.js), iar bifele urmează cheia de context pe care o setează ea și
+#     `config.*`, pe care VS Code o ține singur pentru orice setare.
 #     Alias-urile minificate (`xe` = MenuRegistry, `P` = MenuId) le luăm din
 #     ancoră; pe cel al lui ContextKeyExpr îl ia cel mai folosit `precondition:X.and(`.
+#     O versiune veche a pasului punea „Vic Presentation" direct în View, ca intrare
+#     simplă — o scoatem înainte, ca să nu apară de două ori.
 VIC_ID = '"victor-vsc.togglePresentation"'
-if VIC_ID in src_js:
+VIC_SUB = '"victor-vsc.toggleCircleBullets"'
+if VIC_SUB in src_js:
     pass                       # deja aplicat
 else:
+    src_js = re.sub(r'[\w$]+\.appendMenuItem\([\w$]+\.MenubarViewMenu,\{group:"2_appearance",command:\{id:'
+                    + re.escape(VIC_ID) + r'[^{}]*\}[^{}]*\}\);', '', src_js)
     m = re.search(r'([\w$]+)\.appendMenuItem\(([\w$]+)\.MenubarViewMenu,\{group:"2_appearance",title:[^{}]*?'
                   r'submenu:\2\.MenubarAppearanceMenu[^{}]*\}\);', src_js)
     ctx = collections.Counter(re.findall(r'precondition:([\w$]+)\.and\(', src_js)).most_common(1)
     if not m or not ctx:
         print('   ATENȚIE: nu găsesc submeniul Appearance din View — „Vic Presentation" rămâne doar pe ⌘F12')
     else:
-        reg, ids = m.group(1), m.group(2)
-        item = (f'{reg}.appendMenuItem({ids}.MenubarViewMenu,{{group:"2_appearance",command:{{id:{VIC_ID},'
-                f'title:"Vic Presentation",toggled:{ctx[0][0]}.has("victorVsc.presentation")}},order:3}});')
+        reg, ids, ck = m.group(1), m.group(2), ctx[0][0]
+        sub = f'{ids}.for("victor-vsc.presentationMenu")'
+        item = (f'{reg}.appendMenuItem({ids}.MenubarViewMenu,{{group:"2_appearance",title:"Vic Presentation",'
+                f'submenu:{sub},order:3}});'
+                f'{reg}.appendMenuItem({sub},{{group:"1_mode",command:{{id:{VIC_ID},'
+                f'title:"Vic Presentation",toggled:{ck}.has("victorVsc.presentation")}},order:1}});'
+                f'{reg}.appendMenuItem({sub},{{group:"2_options",command:{{id:{VIC_SUB},'
+                f'title:"Circle Bullets",toggled:{ck}.equals("config.victorVsc.presentationCircleBullets",!0)}},order:1}});')
         src_js = src_js[:m.end()] + item + src_js[m.end():]
         open(bundle, 'w', encoding='utf8').write(src_js)
-        print('   meniul View: + Vic Presentation')
+        print('   meniul View: + Vic Presentation › (Vic Presentation, Circle Bullets)')
 
 # 3g-bis. „Centered Layout" scos din View › Appearance. E o acțiune din workbench,
 #     cu meniul declarat în registerAction2, deci nicio extensie nu-l poate ascunde

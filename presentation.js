@@ -279,6 +279,16 @@ function register(context) {
     vscode.workspace.onDidChangeTextDocument((e) => {
       const ed = vscode.window.activeTextEditor;
       if (on && ed && ed.document === e.document) paint(ed);
+    }),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (on && e.affectsConfiguration(`victorVsc.${bullets.SETTING}`)) bullets.paint(vscode.window.activeTextEditor);
+    }),
+    // View › Vic Presentation › Circle Bullets (vscode-patch/apply.sh, 3g). Bifa
+    // urmează `config.victorVsc.presentationCircleBullets`, deci e o setare
+    // globală, nu per fereastră: o preferință, nu o stare a prezentării.
+    vscode.commands.registerCommand('victor-vsc.toggleCircleBullets', () => {
+      const cfg = vscode.workspace.getConfiguration('victorVsc');
+      return cfg.update(bullets.SETTING, !cfg.get(bullets.SETTING, false), vscode.ConfigurationTarget.Global);
     }));
 
   // Semnalul pentru patch-ul din workbench (vscode-patch/workbench.css): cât e

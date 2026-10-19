@@ -1,7 +1,8 @@
 const vscode = require('vscode');
 
 // Doar în Vic Presentation: presentation.js cheamă `paint`/`clear` din paint/unpaint
-// ale lui, pe editorul activ.
+// ale lui, pe editorul activ. Și doar cu setarea `victorVsc.presentationCircleBullets`
+// (bifa View › Vic Presentation › Circle Bullets), oprită implicit.
 //
 // Marcajele din notițele de curs (fișiere text simplu): primul semn de pe rând
 // spune ce fel de punct e, desenat alb pe un cerc colorat: `+` verde (pro), `-`
@@ -37,12 +38,15 @@ function markerOf(text) {
   return [kind, m[1].length, m[2].length];
 }
 
+const SETTING = 'presentationCircleBullets';
+const enabled = () => vscode.workspace.getConfiguration('victorVsc').get(SETTING, false);
+
 let types = null;
 
 function paint(editor) {
   if (!editor || !types) return;
   const doc = editor.document;
-  const on = doc.languageId === 'plaintext';
+  const on = doc.languageId === 'plaintext' && enabled();
   const ranges = { plus: [], minus: [], info: [] };
   if (on) {
     for (let i = 0; i < doc.lineCount; i++) {
@@ -70,4 +74,4 @@ function register(context) {
   context.subscriptions.push(...Object.values(types));
 }
 
-module.exports = { register, paint, clear, markerOf };
+module.exports = { register, paint, clear, markerOf, SETTING };

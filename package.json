@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.193",
+  "version": "0.0.194",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -397,6 +397,11 @@
         "category": "victor-vsc"
       },
       {
+        "command": "victor-vsc.toggleCircleBullets",
+        "title": "Vic Presentation: Circle Bullets",
+        "category": "victor-vsc"
+      },
+      {
         "command": "victor-vsc.commitAndPush",
         "title": "Commit & Push",
         "category": "victor-vsc"
@@ -603,6 +608,11 @@
     "configuration": {
       "title": "Victor VSC",
       "properties": {
+        "victorVsc.presentationCircleBullets": {
+          "type": "boolean",
+          "default": false,
+          "description": "În Vic Presentation, desenează marcajul de la începutul rândului (+ - i = …) alb pe un cerc colorat. Bifa e și în View › Vic Presentation › Circle Bullets."
+        },
         "victorVsc.plantumlPath": {
           "type": "string",
           "default": "",
