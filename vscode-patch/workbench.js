@@ -512,11 +512,12 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (e.button === 1 && e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
   }, true);
 
-  // „Nu mai tasta acolo" — pulsul lent de pe marginea zonei de editare.
+  // „Nu mai tasta acolo" — chenarul portocaliu de pe marginea zonei de editare.
   //
   // Inginerul agentic nu mai scrie cod cu mâna: dictează în prompt, în terminal.
   // De-aia orice tastă apăsată ÎNTR-UN EDITOR (indiferent de limbaj: Java,
-  // Markdown, JSON, orice) aprinde un chenar care pulsează încet și se stinge
+  // Markdown, JSON, orice) aprinde un chenar fix (fără puls: vezi workbench.css,
+  // pulsul costa ~10% dintr-un nucleu cât tastai) care se stinge
   // singur la ~1.5s după ultima tastă. E doar un avertisment vizual — nu blochează
   // nimic, tastarea merge mai departe.
   //
@@ -552,12 +553,10 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // editor e plină de straturi cu z-index mare (grupuri, overlay-uri, sticky
   // scroll), care acopereau pseudo-elementul. Un nod real, ultimul copil și cu
   // z-index maxim, se vede peste tot ce e dedesubt.
-  // Două straturi, ca stingerea să iasă lină: cel de afară ține DOAR opacitatea
-  // de ansamblu (aprindere/stingere prin `transition`), cel dinăuntru desenează
-  // chenarul și pulsează. Dacă pulsul ar sta pe același element cu stingerea,
-  // oprirea animației i-ar smuci opacitatea înapoi la valoarea de bază și
-  // dispariția ar fi bruscă — așa pulsul continuă liniștit cât timp ansamblul
-  // se stinge.
+  // Două straturi: cel de afară ține DOAR opacitatea de ansamblu
+  // (aprindere/stingere prin `transition`), cel dinăuntru desenează chenarul.
+  // Rămase de când chenarul pulsa (stratul interior ținea pulsul viu cât se
+  // stingea ansamblul); acum e fix, dar împărțirea nu strică nimic.
   function typingOverlay(part) {
     let el = part.querySelector(':scope > .victor-typing-overlay');
     if (!el) {
@@ -571,9 +570,9 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     return el;
   }
 
-  // Pasul 1: scoatem `victor-typing` și punem `victor-typing-out`, care doar
-  // duce opacitatea spre 0 (pulsul merge mai departe). Pasul 2, după fade:
-  // curățăm și clasa de stingere, ca animația să se oprească de tot.
+  // Pasul 1: scoatem `victor-typing` și punem `victor-typing-out`, iar
+  // opacitatea coboară spre 0 prin `transition`. Pasul 2, după fade: curățăm și
+  // clasa de stingere.
   function stopTypingWarning() {
     typingTimer = null;
     const part = typingPart;

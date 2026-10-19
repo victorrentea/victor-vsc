@@ -297,8 +297,11 @@
 /* „Nu mai tasta acolo" — vezi blocul cu același nume din workbench.js.
    Două straturi: `.victor-typing-overlay` ține doar opacitatea de ansamblu
    (aprindere scurtă, stingere lungă, prin `transition`), iar `.victor-typing-ring`
-   desenează chenarul și pulsează. Separarea e ce face stingerea blândă: dacă
-   pulsul ar sta pe același element, oprirea animației ar smuci opacitatea.
+   desenează chenarul — FIX, fără puls. Pulsul (animație `infinite`) cerea un
+   cadru nou la fiecare refresh cât timp tastai: măsurat pe 19 oct 2026 (30 s de
+   taste reale, 2 rulări per variantă), renderer-ul ferestrei 44–51% dintr-un
+   nucleu cu puls, 35–42% cu chenar fix, 34% fără chenar; procesul GPU 7–8% cu
+   puls, 4% fără. Nu-l pune la loc.
    Nodurile le pune JS ca ultimi copii ai părții de editor (un `::after` rămânea
    sub straturile cu z-index mare ale grupurilor de editoare).
    `pointer-events: none` ca să nu fure niciun click. */
@@ -316,23 +319,11 @@
   transition: opacity 0.25s ease-in;   /* aprinderea e promptă, nu leneșă */
 }
 
-/* Clasa de stingere: nu schimbă ținta (0 din regula de bază), doar ține pulsul
-   viu cât timp ansamblul se retrage. */
 .monaco-workbench .part.editor > .victor-typing-overlay > .victor-typing-ring {
   position: absolute;
   inset: 0;
-  opacity: 0.5;
+  opacity: 0.6;
   box-shadow: inset 0 0 0 3px #e0a33c, inset 0 0 14px 3px rgba(224, 163, 60, 0.35);
-}
-
-.monaco-workbench .part.editor.victor-typing > .victor-typing-overlay > .victor-typing-ring,
-.monaco-workbench .part.editor.victor-typing-out > .victor-typing-overlay > .victor-typing-ring {
-  animation: victor-typing-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes victor-typing-pulse {
-  0%, 100% { opacity: 0.25; }
-  50%      { opacity: 0.9; }
 }
 
 /* ------------------- liniile schimbate, în capul grupului din Source Control */
