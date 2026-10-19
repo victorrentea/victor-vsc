@@ -19,6 +19,7 @@ const viewLog = require('./view-log');
 const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
+const windowCycle = require('./window-cycle');
 
 const SEP = '  ›  ';
 
@@ -364,6 +365,8 @@ function activate(context) {
   reviewStatus.register(context);
   quickDefinition.register(context);
   commentClose.register(context);
+  // ⌃⌥Tab / ⌃⌥⇧Tab: fereastra VS Code următoare / precedentă, ca ⌘` / ⌘⇧`.
+  windowCycle.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur

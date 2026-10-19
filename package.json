@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.192",
+  "version": "0.0.193",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -407,6 +407,16 @@
         "category": "victor-vsc"
       },
       {
+        "command": "victor-vsc.nextWindow",
+        "title": "Next Window",
+        "category": "victor-vsc"
+      },
+      {
+        "command": "victor-vsc.previousWindow",
+        "title": "Previous Window",
+        "category": "victor-vsc"
+      },
+      {
         "command": "victor-vsc.copyGitHubLink",
         "title": "Copy GitHub Link",
         "category": "victor-vsc"
@@ -493,6 +503,14 @@
       {
         "command": "victor-vsc.noop",
         "key": "cmd+alt+right"
+      },
+      {
+        "command": "victor-vsc.nextWindow",
+        "key": "ctrl+alt+tab"
+      },
+      {
+        "command": "victor-vsc.previousWindow",
+        "key": "ctrl+alt+shift+tab"
       },
       {
         "command": "editor.action.toggleWordWrap",
