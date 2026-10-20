@@ -6,9 +6,9 @@ const vscode = require('vscode');
 // galben (vscode-patch/workbench.css, `victor-fold-blink`).
 //
 // Valul pornește la fiecare maxim al clipitului: clipitul e 1.6s `alternate`, deci
-// săgeata e plină la 0, 3.2s, 6.4s…, iar valul are aceeași perioadă și pornește în
-// același moment — amândouă încep când cursorul ajunge pe rând (sau rândul se
-// pliază). Fiecare caracter își animă culoarea alb → galben → alb (keyframes
+// săgeata e plină la 0, 3.2s, 6.4s…, iar valul are aceeași perioadă — amândouă
+// încep când cursorul ajunge pe rând (sau rândul se pliază). Valul sare peste
+// maximul de la 0: rândul pe care tocmai ai pus cursorul e întâi alb de tot. Fiecare caracter își animă culoarea alb → galben → alb (keyframes
 // `victor-fold-wave` din workbench.css), cu o întârziere proporțională cu coloana.
 // O decorație pe caracter, câte un tip pe coloană, fiindcă întârzierea e în CSS-ul
 // tipului. Nu `background-clip: text` cu un gradient care alunecă: ăla cere text
@@ -49,8 +49,11 @@ function charsOf(text) {
 let types = null;
 let last = null;                // ce e desenat acum: {editor, line, text, used}
 
+// Primul val vine abia la al doilea maxim al clipitului: cât cursorul tocmai a ajuns
+// pe rând, rândul e alb de tot (fill-mode `both` ține 0%-ul, alb, cât durează
+// întârzierea). Primul caracter atinge galbenul exact la maxim.
 function delayOf(col) {
-  return (col / CHARS_PER_S - PEAK_S).toFixed(3);
+  return (PERIOD_S - PEAK_S + col / CHARS_PER_S).toFixed(3);
 }
 
 function clear() {
