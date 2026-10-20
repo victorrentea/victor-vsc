@@ -581,11 +581,29 @@
   -webkit-text-stroke: 0.9px currentColor;
 }
 
+/* Pe rândul cursorului, săgeata unui bloc pliat clipește încet în galben: „aici e
+   ceva de deschis". Desfăcut, devine `v` și clasa `-collapsed` dispare, deci se
+   oprește singură. Rândul cursorului îl știm din numărul lui (`active-line-number`). */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .margin-view-overlays > div:has(> .active-line-number) > .cldr:is(.codicon-folding-collapsed, .codicon-folding-manual-collapsed) {
+  color: #ffd23f !important; /* VS Code pune culoarea săgeților cu !important */
+  animation: victor-fold-blink 1.6s ease-in-out infinite alternate;
+}
+@keyframes victor-fold-blink {
+  to { opacity: 0.2; }
+}
+
 /* Fără `⋯`-ul de după un rând pliat: săgeata de pliere stă doar în gutter. Un al
    doilea marcaj lângă text (un `>` aici, plus un `v` pe antetele desfăcute) ducea la
-   bug-uri și dubla ce arată deja gutter-ul. */
-.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded {
-  display: none;
+   bug-uri și dubla ce arată deja gutter-ul.
+
+   Doar glifa dispare, nu span-ul: cu `display: none` pe span, cursorul de la capătul
+   unui rând pliat nu se mai vedea. VS Code măsoară poziția de după text pe span-ul
+   ăsta, iar un element nerandat n-are dreptunghiuri — măsurătoarea ieșea goală și
+   cursorul primea `display: none`. Gol și fără margini, span-ul are lățime 0 exact
+   la capătul textului. */
+.monaco-workbench:has(.statusbar-item[id="victorrentea.victor-vsc.presentation"]) .monaco-editor .inline-folded::after {
+  content: '';
+  margin: 0;
 }
 
 /* ------------------------------------------ Quick Definition (⌘-click, quick-definition.js) */
