@@ -81,3 +81,11 @@ test('with a selection, the unselected bits of a line stay grey', () => {
   assert.deepStrictEqual(subtract(0, 20, [[0, 20]]), []);
   assert.deepStrictEqual(subtract(0, 20, [[2, 5], [10, 30]]), [[0, 2], [5, 10]]);
 });
+
+test('a wheel click steps to the next non-blank line, over the gap to the next chapter', () => {
+  const { nextStop } = require('../presentation');
+  assert.strictEqual(nextStop(2, doc.length, textAt), 3);   // regular line: the one below
+  assert.strictEqual(nextStop(5, doc.length, textAt), 7);   // last of its section: next chapter
+  assert.strictEqual(nextStop(1, doc.length, textAt), 2);   // from a blank line too
+  assert.strictEqual(nextStop(8, doc.length, textAt), -1);  // end of file: stay
+});

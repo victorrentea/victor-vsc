@@ -426,7 +426,8 @@
    estompată, se aprinde doar la hover. Marginea de 78px e cea a pastilei de
    branch (semafoarele nu-și rezervă loc), care vine după ele și se lipește. */
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldall"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.advance"] {
   display: none;
 }
 

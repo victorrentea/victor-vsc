@@ -138,6 +138,14 @@ function whiteOnBlank([start, end], column, textAt, tabSize = 4) {
   return parentsOf(column, end, start, textAt, tabSize);
 }
 
+/** Unde duce un click pe rotiță din linia `line`: următoarea linie ne-goală — din
+ *  ultima linie a unei secțiuni sare peste gol direct la capitolul următor — sau
+ *  -1 la capătul fișierului. Pe un antet pliat e chiar primul lui copil. */
+function nextStop(line, lineCount, textAt) {
+  for (let i = line + 1; i < lineCount; i++) if (!isBlank(textAt(i))) return i;
+  return -1;
+}
+
 /** Capitolul secțiunii [start, end]: cel mai de sus părinte al ultimei linii. */
 function chapterOf([start, end], textAt, tabSize = 4) {
   return lineWithParents(end, start, textAt, tabSize)[0];
@@ -265,6 +273,28 @@ function unpaint() {
     } catch { /* editorul s-a închis */ }
   }
 }
+
+// Click pe rotiță oriunde în fereastră (vscode-patch/workbench.js) = un pas înainte
+// prin notițe, ca un clicker: antetul pliat de sub cursor se desface, apoi cursorul
+// coboară pe următoarea linie ne-goală. Pliat = deducție din `visibleRanges`, ca în
+// fold-wave.js; dacă deducția ratează (antetul e ultima linie din viewport), mutarea
+// cursorului pe o linie ascunsă desface oricum blocul — așa face VS Code.
+async function advance() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) return;
+  const doc = editor.document;
+  const line = editor.selection.active.line;
+  const ranges = editor.visibleRanges.map((r) => [r.start.line, r.end.line]);
+  if (foldWave.isFoldedAt(ranges, line)) {
+    await vscode.commands.executeCommand('editor.unfold', { levels: 1, selectionLines: [line] });
+  }
+  const next = nextStop(line, doc.lineCount, (i) => doc.lineAt(i).text);
+  if (next < 0) return;
+  const at = new vscode.Position(next, doc.lineAt(next).firstNonWhitespaceCharacterIndex);
+  editor.selection = new vscode.Selection(at, at);
+  editor.revealRange(new vscode.Range(at, at));
+}
+
 const MEMORY_CONFIG = 'victor-vsc.memoryConfig';
 
 // Citit și de view-log.js: în prezentare, fereastra se vede pe proiector chiar nefocusată.
@@ -326,8 +356,16 @@ function register(context) {
     return item;
   });
 
+  // Click pe rotiță: tot o intrare ascunsă, apăsată de workbench.js. Există doar
+  // cât e pornit modul — după ea știe workbench.js că rotița nu mai e ⌘-click.
+  const next = vscode.window.createStatusBarItem('advance', vscode.StatusBarAlignment.Right, -2000004);
+  next.name = 'Next Line';
+  next.text = 'Next Line';
+  next.command = 'victor-vsc.presentationAdvance';
+  context.subscriptions.push(next, vscode.commands.registerCommand('victor-vsc.presentationAdvance', advance));
+
   const sync = () => {
-    for (const item of [marker, ...folds]) if (on) item.show(); else item.hide();
+    for (const item of [marker, ...folds, next]) if (on) item.show(); else item.hide();
     return vscode.commands.executeCommand('setContext', STATE, on);
   };
   sync();
@@ -364,4 +402,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, isPresenting, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
+module.exports = { register, isPresenting, nextStop, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };

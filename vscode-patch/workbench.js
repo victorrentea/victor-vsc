@@ -498,10 +498,22 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // În Vic Presentation rotița e clicker-ul: oriunde în fereastră, apasă intrarea
+  // ascunsă `advance` din presentation.js (desface antetul pliat / următoarea
+  // linie / capitolul următor). Intrarea există doar cât e pornit modul.
+  const ADVANCE_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.advance"]';
+
   // Capture, ca să ajungem înaintea editorului, care altfel ar trata butonul
   // din mijloc ca pe o selecție/paste (X11) sau l-ar înghiți în tăcere.
   document.addEventListener('mousedown', (e) => {
     if (e.button !== 1) return;
+    const advance = document.querySelector(ADVANCE_ITEM);
+    if (advance) {
+      e.preventDefault();
+      e.stopPropagation();
+      (advance.querySelector('a.statusbar-item-label') || advance).click();
+      return;
+    }
     if (!e.target?.closest?.('.monaco-editor .view-lines')) return;
     e.preventDefault();
     e.stopPropagation();
@@ -509,7 +521,8 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   }, true);
 
   document.addEventListener('auxclick', (e) => {
-    if (e.button === 1 && e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
+    if (e.button !== 1) return;
+    if (document.querySelector(ADVANCE_ITEM) || e.target?.closest?.('.monaco-editor .view-lines')) e.preventDefault();
   }, true);
 
   // „Nu mai tasta acolo" — chenarul portocaliu de pe marginea zonei de editare.
