@@ -16,8 +16,8 @@ const foldWave = require('./fold-wave');
 // `vscode-patch/apply.sh` (pasul 3h) înregistrează în workbench comanda
 // `victor-vsc.memoryConfig`, care face doar `updateValue(cheie, valoare, MEMORY)`.
 // Versiunea veche scria în setările globale și modul se aprindea în toate
-// ferestrele deodată. Bonus: un Reload Window iese singur din mod, fiindcă
-// stratul MEMORY nu supraviețuiește reîncărcării.
+// ferestrele deodată. Stratul MEMORY nu supraviețuiește unui Reload Window;
+// modul revine după restart din workspaceState (vezi `RESUME_KEY`).
 //
 // Title bar-ul rămâne: pe macOS se poate ascunde doar în full screen, iar full
 // screen-ul mută fereastra pe un Space propriu — la ieșire nu mai stătea pe
@@ -432,21 +432,21 @@ function register(context) {
   // dar lasă setările de prezentare aplicate: taburi și activity bar ascunse, fără
   // fundal, iar ⌘F12 *pornea* modul în loc să-l oprească. Deci la activare
   // aliniem fereastra la `on = false`; după un Reload Window stratul e gol oricum.
-  vscode.commands.getCommands(true).then((ids) => {
-    if (ids.includes(MEMORY_CONFIG)) {
-      vscode.commands.executeCommand(MEMORY_CONFIG,
-        Object.fromEntries(Object.keys(SETTINGS).map((k) => [k, null])));
-    }
-  });
+  //
+  // Apoi, dacă fereastra era în prezentare chiar înainte de restart (Reload Window,
+  // ⌘Q + relansare, o versiune nouă a extensiei), modul revine singur: un restart
+  // în mijlocul unei prezentări nu are voie să-l scoată pe Victor din ea. Starea
+  // stă în workspaceState (per fereastră), cu un puls pe minut cât e pornit, și
+  // contează doar dacă pulsul e proaspăt — o fereastră închisă aseară în
+  // prezentare nu se redeschide așa a doua zi.
+  const RESUME_KEY = 'victorVsc.presentationAlive';
+  const RESUME_WINDOW_MS = 10 * 60 * 1000;
+  const remember = () => context.workspaceState.update(RESUME_KEY, on ? Date.now() : undefined);
+  const pulse = setInterval(() => { if (on) remember(); }, 60 * 1000);
+  context.subscriptions.push({ dispose: () => clearInterval(pulse) });
 
-  context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
-    if (!(await vscode.commands.getCommands(true)).includes(MEMORY_CONFIG)) {
-      // Bundle-ul workbench-ului se servește din cache la Reload Window, deci
-      // după `apply.sh` comanda apare abia după ⌘Q + relansare.
-      vscode.window.showErrorMessage('Vic Presentation: comanda din patch nu e încărcată — repornește VS Code (⌘Q + relansare, Reload Window nu ajunge); dacă tot nu merge, rulează vscode-patch/apply.sh.');
-      return;
-    }
-    on = !on;
+  const setOn = async (want) => {
+    on = want;
     presenting = on;
     await vscode.commands.executeCommand(MEMORY_CONFIG,
       Object.fromEntries(Object.entries(SETTINGS).map(([k, v]) => [k, on ? v : null])));
@@ -456,7 +456,34 @@ function register(context) {
     if (!on) await vscode.commands.executeCommand('workbench.action.exitZenMode');
     if (!on) while (zoomSteps) await zoom(-Math.sign(zoomSteps))();
     if (on) paint(vscode.window.activeTextEditor); else unpaint();
+    await remember();
     await sync();
+  };
+
+  // Editorii se restaurează după activare; zoom-ul de la intrare are nevoie de fișier.
+  const editorReady = () => vscode.window.activeTextEditor ? Promise.resolve() : new Promise((resolve) => {
+    const sub = vscode.window.onDidChangeActiveTextEditor((ed) => { if (ed) { sub.dispose(); resolve(); } });
+    setTimeout(() => { sub.dispose(); resolve(); }, 5000);
+  });
+
+  vscode.commands.getCommands(true).then(async (ids) => {
+    if (!ids.includes(MEMORY_CONFIG)) return;
+    await vscode.commands.executeCommand(MEMORY_CONFIG,
+      Object.fromEntries(Object.keys(SETTINGS).map((k) => [k, null])));
+    const alive = context.workspaceState.get(RESUME_KEY);
+    if (!alive || Date.now() - alive > RESUME_WINDOW_MS) return;
+    await editorReady();
+    if (!on) await setOn(true);
+  });
+
+  context.subscriptions.push(vscode.commands.registerCommand('victor-vsc.togglePresentation', async () => {
+    if (!(await vscode.commands.getCommands(true)).includes(MEMORY_CONFIG)) {
+      // Bundle-ul workbench-ului se servește din cache la Reload Window, deci
+      // după `apply.sh` comanda apare abia după ⌘Q + relansare.
+      vscode.window.showErrorMessage('Vic Presentation: comanda din patch nu e încărcată — repornește VS Code (⌘Q + relansare, Reload Window nu ajunge); dacă tot nu merge, rulează vscode-patch/apply.sh.');
+      return;
+    }
+    await setOn(!on);
   }));
 }
 
