@@ -507,11 +507,10 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
   // din mijloc ca pe o selecție/paste (X11) sau l-ar înghiți în tăcere.
   document.addEventListener('mousedown', (e) => {
     if (e.button !== 1) return;
-    const advance = document.querySelector(ADVANCE_ITEM);
-    if (advance) {
+    if (document.querySelector(ADVANCE_ITEM)) {
       e.preventDefault();
       e.stopPropagation();
-      (advance.querySelector('a.statusbar-item-label') || advance).click();
+      pressStatusItem('advance');
       return;
     }
     if (!e.target?.closest?.('.monaco-editor .view-lines')) return;
@@ -850,6 +849,98 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     fitCrumb();
   }
 
+  // Zoom la intrarea în Vic Presentation: ca la ⌘-scroll, pas cu pas, cât timp cea
+  // mai lungă linie a fișierului încape pe lățimea editorului. Liniile vin de la
+  // presentation.js în textul intrării ascunse `fit` (există doar cât e pornit
+  // modul); pașii sunt intrările `zoomin` / `zoomout`, numărate acolo ca ieșirea
+  // să-i desfacă. Doar mărește: un fișier care deja nu încape rămâne cum e.
+  // Liniile se măsoară într-un span cu fontul editorului, nu din DOM-ul lui:
+  // editorul desenează doar ce e în viewport, iar o linie pliată nu e desenată deloc.
+  const FIT_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.fit"]';
+  let fitDone = null;       // payload-ul tratat deja (poartă momentul intrării)
+  let fitWatched = null;
+
+  function pressStatusItem(id) {
+    const item = document.querySelector(`.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.${id}"]`);
+    if (item) (item.querySelector('a.statusbar-item-label') || item).click();
+    return !!item;
+  }
+
+  /** Mărimea fontului, lățimea celei mai lungi linii și cât loc e în editor, în px. */
+  function measureFit(editor, lines) {
+    const view = editor.querySelector('.view-lines');
+    const scrollable = editor.querySelector('.editor-scrollable');
+    if (!view || !scrollable) return null;
+    const cs = getComputedStyle(view);
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:fixed;left:-100000px;top:0;white-space:pre;visibility:hidden';
+    for (const p of ['fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'fontFeatureSettings', 'fontVariationSettings']) probe.style[p] = cs[p];
+    document.body.appendChild(probe);
+    let widest = 0;
+    for (const text of lines) {
+      probe.textContent = text;
+      widest = Math.max(widest, probe.getBoundingClientRect().width);
+    }
+    probe.remove();
+    const bar = editor.querySelector('.scrollbar.vertical');
+    // Câțiva px pentru cursorul de la capătul liniei.
+    return { size: parseFloat(cs.fontSize), widest, room: scrollable.clientWidth - (bar ? bar.offsetWidth : 0) - 4 };
+  }
+
+  /** Așteaptă până se schimbă fontul editorului (un pas de zoom), max 1s. */
+  function fontChange(editor, from) {
+    const t0 = Date.now();
+    return new Promise((resolve) => {
+      const poll = () => {
+        const view = editor.querySelector('.view-lines');
+        const size = view ? parseFloat(getComputedStyle(view).fontSize) : from;
+        if (size !== from || Date.now() - t0 > 1000) resolve(size); else setTimeout(poll, 16);
+      };
+      poll();
+    });
+  }
+
+  async function fitZoom(lines) {
+    // Intrarea ascunde taburile și barele: lățimea editorului se schimbă abia după.
+    await new Promise((r) => setTimeout(r, 300));
+    const editor = document.querySelector('.part.editor .monaco-editor.focused')
+                || document.querySelector('.part.editor .monaco-editor');
+    if (!editor) return;
+    let m = measureFit(editor, lines);
+    if (!m || m.widest > m.room) return;
+    for (let i = 0; i < 25; i++) {
+      if (!pressStatusItem('zoomin')) return;           // ieșit din prezentare între timp
+      const size = await fontChange(editor, m.size);
+      if (size === m.size) return;                      // plafonul zoom-ului
+      m = measureFit(editor, lines);
+      if (!m) return;
+      if (m.widest > m.room) { pressStatusItem('zoomout'); return; }
+    }
+  }
+
+  function ensurePresentationFit() {
+    const item = document.querySelector(FIT_ITEM);
+    if (!item) { fitDone = null; return; }
+    const text = item.textContent;
+    if (!text || text === fitDone) return;
+    fitDone = text;
+    let lines;
+    try { lines = JSON.parse(decodeURIComponent(text)).lines; } catch { return; }
+    if (lines && lines.length) fitZoom(lines).catch(() => {});
+  }
+
+  // Tick-ul de 2s ar întârzia zoom-ul: intrarea apare ca un copil nou în bară.
+  function watchPresentationFit() {
+    const right = document.querySelector('.part.statusbar .right-items');
+    if (right && right !== fitWatched) {
+      fitWatched = right;
+      new MutationObserver(() => {
+        try { ensurePresentationFit(); } catch { /* idem */ }
+      }).observe(right, { childList: true });
+    }
+    ensurePresentationFit();
+  }
+
   let lastTitle = null;
 
   function tick() {
@@ -867,6 +958,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       installPanelSidebarSync();
       ensureScmLineCounts();
       ensureCrumbFit();
+      watchPresentationFit();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;
       ensureBranchPill();

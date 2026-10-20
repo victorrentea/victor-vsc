@@ -89,3 +89,10 @@ test('a wheel click steps to the next non-blank line, over the gap to the next c
   assert.strictEqual(nextStop(1, doc.length, textAt), 2);   // from a blank line too
   assert.strictEqual(nextStop(8, doc.length, textAt), -1);  // end of file: stay
 });
+
+test('entering presentation measures the longest lines, tabs expanded to the next stop', () => {
+  const { longestLines, expandTabs } = require('../presentation');
+  assert.strictEqual(expandTabs('\t- x', 4), '    - x');
+  assert.strictEqual(expandTabs('ab\tc', 4), 'ab  c');
+  assert.deepStrictEqual(longestLines(doc.length, textAt, 4, 2), ['    => use Copilot CLI', '    - Context window']);
+});

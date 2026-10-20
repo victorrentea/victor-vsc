@@ -427,7 +427,10 @@
    branch (semafoarele nu-și rezervă loc), care vine după ele și se lipește. */
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.foldall"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.unfoldall"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.advance"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.advance"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.fit"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomin"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomout"] {
   display: none;
 }
 

@@ -295,6 +295,38 @@ async function advance() {
   editor.revealRange(new vscode.Range(at, at));
 }
 
+// La intrare, fișierul activ se mărește ca la ⌘-scroll până cât încape pe lățime
+// cea mai lungă linie a lui. Lățimea editorului și a textului le știe doar
+// workbench-ul, deci măsurarea și pașii îi face vscode-patch/workbench.js: de aici
+// pleacă cele mai lungi linii (textul intrării ascunse `fit`), iar el apasă
+// intrările `zoomin` / `zoomout` — exact `editor.action.fontZoomIn/Out`, zoom-ul
+// de la ⌘-scroll (+10% din font pe pas, pe toată fereastra, nescris pe disc).
+// Pașii se numără, ca ieșirea să-i desfacă și să rămână zoom-ul dinainte.
+const FIT_LINES = 5;            // emoji-urile fac lățimea în pixeli ≠ numărul de caractere
+
+/** Textul cu tab-urile desfăcute în spații, până la următorul tab stop. */
+function expandTabs(text, tabSize = 4) {
+  let out = '';
+  for (const ch of text) out += ch === '\t' ? ' '.repeat(tabSize - (out.length % tabSize)) : ch;
+  return out;
+}
+
+/** Cele mai lungi `n` linii ne-goale, cu tab-urile desfăcute: pe ele le măsoară workbench.js. */
+function longestLines(lineCount, textAt, tabSize = 4, n = FIT_LINES) {
+  const lines = [];
+  for (let i = 0; i < lineCount; i++) {
+    const text = expandTabs(textAt(i), tabSize);
+    if (!isBlank(text)) lines.push(text);
+  }
+  return lines.sort((a, b) => b.length - a.length).slice(0, n);
+}
+
+let zoomSteps = 0;
+const zoom = (dir) => async () => {
+  await vscode.commands.executeCommand(dir > 0 ? 'editor.action.fontZoomIn' : 'editor.action.fontZoomOut');
+  zoomSteps += dir;
+};
+
 const MEMORY_CONFIG = 'victor-vsc.memoryConfig';
 
 // Citit și de view-log.js: în prezentare, fereastra se vede pe proiector chiar nefocusată.
@@ -364,8 +396,28 @@ function register(context) {
   next.command = 'victor-vsc.presentationAdvance';
   context.subscriptions.push(next, vscode.commands.registerCommand('victor-vsc.presentationAdvance', advance));
 
+  // Zoom-ul de la intrare (vezi `longestLines`): textul e payload-ul pentru
+  // workbench.js, codat ca un `$(` din notițe să nu devină iconiță.
+  const fit = vscode.window.createStatusBarItem('fit', vscode.StatusBarAlignment.Right, -2000005);
+  fit.name = 'Presentation Fit';
+  const zooms = [['zoomin', 1], ['zoomout', -1]].map(([id, dir]) => {
+    const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000006);
+    item.name = item.text = id;
+    item.command = `victor-vsc.presentation.${id}`;
+    context.subscriptions.push(item, vscode.commands.registerCommand(item.command, zoom(dir)));
+    return item;
+  });
+  context.subscriptions.push(fit);
+
   const sync = () => {
-    for (const item of [marker, ...folds, next]) if (on) item.show(); else item.hide();
+    for (const item of [marker, ...folds, next, ...zooms]) if (on) item.show(); else item.hide();
+    const ed = vscode.window.activeTextEditor;
+    if (on && ed) {
+      const tabSize = typeof ed.options.tabSize === 'number' ? ed.options.tabSize : 4;
+      const lines = longestLines(ed.document.lineCount, (i) => ed.document.lineAt(i).text, tabSize);
+      fit.text = encodeURIComponent(JSON.stringify({ at: Date.now(), lines }));
+      fit.show();
+    } else fit.hide();
     return vscode.commands.executeCommand('setContext', STATE, on);
   };
   sync();
@@ -397,9 +449,10 @@ function register(context) {
     // „blocată" în prezentare — Zen ascunde și el taburile și activity bar-ul.
     // Comanda nu face nimic fără Zen.
     if (!on) await vscode.commands.executeCommand('workbench.action.exitZenMode');
+    if (!on) while (zoomSteps) await zoom(-Math.sign(zoomSteps))();
     if (on) paint(vscode.window.activeTextEditor); else unpaint();
     await sync();
   }));
 }
 
-module.exports = { register, isPresenting, nextStop, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
+module.exports = { register, isPresenting, nextStop, longestLines, expandTabs, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
