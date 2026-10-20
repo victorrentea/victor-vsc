@@ -60,6 +60,9 @@ const SETTINGS = {
   // decorațiile noastre: titlul unui bloc estompat apărea acolo la luminozitate
   // plină. Blocul cursorului își are oricum titlul aprins.
   'editor.stickyScroll.enabled': false,
+  // Fără becul / steluța din gutter cu meniul „Rewrite › Modify / Review" (code
+  // actions, inclusiv cele AI de la Copilot), care sărea la orice selecție.
+  'editor.lightbulb.enabled': 'off',
 };
 
 // Secțiunea = liniile ne-goale lipite de cea a cursorului (până la prima linie
