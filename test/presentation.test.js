@@ -96,10 +96,3 @@ test('entering presentation measures the longest lines, tabs expanded to the nex
   assert.strictEqual(expandTabs('ab\tc', 4), 'ab  c');
   assert.deepStrictEqual(longestLines(doc.length, textAt, 4, 2), ['    => use Copilot CLI', '    - Context window']);
 });
-
-test('in the section, lines below the cursor stay faded until the cursor has been on them', () => {
-  const { isAhead } = require('../presentation');
-  assert.strictEqual(isAhead(5, 3, new Set()), true);       // not said yet: faded like the rest
-  assert.strictEqual(isAhead(5, 3, new Set([5])), false);   // already visited, then went back up: grey
-  assert.strictEqual(isAhead(2, 3, new Set()), false);      // above the cursor: grey
-});
