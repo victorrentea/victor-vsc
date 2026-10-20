@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const bullets = require('./bullets');
+const foldWave = require('./fold-wave');
 
 // „Vic Presentation" (⌘F12, și în meniul View): doar codul și numerele de linie
 // pe ecran — fără taburi, activity bar și status bar. Doar în fereastra în care
@@ -206,6 +207,8 @@ function paintSelection(editor, sels, textAt, tabSize) {
 function paint(editor) {
   if (!editor) return;
   bullets.paint(editor);
+  // Rândul cu valul galben își ia culoarea din animație, deci nu primește albul de mai jos.
+  const waved = foldWave.paint(editor);
   const doc = editor.document;
   const textAt = (i) => doc.lineAt(i).text;
   const tabSize = typeof editor.options.tabSize === 'number' ? editor.options.tabSize : 4;
@@ -242,6 +245,7 @@ function paint(editor) {
   if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
   const dim = [];
   for (let l = start; l <= end; l++) if (!bright.has(l)) dim.push(lineRange(doc, l, l));
+  bright.delete(waved);
   editor.setDecorations(cursorDeco, [...bright].map((l) => lineRange(doc, l, l)));
   editor.setDecorations(dimDeco, dim);
   editor.setDecorations(fadeDeco, fade);
@@ -249,6 +253,7 @@ function paint(editor) {
 
 function unpaint() {
   bullets.clear();
+  foldWave.clear();
   for (const editor of vscode.window.visibleTextEditors) {
     try {
       editor.setDecorations(cursorDeco, []);
@@ -272,9 +277,13 @@ function register(context) {
   fadeDeco = vscode.window.createTextEditorDecorationType({ opacity: FADE });
   dimDeco = vscode.window.createTextEditorDecorationType({ opacity: DIM });
   bullets.register(context);
+  foldWave.register(context);
   context.subscriptions.push(cursorDeco, fadeDeco, dimDeco,
     vscode.window.onDidChangeTextEditorSelection((e) => { if (on) paint(e.textEditor); }),
     vscode.window.onDidChangeActiveTextEditor((ed) => { if (on) paint(ed); }),
+    // Plierea și desfacerea schimbă doar intervalele vizibile — de aici știe valul
+    // galben (fold-wave.js) că rândul cursorului s-a pliat.
+    vscode.window.onDidChangeTextEditorVisibleRanges((e) => { if (on) paint(e.textEditor); }),
     // Un rând gol scris sau șters mută granițele secțiunii.
     vscode.workspace.onDidChangeTextDocument((e) => {
       const ed = vscode.window.activeTextEditor;

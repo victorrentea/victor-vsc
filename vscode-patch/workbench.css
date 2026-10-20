@@ -591,6 +591,13 @@
 @keyframes victor-fold-blink {
   to { opacity: 0.2; }
 }
+/* Valul galben care trece prin textul aceluiași rând, pornit la fiecare maxim al
+   clipitului de mai sus (fold-wave.js): fiecare caracter trece alb → galben → alb,
+   cu o întârziere după coloană, pe aceeași perioadă de 3.2s. */
+@keyframes victor-fold-wave {
+  0%, 30%, 100% { color: #ffffff; }
+  12% { color: #ffd23f; }
+}
 
 /* Fără `⋯`-ul de după un rând pliat: săgeata de pliere stă doar în gutter. Un al
    doilea marcaj lângă text (un `>` aici, plus un `v` pe antetele desfăcute) ducea la
