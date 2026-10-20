@@ -78,7 +78,10 @@ const SETTINGS = {
 // frate, deci nu. Pe coloana 0 rămâne alb capitolul (linia de sus din lanțul
 // de părinți al ultimei linii), ca sala să nu piardă sub ce titlu e. Restul liniilor din
 // secțiune sunt un pic mai închise decât textul normal (70%): trei trepte —
-// alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest.
+// alb pe ce spui acum, gri pe blocul curent, abia vizibil în rest. Gri sunt
+// doar liniile deja spuse: deasupra cursorului sau pe care a stat cursorul de
+// la pornirea modului; cele de sub el, încă nevizitate, sunt estompate ca restul
+// fișierului — sala nu citește înainte.
 const FADE = '0.3';
 const DIM = '0.7';
 const CURSOR_COLOR = '#ffffff';
@@ -146,6 +149,11 @@ function nextStop(line, lineCount, textAt) {
   return -1;
 }
 
+/** Linia `line` din secțiunea cursorului e încă nespusă: sub cursor și nevizitată. */
+function isAhead(line, cursor, visited) {
+  return line > cursor && !visited.has(line);
+}
+
 /** Capitolul secțiunii [start, end]: cel mai de sus părinte al ultimei linii. */
 function chapterOf([start, end], textAt, tabSize = 4) {
   return lineWithParents(end, start, textAt, tabSize)[0];
@@ -156,6 +164,14 @@ const STATE = 'victorVsc.presentation';
 // Inline, nu `isWholeLine`: un decor pe toată linia se desenează pe stratul din
 // spatele textului, deci opacitatea și culoarea lui n-ar atinge literele (vezi
 // și range-focus.js). Pe span-urile de text, da.
+// Liniile pe care a stat cursorul, per document, de la pornirea modului.
+let visitedLines = new Map();
+function visitedIn(doc) {
+  const key = doc.uri.toString();
+  if (!visitedLines.has(key)) visitedLines.set(key, new Set());
+  return visitedLines.get(key);
+}
+
 let cursorDeco = null;
 let fadeDeco = null;
 let dimDeco = null;
@@ -248,6 +264,8 @@ function paint(editor) {
     editor.setDecorations(fadeDeco, fade);
     return;
   }
+  const visited = visitedIn(doc);
+  visited.add(cursor);
   const bright = new Set(editor.selections.map((sel) => sel.active.line));
   const fade = [];
   const [start, end] = section;
@@ -255,7 +273,9 @@ function paint(editor) {
   if (start > 0) fade.push(lineRange(doc, 0, start - 1));
   if (end < doc.lineCount - 1) fade.push(lineRange(doc, end + 1, doc.lineCount - 1));
   const dim = [];
-  for (let l = start; l <= end; l++) if (!bright.has(l)) dim.push(lineRange(doc, l, l));
+  for (let l = start; l <= end; l++) {
+    if (!bright.has(l)) (isAhead(l, cursor, visited) ? fade : dim).push(lineRange(doc, l, l));
+  }
   bright.delete(waved);
   editor.setDecorations(cursorDeco, [...bright].map((l) => lineRange(doc, l, l)));
   editor.setDecorations(dimDeco, dim);
@@ -443,6 +463,7 @@ function register(context) {
     }
     on = !on;
     presenting = on;
+    visitedLines = new Map();
     await vscode.commands.executeCommand(MEMORY_CONFIG,
       Object.fromEntries(Object.entries(SETTINGS).map(([k, v]) => [k, on ? v : null])));
     // Ieșind din prezentare cu Zen (F12) rămas pornit, fereastra arăta tot
@@ -455,4 +476,4 @@ function register(context) {
   }));
 }
 
-module.exports = { register, isPresenting, nextStop, longestLines, expandTabs, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
+module.exports = { register, isPresenting, nextStop, isAhead, longestLines, expandTabs, sectionAround, sectionAbove, chapterOf, whiteOnBlank, lineWithParents, indentOf, subtract };
