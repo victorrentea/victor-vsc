@@ -48,7 +48,7 @@ Repo public: <https://github.com/victorrentea/victor-vsc> (branch `main`).
 |---|---|
 | `package.json` | toate `contributes`: culori (`configurationDefaults`), icon theme, profil de terminal, custom editor, comenzi, meniuri, setări |
 | `COLORS.md` | de ce sunt culorile alea — `package.json` e JSON strict, n-are comentarii |
-| `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude |
+| `extension.js` | status bar (breadcrumb, problems, cog), profilul de terminal Claude, butonul de word wrap din colțul tab-ului (mereu vizibil; iconița arată starea în care te duce) |
 | `puml.js` | randare PlantUML: editorul custom care desenează diagrama |
 | `openapi.js` | randare OpenAPI: Swagger UI ca editor custom peste `openapi.yaml`/`.json`, în ACELAȘI tab. Recunoaște fișierul după conținut (`openapi:`/`swagger:`), nu după extensie, și ridică cheia de context `victorVsc.openapiFile` pentru butonul ⇄. Assets-urile (Swagger UI, js-yaml) sunt vendorate în `media/` |
 | `render-toggle.js` | butonul text ⇄ randat din colțul title bar-ului: unul singur, comută TAB-UL DIN FAȚĂ (Markdown / PlantUML / OpenAPI / Draw.io); iconița arată forma în care te duce — poză (`victor-picture`, din `icons/victor-icons.woff`) pe text, foaie cu text (`$(file-text)`) pe randat. Forma aleasă ultima oară rămâne implicita per tip, pentru fișierele deschise de atunci încolo |
