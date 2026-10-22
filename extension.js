@@ -303,6 +303,16 @@ function activate(context) {
     return vscode.commands.executeCommand('workbench.action.quickOpen', text || undefined);
   });
 
+  // Butonul de word wrap din colțul tab-ului, mereu acolo: ⌥Z nu-l mai ține
+  // nimeni minte. VS Code are și el unul, dar îl arată doar pe fișierele
+  // „dominate de linii lungi" (minificate), și doar ca să pornească wrap-ul.
+  // Două comenzi proprii, nu una: iconița arată unde te duce (ca la ⇄), iar o
+  // extensie nu poate da `toggled` unui buton — starea vine din `editorWordWrap`.
+  const wrapOn = vscode.commands.registerCommand('victor-vsc.wordWrapOn',
+    () => vscode.commands.executeCommand('editor.action.toggleWordWrap'));
+  const wrapOff = vscode.commands.registerCommand('victor-vsc.wordWrapOff',
+    () => vscode.commands.executeCommand('editor.action.toggleWordWrap'));
+
   // „Open in Draw.io App" pe *.drawio.png/svg: macOS alege aplicația doar după
   // ultima extensie, deci un .drawio.png ar merge în Preview. Din Explorer vin
   // (item-ul pe care s-a dat click, toată selecția), din tab doar item-ul.
@@ -328,6 +338,8 @@ function activate(context) {
     selectOpened,
     quickOpenSelection,
     openInDrawio,
+    wrapOn,
+    wrapOff,
     vscode.window.onDidChangeActiveTextEditor(debounced),
     vscode.languages.onDidChangeDiagnostics(debouncedProblems),
   );

@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.204",
+  "version": "0.0.205",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -383,6 +383,18 @@
         "category": "victor-vsc"
       },
       {
+        "command": "victor-vsc.wordWrapOn",
+        "title": "Wrap Lines (⌥Z)",
+        "category": "victor-vsc",
+        "icon": "$(word-wrap)"
+      },
+      {
+        "command": "victor-vsc.wordWrapOff",
+        "title": "Unwrap Lines (⌥Z)",
+        "category": "victor-vsc",
+        "icon": "$(arrow-both)"
+      },
+      {
         "command": "victor-vsc.showRendered",
         "title": "Show Rendered",
         "category": "victor-vsc",
@@ -542,6 +554,14 @@
           "when": "false"
         },
         {
+          "command": "victor-vsc.wordWrapOn",
+          "when": "false"
+        },
+        {
+          "command": "victor-vsc.wordWrapOff",
+          "when": "false"
+        },
+        {
           "command": "victor-vsc.showSource",
           "when": "false"
         },
@@ -589,6 +609,16 @@
           "command": "victor-vsc.debugFileTests",
           "group": "navigation@0",
           "when": "resourceFilename =~ /\\.(spec|test)\\.[jt]sx?$/"
+        },
+        {
+          "command": "victor-vsc.wordWrapOn",
+          "group": "navigation@1",
+          "when": "canToggleWordWrap && !editorWordWrap && !isDominatedByLongLines"
+        },
+        {
+          "command": "victor-vsc.wordWrapOff",
+          "group": "navigation@1",
+          "when": "canToggleWordWrap && editorWordWrap"
         },
         {
           "command": "victor-vsc.showRendered",
