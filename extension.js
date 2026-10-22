@@ -53,9 +53,18 @@ function tildify(p) {
 // bar, adică o „Vic Presentation" pe jumătate, fără fundal (2 oct 2026:
 // petclinic-main și petclinic-clone aveau `workbench.zenMode.active: true`
 // salvat din 31 aug / 4 sep).
+//
+// `chat.defaultConfiguration.approvals: allowAll` — fiecare sesiune nouă de
+// Copilot pornește pe „Allow all", nu pe Manual (22 oct 2026: a treia oară când
+// Victor uita să-l comute și agentul stătea blocat la aprobări). VS Code 1.142
+// citește `approvals` din `inspect()` sărind peste `defaultValue` (FIn în
+// bundle), deci un default de extensie e ignorat. `chat.permissions.default`
+// e perechea lui pentru sesiunile locale de chat.
 const MAIN_PROCESS_SETTINGS = {
   'window.openFoldersInNewWindow': 'on',
   'zenMode.restore': false,
+  'chat.defaultConfiguration': { mode: 'interactive', approvals: 'allowAll' },
+  'chat.permissions.default': 'autoApprove',
 };
 
 function enforceMainProcessSettings() {
@@ -68,7 +77,7 @@ function enforceMainProcessSettings() {
   if (dirty) return;
   const config = vscode.workspace.getConfiguration();
   for (const [key, value] of Object.entries(MAIN_PROCESS_SETTINGS)) {
-    if (config.inspect(key)?.globalValue !== value) {
+    if (JSON.stringify(config.inspect(key)?.globalValue) !== JSON.stringify(value)) {
       config.update(key, value, vscode.ConfigurationTarget.Global);
     }
   }
