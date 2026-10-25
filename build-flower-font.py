@@ -1,6 +1,6 @@
 """Builds icons/victor-icons.woff: a six-petal flower (U+E001), two coins
-(U+E002), a crosshair (U+E003), a picture (U+E004) and Clawd, the Claude Code
-mascot (U+E005), drawn on the same grid
+(U+E002), a crosshair (U+E003), a picture (U+E004), Clawd, the Claude Code
+mascot (U+E005) and unwrap (U+E006), the opposite of $(word-wrap), drawn on the same grid
 as VS Code's codicon.ttf (upem 300, ascent 300, glyph box 0..282) so they line up with the
 built-in icons everywhere VS Code renders a ThemeIcon."""
 import math, re, sys
@@ -152,6 +152,93 @@ def draw_clawd(pen):
                  x_off + m.end() * CLAWD_PX, y1)
 
 
+# „ab" exact ca în $(word-wrap) din codicon.ttf (CC BY 4.0), pe aceleași
+# coordonate, ca cele două butoane de wrap/unwrap să fie de aceeași mărime.
+WRAP_A = [
+    [("moveTo", (94, 178)), ("lineTo", (94, 230)), ("qCurveTo", (94, 243), (74, 258), (61, 258)),
+     ("qCurveTo", (50, 258), (43, 255)),
+     ("qCurveTo", (38, 253), (33, 248), (33, 240), (38, 234), (46, 234), (52, 239), (61, 239)),
+     ("qCurveTo", (65, 239), (68, 238)), ("qCurveTo", (75, 236), (75, 230)), ("lineTo", (75, 224)),
+     ("qCurveTo", (69, 225), (61, 225)),
+     ("qCurveTo", (43, 225), (23, 208), (23, 186), (43, 169), (61, 169)),
+     ("qCurveTo", (70, 169), (78, 172)), ("qCurveTo", (80, 169), (88, 169), (94, 174), (94, 178))],
+    [("moveTo", (61, 206)), ("qCurveTo", (69, 206), (75, 205)), ("lineTo", (75, 191)),
+     ("qCurveTo", (71, 187), (52, 187), (42, 193), (42, 201), (52, 206), (61, 206))],
+]
+WRAP_B = [
+    [("moveTo", (150, 169)), ("qCurveTo", (166, 169), (188, 193), (188, 228), (166, 253), (150, 253)),
+     ("qCurveTo", (140, 253), (131, 247)), ("lineTo", (131, 272)),
+     ("qCurveTo", (131, 276), (126, 281), (118, 281), (113, 276), (113, 272)), ("lineTo", (113, 178)),
+     ("qCurveTo", (113, 174), (118, 169), (125, 169), (130, 172), (131, 175)),
+     ("qCurveTo", (140, 169), (150, 169))],
+    [("moveTo", (150, 234)),
+     ("qCurveTo", (158, 234), (169, 221), (169, 201), (158, 187), (142, 187), (131, 201), (131, 221),
+      (142, 234), (150, 234))],
+]
+# $(arrow-small-right), ca săgeata să aibă grosimea și vârful codicon-urilor
+ARROW_R = [
+    [("moveTo", (166, 115)), ("lineTo", (204, 153)), ("qCurveTo", (206, 155), (206, 163), (204, 166)),
+     ("lineTo", (166, 203)), ("qCurveTo", (163, 206), (155, 206), (150, 201), (150, 193), (153, 190)),
+     ("lineTo", (174, 169)), ("lineTo", (84, 169)),
+     ("qCurveTo", (80, 169), (75, 163), (75, 155), (80, 150), (84, 150)),
+     ("lineTo", (174, 150)), ("lineTo", (153, 129)),
+     ("qCurveTo", (150, 126), (150, 118), (155, 112), (163, 112), (166, 115))],
+]
+
+UNWRAP_O = (232.0, 213.5, 32.0, 44.5)   # litera tăiată: centru, raze (cât „c"-ul din $(word-wrap))
+UNWRAP_STROKE = 19.0                     # grosimea liniilor din codicon
+UNWRAP_CUT = 0.6                         # cât rămâne din literă, din lățime
+UNWRAP_BAR = (250.0, 266.0)              # marginea editorului; golul de 12 o ține departe de literă
+UNWRAP_ARROW_TIP = 236.0                 # săgeata se oprește înainte de margine
+
+
+def contours(pen, cs, fx=lambda x: x, dy=0):
+    for c in cs:
+        for op, *pts in c:
+            pts = [(round(fx(x)), round(y + dy)) for x, y in pts]
+            getattr(pen, op)(*pts)
+        pen.closePath()
+
+
+def arc(pen, cx, cy, a, b, t0, t1, n=4):
+    """Arc de elipsă de la t0 la t1 (grade), din n bucăți pătratice; punctul de
+    control e la mijlocul unghiului, la raza r/cos(Δ/2), ca la ellipse()."""
+    d = (t1 - t0) / n
+    k = 1 / math.cos(math.radians(d / 2))
+    def pt(t, s=1.0):
+        t = math.radians(t)
+        return (round(cx + a * s * math.cos(t)), round(cy + b * s * math.sin(t)))
+    for i in range(n):
+        pen.qCurveTo(pt(t0 + (i + 0.5) * d, k), pt(t0 + (i + 1) * d))
+
+
+def draw_unwrap(pen):
+    """Opusul lui $(word-wrap): rândul „ab…" nu se mai frânge, ci dă de
+    marginea editorului, bara verticală. Litera de lângă ea e tăiată drept la
+    60%: o literă închisă („o"), ca tăietura să treacă prin gaura ei și să se
+    vadă că lipsește o bucată — un „c" tăiat arată tot ca un „c" (e deschis
+    exact în partea aia), iar lipit de bară se citea „d". Dedesubt, pe rândul
+    lui „c↲", o săgeată într-un singur sens, spre dreapta: rândul continuă."""
+    contours(pen, WRAP_A)
+    contours(pen, WRAP_B)
+    cx, cy, rx, ry = UNWRAP_O
+    ix, iy = rx - UNWRAP_STROKE, ry - UNWRAP_STROKE
+    cut = rx * (2 * UNWRAP_CUT - 1)               # tăietura, față de centru
+    to = math.degrees(math.acos(cut / rx))        # unde taie inelul exterior
+    ti = math.degrees(math.acos(cut / ix))        # și pe cel interior (cut < ix)
+    # un singur contur, în sensul acelor (y în sus): exteriorul de jos, prin
+    # stânga, până sus; tăietura în jos până în gaură; interiorul înapoi, invers
+    pen.moveTo((round(cx + cut), round(cy - ry * math.sin(math.radians(to)))))
+    arc(pen, cx, cy, rx, ry, 360 - to, to)
+    pen.lineTo((round(cx + cut), round(cy + iy * math.sin(math.radians(ti)))))
+    arc(pen, cx, cy, ix, iy, ti, 360 - ti)
+    pen.closePath()
+    rect(pen, UNWRAP_BAR[0], 19, UNWRAP_BAR[1], 281)
+    # coada săgeții mutată la începutul lui „a", vârful lângă bară
+    contours(pen, ARROW_R,
+             fx=lambda x: x + (23 - 75 if x < 150 else UNWRAP_ARROW_TIP - 206), dy=-94)
+
+
 def glyph(fn):
     pen = TTGlyphPen(None)
     fn(pen)
@@ -159,14 +246,14 @@ def glyph(fn):
 
 
 fb = FontBuilder(UPEM, isTTF=True)
-order = [".notdef", "flower", "coins", "crosshair", "picture", "clawd"]
+order = [".notdef", "flower", "coins", "crosshair", "picture", "clawd", "unwrap"]
 fb.setupGlyphOrder(order)
 fb.setupCharacterMap({0xE001: "flower", 0xE002: "coins", 0xE003: "crosshair",
-                       0xE004: "picture", 0xE005: "clawd"})
+                       0xE004: "picture", 0xE005: "clawd", 0xE006: "unwrap"})
 fb.setupGlyf({".notdef": TTGlyphPen(None).glyph(),
               "flower": glyph(draw), "coins": glyph(draw_coins),
               "crosshair": glyph(draw_crosshair), "picture": glyph(draw_picture),
-              "clawd": glyph(draw_clawd)})
+              "clawd": glyph(draw_clawd), "unwrap": glyph(draw_unwrap)})
 fb.setupHorizontalMetrics({g: (UPEM, 0) for g in order})
 fb.setupHorizontalHeader(ascent=UPEM, descent=0)
 fb.setupNameTable({"familyName": "victor-icons", "styleName": "Regular",
@@ -179,7 +266,7 @@ print("wrote", sys.argv[1])
 
 if len(sys.argv) > 2:      # proof sheet: the very contours that went into the font
     paths = []
-    FNS = (draw, draw_coins, draw_crosshair, draw_picture, draw_clawd)
+    FNS = (draw, draw_coins, draw_crosshair, draw_picture, draw_clawd, draw_unwrap)
     for i, fn in enumerate(FNS):
         svg = SVGPathPen(None)
         fn(svg)

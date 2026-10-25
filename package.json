@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.205",
+  "version": "0.0.206",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -67,6 +67,13 @@
         "default": {
           "fontPath": "./icons/victor-icons.woff",
           "fontCharacter": "\\E005"
+        }
+      },
+      "victor-unwrap": {
+        "description": "Unwrap: ab and a letter cut by the editor edge, an arrow to the right",
+        "default": {
+          "fontPath": "./icons/victor-icons.woff",
+          "fontCharacter": "\\E006"
         }
       }
     },
@@ -392,7 +399,7 @@
         "command": "victor-vsc.wordWrapOff",
         "title": "Unwrap Lines (⌥Z)",
         "category": "victor-vsc",
-        "icon": "$(arrow-both)"
+        "icon": "$(victor-unwrap)"
       },
       {
         "command": "victor-vsc.showRendered",
