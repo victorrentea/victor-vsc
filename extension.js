@@ -54,16 +54,19 @@ function tildify(p) {
 // petclinic-main și petclinic-clone aveau `workbench.zenMode.active: true`
 // salvat din 31 aug / 4 sep).
 //
-// `chat.defaultConfiguration.approvals: allowAll` — fiecare sesiune nouă de
-// Copilot pornește pe „Allow all", nu pe Manual (22 oct 2026: a treia oară când
-// Victor uita să-l comute și agentul stătea blocat la aprobări). VS Code 1.142
-// citește `approvals` din `inspect()` sărind peste `defaultValue` (FIn în
+// `chat.defaultConfiguration.approvals: assisted` — fiecare sesiune nouă de
+// Copilot pornește pe „Assisted permissions", nu pe Manual (22 oct 2026: a treia
+// oară când Victor uita să-l comute și agentul stătea blocat la aprobări). Până
+// la 1.143 era `allowAll`; „Assisted" (evaluează riscul înainte să ruleze un
+// tool) a apărut în 1.143 și e cel pe care îl vrea mereu (26 oct 2026). VS Code
+// citește `approvals` din `inspect()` sărind peste `defaultValue` (nAn în
 // bundle), deci un default de extensie e ignorat. `chat.permissions.default`
-// e perechea lui pentru sesiunile locale de chat.
+// e perechea lui pentru sesiunile locale de chat — enum-ul lui n-are „assisted"
+// (doar default/autoApprove/autopilot), deci rămâne pe autoApprove.
 const MAIN_PROCESS_SETTINGS = {
   'window.openFoldersInNewWindow': 'on',
   'zenMode.restore': false,
-  'chat.defaultConfiguration': { mode: 'interactive', approvals: 'allowAll' },
+  'chat.defaultConfiguration': { mode: 'interactive', approvals: 'assisted' },
   'chat.permissions.default': 'autoApprove',
 };
 
