@@ -7,7 +7,7 @@ const foldWave = require('./fold-wave');
 // l-ai pornit.
 //
 // Zen Mode (F12) e apropiat, dar Victor îl folosește zilnic cu propriile
-// `zenMode.*` din package.json (status bar, numere de linie, fără taburi),
+// `zenMode.*` din package.json (status bar, numere de linie, cu taburi),
 // deci modul ăsta e separat.
 //
 // Setările de mai jos se scriu în stratul de configurare MEMORY al ferestrei:
