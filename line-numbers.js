@@ -15,7 +15,7 @@
       const badge = document.createElement('span');
       badge.className = 'md-line-num';
       badge.textContent = line;
-      badge.style.left = `${4 - totalOffsetLeft(el)}px`;
+      badge.style.left = `${1 - totalOffsetLeft(el)}px`;
       el.prepend(badge);
     });
   }

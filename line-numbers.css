@@ -1,17 +1,35 @@
+/* VS Code's markdown.css gives html and body 26px each side; the line
+   numbers no longer need a gutter, so the text goes almost to the edges. */
+html, body {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
 body {
-  padding-left: 48px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
 }
 
+/* Hidden until hovered, and drawn over the left margin instead of taking
+   space of its own. */
 .md-line-num {
   position: absolute;
+  display: none;
   color: #888;
+  background: var(--vscode-editor-background);
+  border-radius: 3px;
+  padding: 0 3px;
   font-size: 11px;
   font-family: monospace;
   user-select: none;
-  min-width: 32px;
-  text-align: right;
   line-height: 1.6;
   pointer-events: none;
+  z-index: 10;
+}
+
+/* Only the innermost hovered line: a list item shows its own number,
+   not the list's too. */
+[data-line]:hover:not(:has([data-line]:hover)) > .md-line-num {
+  display: block;
 }
 
 [data-line] {
