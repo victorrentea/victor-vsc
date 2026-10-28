@@ -283,4 +283,4 @@ function quit() {
   vscode.commands.executeCommand('workbench.action.quit');
 }
 
-module.exports = { register };
+module.exports = { register, repoDir, run };

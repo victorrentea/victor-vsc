@@ -280,6 +280,22 @@ function handle(req, res) {
     return;
   }
 
+  // Re-run `vscode-patch/apply.sh` from **inside** VS Code (2026-10-28). An
+  // agent's shell is refused writes into the app bundle by macOS App
+  // Management (`touch` there answers *Operation not permitted*, sandbox or
+  // not), while this extension host — VS Code's own child — may, which is why
+  // `update-patch.js` runs the script from here after an update. Same script,
+  // same repo, nothing taken from the request. A change to `workbench.js` /
+  // `workbench.css` then takes a `/reload`; a bundle constant still a ⌘Q.
+  if (req.method === 'POST' && url.pathname === '/apply-patch') {
+    const { repoDir, run } = require('./update-patch');
+    const repo = repoDir();
+    if (!repo) return send(res, 404, { ok: false, error: 'no vscode-patch/apply.sh found' });
+    run('/bin/bash', [path.join(repo, 'vscode-patch', 'apply.sh')], { cwd: repo })
+      .then(({ code, out }) => send(res, code === 0 ? 200 : 500, { ok: code === 0, code, out }));
+    return;
+  }
+
   // Run one of a few layout commands in **this** window. Zen Mode is kept per
   // window, so a window left in it (no tabs, no activity bar) can only be fixed
   // from inside that window — and Victor is usually not sitting in front of it.

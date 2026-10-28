@@ -941,6 +941,34 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     ensurePresentationFit();
   }
 
+  // Pinul roșu din Walkie Talkie stă pe cursor (28 oct 2026). Walkie citește
+  // caretul prin Accessibility, iar în editor elementul focusat e div-ul
+  // `.native-edit-context` al lui Monaco — singurul lucru pe care macOS îl vede.
+  // Cu `editor.accessibilitySupport: off` Monaco îl pune pe rândul cursorului,
+  // dar la ÎNCEPUTUL rândului (`_doRender(top, this._contentLeft, …)`), iar în
+  // chat e lat cât tot câmpul — deci pinul stătea la stânga rândului, oricare ar
+  // fi coloana. Aici îl mutăm sub cursorul primar, lat de 0px. Monaco nu-l
+  // rescrie: FastDomNode scrie `left`/`width` doar când valoarea LUI se schimbă.
+  // IME-ul nu e afectat — EditContext-ul primește bounds calculate separat.
+  // Cu screen reader pornit div-ul are textul rândurilor, așezat de la începutul
+  // rândului, și nu-l atingem.
+  function caretToEditContext() {
+    const box = document.activeElement;
+    if (!box || !box.classList || !box.classList.contains('native-edit-context')) return;
+    if (box.textContent) return;
+    const editor = box.closest('.monaco-editor');
+    const cursor = editor && editor.querySelector('.cursors-layer > .cursor:not(.cursor-secondary)');
+    if (!cursor) return;
+    const c = cursor.getBoundingClientRect();
+    if (!c.height) return;   // cursor în afara viewport-ului (display: none)
+    const b = box.getBoundingClientRect();
+    const dx = c.left - b.left;
+    if (Math.abs(dx) >= 0.5) box.style.left = `${box.offsetLeft + dx}px`;
+    if (b.width) box.style.width = '0px';
+  }
+  // Doar cât e focusat un editor: altfel iese la prima linie.
+  setInterval(() => { try { caretToEditContext(); } catch { /* idem */ } }, 120);
+
   let lastTitle = null;
 
   function tick() {
