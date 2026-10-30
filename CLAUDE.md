@@ -222,3 +222,8 @@ O intrare e crezută doar după ce procesul pe care-l numește răspunde, pe por
 token-ul lui. Portul *refuzat* → intrarea se șterge (dovadă că fereastra nu mai e);
 timeout → nu se șterge nimic (nu dovedește nimic, iar o fereastră vie rămasă fără
 fișier de registru e deconectată de Walkie Talkie până la următoarea activare).
+
+## Memoria lui Claude
+
+Memoria generală (cine e Victor, cum vrea să lucrezi) e în repo-ul privat `victorrentea/assistant`.
+Într-o sesiune din cloud, atașează-l la sesiune și urmează-i `CLAUDE.md`-ul. Pe Mac se încarcă singură.
