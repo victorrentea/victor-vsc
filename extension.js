@@ -329,6 +329,19 @@ function activate(context) {
     }
   });
 
+  // „Open with System App" sub „Open With...": fișierul pleacă la `open`, deci
+  // în aplicația pe care o alege Finder la dublu-click (.docx → Word). Doar pe
+  // fișiere — pe un folder, `open` ar deschide doar Finder-ul.
+  const openWithSystemApp = vscode.commands.registerCommand('victor-vsc.openWithSystemApp', (uri, uris) => {
+    const targets = (uris && uris.length ? uris : [uri || vscode.window.activeTextEditor?.document.uri])
+      .filter(Boolean);
+    for (const target of targets) {
+      require('child_process').execFile('open', [target.fsPath], (err) => {
+        if (err) vscode.window.showErrorMessage(`Open with System App: ${err.message}`);
+      });
+    }
+  });
+
   context.subscriptions.push(
     tools,
     trail,
@@ -341,6 +354,7 @@ function activate(context) {
     selectOpened,
     quickOpenSelection,
     openInDrawio,
+    openWithSystemApp,
     wrapOn,
     wrapOff,
     vscode.window.onDidChangeActiveTextEditor(debounced),
