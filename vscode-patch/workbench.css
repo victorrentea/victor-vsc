@@ -430,7 +430,9 @@
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.advance"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.fit"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomin"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomout"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomout"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatin"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatout"] {
   display: none;
 }
 

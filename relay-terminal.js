@@ -53,6 +53,20 @@ let nextId = 1;
 let server = null;
 let registryFile = null;
 
+/** **The chat, as a target** (2026-11-03, Victor: *"să pot lega chatul copilot din
+ *  vsc cum leg orice terminal"*). One object for every binding of it: what a
+ *  dictation goes into is "the chat Victor was last in, in this window" —
+ *  `workbench.action.chat.open` sends to the chat service's `lastFocusedWidget`
+ *  (the side view or a chat editor tab), and an extension has no handle on a
+ *  particular chat session to hold instead. */
+const CHAT = { chat: true, name: 'Copilot Chat' };
+
+/** Whether the keyboard is in a chat in this window, as `vscode-patch/workbench.js`
+ *  reports it by pressing the hidden `chatin` / `chatout` status items on every
+ *  focus change across the chat's edge. An extension cannot read the `inChat`
+ *  context key itself. `null` = never reported (an unpatched workbench). */
+let chatFocused = null;
+
 function activate(context) {
   // Port 0: the OS picks a free one and we publish it. A fixed port would have
   // to be negotiated with every other VS Code window on the machine, and each
@@ -92,6 +106,17 @@ function activate(context) {
   // A terminal the relay is pointed at can be closed while it is pointed at it.
   // Dropping it here is what turns the next delivery into an honest 404 instead
   // of a silent no-op.
+  // The two halves of the focus report above. Hidden by `workbench.css`; they
+  // exist only to be pressed.
+  for (const [id, value] of [['chatin', true], ['chatout', false]]) {
+    const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000007);
+    item.name = item.text = id;
+    item.command = `victor-vsc.relayChat${value ? 'In' : 'Out'}`;
+    item.show();
+    context.subscriptions.push(item,
+      vscode.commands.registerCommand(item.command, () => { chatFocused = value; }));
+  }
+
   context.subscriptions.push(
     vscode.window.onDidCloseTerminal((t) => {
       for (const [id, term] of bound) if (term === t) bound.delete(id);
@@ -187,12 +212,26 @@ function handle(req, res) {
       // "did the click land in the right window" is answerable from a script
       // instead of from a screenshot, which is how this feature gets tested at all.
       activeFile: vscode.window.activeTextEditor?.document.uri.fsPath || null,
+      // Whether the keyboard is in a chat, as workbench.js last reported it
+      // (null: never — the patch is missing or has not run in this window).
+      chatFocused,
     });
   }
 
   // Point me at the terminal that is active **right now** — the one he is
   // looking at as he presses the key.
   if (req.method === 'POST' && url.pathname === '/bind') {
+    // **The chat, when that is where the keyboard is.** ⌘⌃B pressed while typing
+    // to Copilot binds the chat, not the terminal behind it. `kind: 'chat'` tells
+    // the relay there is no shell to guard: a chat cannot run the sentence.
+    // `?target=chat` binds the chat whatever holds the keyboard — how a script
+    // exercises this without anybody's mouse.
+    if (chatFocused === true || url.searchParams.get('target') === 'chat') {
+      const id = nextId++;
+      bound.set(id, CHAT);
+      const cwd = (vscode.workspace.workspaceFolders || [])[0]?.uri.fsPath || null;
+      return send(res, 200, { ok: true, id, kind: 'chat', name: CHAT.name, shellPID: null, cwd });
+    }
     // **`activeTerminal`, and the newest terminal behind it.** That property is
     // only set once a terminal has actually held focus in this window, and it
     // is empty in the case the feature exists for: Victor clicks `+`, gets a
@@ -236,6 +275,11 @@ function handle(req, res) {
   // extension host in the middle of a reload from costing Victor his binding.
   if (req.method === 'GET' && url.pathname === '/state') {
     const term = bound.get(Number(url.searchParams.get('id')));
+    if (term === CHAT) {
+      // The chat lives as long as the window: this listener answering is the proof.
+      const cwd = (vscode.workspace.workspaceFolders || [])[0]?.uri.fsPath || null;
+      return send(res, 200, { ok: true, kind: 'chat', name: CHAT.name, cwd });
+    }
     if (!term || term.exitStatus !== undefined) {
       return send(res, 404, { ok: false, error: 'that terminal is gone' });
     }
@@ -539,6 +583,19 @@ function handle(req, res) {
       if (!term) return send(res, 404, { ok: false, error: 'that terminal is gone' });
       const line = String(parsed.line || '');
       if (!line) return send(res, 400, { ok: false, error: 'empty line' });
+
+      // **Into the chat, without the window in front.** `chat.open` with a query
+      // reveals the chat Victor was last in, sets its input and accepts it — the
+      // same path as Enter, so a busy agent queues it as it would his own typing.
+      // `isPartialQuery` is `submit: false`: the words wait in the box. The
+      // window is never raised; inside it, the keyboard moves to the chat input.
+      if (term === CHAT) {
+        vscode.commands.executeCommand('workbench.action.chat.open',
+          { query: line, isPartialQuery: parsed.submit === false }).then(
+          () => send(res, 200, { ok: true, name: CHAT.name }),
+          (e) => send(res, 500, { ok: false, error: `chat did not take it: ${e.message}` }));
+        return;
+      }
 
       // **`sendText` and not the clipboard.** It writes straight to that
       // terminal's pty: no window is activated, no focus moves, the caret stays

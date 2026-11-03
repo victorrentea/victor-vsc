@@ -993,6 +993,20 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     } catch { /* un selector mutat nu strică workbench-ul */ }
   }
 
+  // Walkie Talkie: e focusul într-un chat (Copilot Chat, în view sau în tab)?
+  // O extensie n-are cum să afle — `inChat` e o cheie de context, iar valorile
+  // cheilor de context nu se expun. relay-terminal.js trebuie să știe la ⌘⌃B
+  // dacă leagă terminalul sau chatul, deci îi spunem noi, la fiecare trecere
+  // înăuntru/afară, apăsând intrarea ascunsă `chatin` / `chatout`.
+  // Doar `focusin`: la pierderea focusului de către fereastră (alt app în față)
+  // nu se schimbă nimic — chatul rămâne ce era focusat în fereastra asta.
+  let inChat = null;
+  document.addEventListener('focusin', (e) => {
+    const now = !!e.target?.closest?.('.interactive-session');
+    if (now === inChat) return;
+    if (pressStatusItem(now ? 'chatin' : 'chatout')) inChat = now;
+  }, true);
+
   // NU pune aici un MutationObserver pe document: workbench-ul mută DOM-ul de mii
   // de ori pe secundă când merg terminalele, iar callback-ul îneacă UI-ul.
   // Un tick la 2s e destul — title bar-ul nu se reconstruiește mai des de-atât.
