@@ -418,6 +418,22 @@ else:
         open(bundle, 'w', encoding='utf8').write(src_js)
         print('   ⌘-click: Quick Definition; click pe rotiță: salt la definiție')
 
+# 3j. bannerul „Your Code installation appears to be corrupt", oprit de tot. Pasul 4
+#     repară checksum-urile pe disc, dar procesul main le citește din product.json o
+#     singură dată, la pornire: după orice apply.sh rulat cu VS Code deschis, fiecare
+#     fereastră nouă le compară pe cele vechi din memorie cu bundle-ul nou și scoate
+#     bannerul, până la ⌘Q. „Don't Show Again" din rotița lui ține doar pe commit-ul
+#     curent. Ancora e numele metodei (nu se minifiază); verificarea rămâne, doar
+#     notificarea dispare — logul „Installation has been modified on disk" rămâne.
+NOTIFY = '||this._showNotification()}'
+if src_js.count(NOTIFY) == 1:
+    src_js = src_js.replace(NOTIFY, '}')
+    open(bundle, 'w', encoding='utf8').write(src_js)
+    print('   bannerul „installation appears to be corrupt" oprit')
+elif 'Installation has been modified on disk' in src_js and '_showNotification(){' in src_js \
+        and 'this._showNotification()' in src_js:
+    print('   ATENȚIE: nu găsesc apelul _showNotification din IntegrityService — bannerul „corrupt" rămâne')
+
 # 4. checksum-urile din product.json, recalculate din ce e efectiv pe disc.
 #    Fără pasul ăsta VS Code arată la fiecare pornire „Your Code installation
 #    appears to be corrupt". Algoritmul e cel din sursă: base64(sha256(fișier)),
