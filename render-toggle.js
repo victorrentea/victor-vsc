@@ -300,11 +300,20 @@ async function drain() {
   } finally { draining = false; }
 }
 
+/**
+ * Tab-ul era randat, deci rămâne randat, indiferent de modul memorat pentru fișiere noi: o
+ * actualizare a extensiei n-are voie să-ți mute un tab deschis pe text.
+ */
 function adoptOldPreviews() {
-  for (const tab of allTabs()) {
-    if (tab.input instanceof vscode.TabInputCustom && tab.input.viewType === OLD_MARKDOWN_PREVIEW) pending.add(tab);
-  }
-  drain().catch(() => { /* tab închis între timp */ });
+  return guarded(async () => {
+    for (const group of vscode.window.tabGroups.all) {
+      for (const tab of group.tabs) {
+        if (!(tab.input instanceof vscode.TabInputCustom) || tab.input.viewType !== OLD_MARKDOWN_PREVIEW) continue;
+        const info = classify(tab);
+        if (info) await convert({ ...info, tab, column: group.viewColumn }, true);
+      }
+    }
+  });
 }
 
 function isReopen(tab, uri, now) {
@@ -384,7 +393,7 @@ function register(context) {
   );
   refreshContext();
   // Tab-urile restaurate apar înainte de activare, deci `watchNewTabs` nu le vede.
-  const timer = setTimeout(adoptOldPreviews, 1500);
+  const timer = setTimeout(() => adoptOldPreviews().catch(() => { /* tab închis între timp */ }), 1500);
   context.subscriptions.push({ dispose: () => clearTimeout(timer) });
 }
 
