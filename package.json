@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.215",
+  "version": "0.0.216",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -16,6 +16,7 @@
     "onTerminalProfile:victor-vsc.claude",
     "onCustomEditor:victor-vsc.pumlDiagram",
     "onCustomEditor:victor-vsc.openapiPreview",
+    "onCustomEditor:victor-vsc.mdWysiwyg",
     "onUri"
   ],
   "contributes": {
@@ -358,6 +359,16 @@
     },
     "customEditors": [
       {
+        "viewType": "victor-vsc.mdWysiwyg",
+        "displayName": "Markdown (WYSIWYG)",
+        "selector": [
+          {
+            "filenamePattern": "*.{md,markdown,mdx}"
+          }
+        ],
+        "priority": "option"
+      },
+      {
         "viewType": "victor-vsc.pumlDiagram",
         "displayName": "PlantUML Diagram",
         "selector": [
@@ -640,12 +651,12 @@
         {
           "command": "victor-vsc.showRendered",
           "group": "navigation@9",
-          "when": "((resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/ || victorVsc.openapiFile) && !isInDiffEditor && !(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/ || activeCustomEditorId == 'victor-vsc.openapiPreview'))"
+          "when": "((resourceFilename =~ /\\.(md|markdown|mdx|puml|plantuml|iuml|wsd|pu|drawio|dio)$/ || victorVsc.openapiFile) && !isInDiffEditor && !(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'victor-vsc.mdWysiwyg' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/ || activeCustomEditorId == 'victor-vsc.openapiPreview'))"
         },
         {
           "command": "victor-vsc.showSource",
           "group": "navigation@9",
-          "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/ || activeCustomEditorId == 'victor-vsc.openapiPreview'"
+          "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'victor-vsc.mdWysiwyg' || activeCustomEditorId == 'victor-vsc.pumlDiagram' || activeCustomEditorId =~ /drawio/ || activeCustomEditorId == 'victor-vsc.openapiPreview'"
         }
       ],
       "comments/commentThread/title": [

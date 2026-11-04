@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const puml = require('./puml');
 const openapi = require('./openapi');
+const mdWysiwyg = require('./md-wysiwyg');
 const renderToggle = require('./render-toggle');
 const relayTerminal = require('./relay-terminal');
 const uriHandler = require('./uri-handler');
@@ -365,6 +366,7 @@ function activate(context) {
   // OpenAPI: Swagger UI în același tab, nu în panou lateral.
   openapi.register(context);
   // Butonul din colț: text ⇄ randat, cu modul ținut minte pe fiecare tip de fișier.
+  mdWysiwyg.register(context);
   renderToggle.register(context);
   // ⌘F12 / View › Vic Presentation: doar codul și numerele de linie pe ecran.
   presentation.register(context);

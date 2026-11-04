@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const puml = require('./puml');
 const openapi = require('./openapi');
+const mdWysiwyg = require('./md-wysiwyg');
 
 /**
  * UN SINGUR buton, mereu în același loc din bara de titlu: comută TAB-UL DIN FAȚĂ
@@ -38,15 +39,12 @@ function drawioViewType() {
 
 const TYPES = [
   {
-    // Markdown-ul are DOUĂ randări native: panoul `markdown.showPreview` (un
-    // webview, adică alt tab, cu altă identitate și fără legătură cu fișierul) și
-    // editorul `vscode.markdown.preview.editor`, care ține locul editorului de
-    // text ÎN ACELAȘI TAB. Îl folosim pe al doilea: e literalmente „tab-ul ăsta,
-    // altă formă", deci se comportă la fel ca PlantUML și Draw.io și scapă de tot
-    // dansul de mai devreme cu blocatul panoului și ghicitul sursei din etichetă.
+    // Forma randată a Markdown-ului e editorul WYSIWYG din `md-wysiwyg.js`: arată ca preview-ul
+    // nativ, dar se scrie direct în el. Tot editor peste același fișier în același tab, deci se
+    // comportă la fel ca PlantUML și Draw.io.
     id: 'markdown',
     exts: ['.md', '.markdown', '.mdx'],
-    viewType: () => 'vscode.markdown.preview.editor',
+    viewType: () => mdWysiwyg.VIEW_TYPE,
     fallback: 'text',
   },
   {
@@ -76,6 +74,7 @@ const TYPES = [
 ];
 
 const MARKDOWN = TYPES[0];
+const OLD_MARKDOWN_PREVIEW = 'vscode.markdown.preview.editor';
 
 function typeForUri(uri) {
   if (!uri || uri.scheme !== 'file') return undefined;
@@ -125,7 +124,10 @@ function classify(tab) {
   if (input instanceof vscode.TabInputText || input instanceof vscode.TabInputCustom) {
     const type = typeForUri(input.uri);
     if (!type) return undefined;
-    return { type, rendered: input instanceof vscode.TabInputCustom, uri: input.uri };
+    // Un tab rămas pe preview-ul nativ (restaurat dintr-o sesiune de dinainte de WYSIWYG) nu e
+    // forma randată de acum, deci alinierea îl aduce pe editorul nou.
+    const rendered = input instanceof vscode.TabInputCustom && input.viewType !== OLD_MARKDOWN_PREVIEW;
+    return { type, rendered, uri: input.uri };
   }
   // Un webview nu spune ce fișier arată; `uri` lipsă înseamnă „doar înapoi pe text,
   // și numai prin comanda Markdown-ului, care știe ea sursa".
@@ -189,6 +191,7 @@ async function convert(t, rendered) {
   // Deci închidem noi forma veche, după ce ne-am asigurat că cea nouă e sus.
   const viewType = rendered ? t.type.viewType() : 'default';
   if (!viewType) return;
+  const line = t.type === MARKDOWN ? await visibleLine(t, rendered) : undefined;
   try {
     await vscode.commands.executeCommand('vscode.openWith', t.uri, viewType,
       { viewColumn: t.column, preserveFocus: true, preview: false });
@@ -203,6 +206,21 @@ async function convert(t, rendered) {
   }
   await settle(() => !stillOpen(t.tab) || allTabs().some(tab => tab !== t.tab && sameFile(tab, t.uri)));
   await closeTab(t.tab, t.column);
+  if (!rendered && line > 0) revealInText(t.uri, line);
+}
+
+/** Linia de sus din forma pe care o părăsești; cea nouă se deschide tot acolo. */
+async function visibleLine(t, rendered) {
+  if (!rendered) return mdWysiwyg.topLine(t.uri);
+  const editor = vscode.window.visibleTextEditors.find(e => String(e.document.uri) === String(t.uri));
+  const line = editor?.visibleRanges[0]?.start.line ?? 0;
+  mdWysiwyg.revealOnOpen(t.uri, line);
+  return line;
+}
+
+function revealInText(uri, line) {
+  const editor = vscode.window.visibleTextEditors.find(e => String(e.document.uri) === String(uri));
+  editor?.revealRange(new vscode.Range(line, 0, line, 0), vscode.TextEditorRevealType.AtTop);
 }
 
 async function guarded(fn) {
@@ -282,6 +300,13 @@ async function drain() {
   } finally { draining = false; }
 }
 
+function adoptOldPreviews() {
+  for (const tab of allTabs()) {
+    if (tab.input instanceof vscode.TabInputCustom && tab.input.viewType === OLD_MARKDOWN_PREVIEW) pending.add(tab);
+  }
+  drain().catch(() => { /* tab închis între timp */ });
+}
+
 function isReopen(tab, uri, now) {
   const id = String(uri);
   if (now - (closedAt.get(id) || 0) < REOPEN_MS) return true;
@@ -358,6 +383,9 @@ function register(context) {
     vscode.commands.registerCommand('victor-vsc.showSource', toggleRender()),
   );
   refreshContext();
+  // Tab-urile restaurate apar înainte de activare, deci `watchNewTabs` nu le vede.
+  const timer = setTimeout(adoptOldPreviews, 1500);
+  context.subscriptions.push({ dispose: () => clearTimeout(timer) });
 }
 
 module.exports = { register };

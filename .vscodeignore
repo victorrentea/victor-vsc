@@ -1,0 +1,6 @@
+.git/**
+.github/**
+md-wysiwyg/**
+test/**
+vscode-patch/nest-test.mjs
+*.vsix

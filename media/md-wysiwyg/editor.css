@@ -1,0 +1,239 @@
+/* Aspectul vine din `markdown.css`-ul lui VS Code, încărcat înaintea acestui fișier, ca editorul
+   să arate identic cu preview-ul pe care îl înlocuiește. Aici e doar ce lipsește. */
+
+html, body {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+body {
+  padding: 0 10px 40vh !important;      /* ca în `line-numbers.css`, plus loc de scris la capăt */
+  cursor: text;
+}
+
+#mdw-editor, .mdw-content { font-size: var(--mdw-zoom, inherit); }
+
+.mdw-content {
+  outline: none;
+  min-height: 60vh;
+  caret-color: var(--vscode-editorCursor-foreground, currentColor);
+  word-wrap: break-word;
+}
+
+.mdw-content ::selection,
+.mdw-content::selection { background: var(--vscode-editor-selectionBackground); }
+
+.mdw-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--vscode-input-placeholderForeground);
+}
+
+/* ------------------------------------------------------- frontmatter */
+
+#mdw-frontmatter {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 12px 0 4px;
+  padding: 8px 10px;
+  resize: none;
+  overflow: hidden;
+  border: 1px solid var(--vscode-editorWidget-border, transparent);
+  border-radius: 4px;
+  outline: none;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-textCodeBlock-background);
+  font: 12px/1.5 var(--vscode-editor-font-family, monospace);
+}
+
+#mdw-frontmatter[hidden] { display: none; }
+
+#mdw-frontmatter:focus { border-color: var(--vscode-focusBorder); }
+
+/* ------------------------------------------------------- task list */
+
+.mdw-content ul[data-type="taskList"] { list-style: none; padding-left: 4px; }
+
+.mdw-content ul[data-type="taskList"] li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.mdw-content ul[data-type="taskList"] li > label { flex: none; margin-top: 2px; user-select: none; }
+.mdw-content ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.mdw-content ul[data-type="taskList"] li > div > p { margin: 0; }
+.mdw-content li > p { margin: 0; }
+.mdw-content li > p + ul, .mdw-content li > p + ol { margin-top: 0; }
+
+.mdw-content ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--vscode-descriptionForeground);
+}
+
+/* ------------------------------------------------------- blocuri cu sursă */
+
+.mdw-source { position: relative; margin: 1em 0; }
+.mdw-source > pre { margin: 0; }
+.mdw-source__render { display: none; cursor: pointer; overflow-x: auto; }
+.mdw-source--previewed:not(.mdw-source--editing) > .mdw-source__render { display: block; }
+.mdw-source--previewed:not(.mdw-source--editing) > pre,
+.mdw-source--previewed:not(.mdw-source--editing) > .mdw-source__head { display: none; }
+
+.mdw-source__render svg { max-width: 100%; height: auto; }
+
+.mdw-source__head {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity .1s;
+}
+
+.mdw-source:hover > .mdw-source__head,
+.mdw-source--editing > .mdw-source__head { opacity: 1; }
+
+.mdw-source__lang {
+  width: 88px;
+  padding: 1px 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  outline: none;
+  text-align: right;
+  color: var(--vscode-descriptionForeground);
+  background: transparent;
+  font: 11px var(--vscode-font-family, sans-serif);
+}
+
+.mdw-source__lang:hover { border-color: var(--vscode-input-border, var(--vscode-editorWidget-border)); }
+.mdw-source__lang:focus { border-color: var(--vscode-focusBorder); color: var(--vscode-foreground); }
+
+.mdw-source__label {
+  color: var(--vscode-descriptionForeground);
+  font: 11px var(--vscode-font-family, sans-serif);
+}
+
+.mdw-source__copy {
+  padding: 1px 6px;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  background: var(--vscode-toolbar-hoverBackground);
+  font: 11px var(--vscode-font-family, sans-serif);
+}
+
+.mdw-source__copy:hover { color: var(--vscode-foreground); }
+
+.mdw-render-error {
+  margin: 0;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  color: var(--vscode-errorForeground);
+  background: var(--vscode-inputValidation-errorBackground, transparent);
+}
+
+.math-inline { cursor: pointer; }
+
+/* ------------------------------------------------------- tabele */
+
+.mdw-content .tableWrapper { overflow-x: auto; margin: 1em 0; }
+.mdw-content table { border-collapse: collapse; }
+.mdw-content td, .mdw-content th { min-width: 40px; position: relative; vertical-align: top; }
+.mdw-content td > p, .mdw-content th > p { margin: 0; }
+
+.mdw-content .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--vscode-editor-selectionBackground);
+  opacity: .5;
+}
+
+/* ------------------------------------------------------- bare plutitoare */
+
+.mdw-bar, .mdw-popover {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid var(--vscode-editorWidget-border);
+  border-radius: 6px;
+  color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+  background: var(--vscode-editorWidget-background);
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow);
+  font: 12px var(--vscode-font-family, sans-serif);
+  cursor: default;
+}
+
+.mdw-bar[hidden] { display: none; }
+
+.mdw-bar__btn {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+.mdw-bar__btn:hover { background: var(--vscode-toolbar-hoverBackground); }
+
+.mdw-bar__btn--on {
+  color: var(--vscode-inputOption-activeForeground);
+  background: var(--vscode-inputOption-activeBackground);
+}
+
+.mdw-bar__bold { font-weight: 700; }
+.mdw-bar__italic { font-style: italic; }
+.mdw-bar__strike { text-decoration: line-through; }
+
+.mdw-bar__sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 4px;
+  background: var(--vscode-editorWidget-border);
+}
+
+.mdw-popover__input {
+  width: 300px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 4px;
+  outline: none;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  font: inherit;
+}
+
+.mdw-popover__input:focus { border-color: var(--vscode-focusBorder); }
+
+/* ------------------------------------------------------- număr de linie */
+
+.mdw-line-badge {
+  position: fixed;
+  left: 1px;
+  z-index: 10;
+  padding: 0 3px;
+  border-radius: 3px;
+  pointer-events: none;
+  user-select: none;
+  color: #888;
+  background: var(--vscode-editor-background);
+  font: 11px/1.6 monospace;
+}
+
+.mdw-line-badge[hidden] { display: none; }
