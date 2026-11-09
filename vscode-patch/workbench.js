@@ -140,6 +140,41 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     }
   }
 
+  // 🔎 Căutare în notițe, în stânga lui 🛠. O extensie nu poate pune un input în title bar și
+  // nici n-are cum să primească text din DOM — doar click-uri pe intrări de status bar. Deci
+  // căsuța e o momeală: la click apasă intrarea ascunsă `notesearch` (note-search.js), care
+  // deschide QuickPick-ul chiar dedesubt, și mutăm focusul în inputul lui.
+  function openNoteSearch() {
+    if (!pressStatusItem('notesearch')) return;
+    let tries = 0;
+    const t = setInterval(() => {
+      const input = document.querySelector('.quick-input-widget:not([style*="display: none"]) .quick-input-box input');
+      if (input || ++tries > 20) { clearInterval(t); input?.focus(); }
+    }, 50);
+  }
+
+  function ensureNotesBox() {
+    const slot = document.querySelector('.titlebar-container > .titlebar-center');
+    const tools = document.querySelector('.victor-tools');
+    if (!slot || !tools || tools.parentElement !== slot) return;
+    let box = document.querySelector('.victor-notes');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'victor-notes';
+      box.title = 'Caută în notițele deschise (⌘⌥⇧F)';
+      box.setAttribute('role', 'search');
+      const icon = document.createElement('span');
+      icon.className = 'codicon codicon-search';
+      const hint = document.createElement('span');
+      hint.className = 'victor-notes-hint';
+      hint.textContent = 'Caută în notițe…';
+      box.append(icon, hint);
+      box.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+      box.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openNoteSearch(); });
+    }
+    if (box.parentElement !== slot || box.nextElementSibling !== tools) slot.insertBefore(box, tools);
+  }
+
   // Collapse All / Expand All lângă semafoare, doar în Vic Presentation: pentru
   // notițele indentate (titlu → puncte → sub-puncte). Comenzile le rulează
   // intrările de status bar din presentation.js (`editor.foldAll` /
@@ -981,6 +1016,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       const title = document.title;
       const left = document.querySelector('.titlebar-container > .titlebar-left');
       ensureToolsButton();
+      ensureNotesBox();
       ensureFoldButtons();
       ensureUpdateWithAi();
       installPanelSidebarSync();

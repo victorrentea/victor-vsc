@@ -432,7 +432,8 @@
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomin"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomout"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatin"],
-.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatout"] {
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatout"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.notesearch"] {
   display: none;
 }
 
@@ -649,3 +650,34 @@
 .monaco-editor .review-widget .head .action-label[aria-label="Collapse"] {
   display: none;
 }
+
+/* 🔎 Căutare în notițe: căsuța din stânga lui 🛠. E doar o momeală — la click/tastă
+   deschide QuickPick-ul din note-search.js și îi dă focusul (vezi workbench.js). */
+.victor-notes {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  height: 22px;
+  width: 150px;
+  margin-right: 6px;
+  padding: 0 8px;
+  border-radius: 6px;
+  cursor: text;
+  font-size: 12px;
+  color: var(--vscode-titleBar-activeForeground);
+  background-color: transparent;
+  border: 1px solid var(--vscode-commandCenter-inactiveBorder);
+  position: relative;
+  z-index: 2500;
+  -webkit-app-region: no-drag;
+}
+.victor-notes > * { pointer-events: none; -webkit-app-region: no-drag; }
+.victor-notes > .codicon { font-size: 13px; opacity: .7; }
+.victor-notes > .victor-notes-hint { opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.victor-notes:hover {
+  color: var(--vscode-commandCenter-activeForeground);
+  background-color: var(--vscode-commandCenter-activeBackground);
+  border-color: var(--vscode-commandCenter-activeBorder);
+}
+.monaco-workbench.fullscreen .victor-notes { display: none; }

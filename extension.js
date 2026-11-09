@@ -21,6 +21,7 @@ const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
 const windowCycle = require('./window-cycle');
+const noteSearch = require('./note-search');
 
 const SEP = '  ›  ';
 
@@ -407,6 +408,8 @@ function activate(context) {
   commentClose.register(context);
   // ⌃⌥Tab / ⌃⌥⇧Tab: fereastra VS Code următoare / precedentă, ca ⌘` / ⌘⇧`.
   windowCycle.register(context);
+  // 🔎 căsuța din title bar: caută în textul tuturor notițelor deschise (și untitled). Vezi note-search.js.
+  noteSearch.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur

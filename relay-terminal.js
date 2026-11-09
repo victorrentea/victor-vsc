@@ -167,6 +167,10 @@ const COMMANDS = new Set([
  * Kept apart from COMMANDS so a URI-taking command cannot be called bare (it would act on
  * whatever happens to be selected), and so the URI is checked before anything runs: a
  * `file:` URI inside one of this window's workspace folders, nothing else. */
+// Commands that take one free-text argument (`&arg=…`): an agent bringing a note to
+// the front by what it says, e.g. `victor-vsc.revealNote&arg=DORA adoption`.
+const TEXT_COMMANDS = new Set(['victor-vsc.revealNote', 'victor-vsc.searchNotes']);
+
 const URI_COMMANDS = new Set([
   // Human Review's Structure tab: a click on a package or a Maven module box shows that
   // folder selected in this window's Explorer.
@@ -355,6 +359,8 @@ function handle(req, res) {
         return send(res, 400, { ok: false, error: `${id} needs a file: uri inside this window's folders` });
       }
       args.push(uri);
+    } else if (TEXT_COMMANDS.has(id)) {
+      args.push(url.searchParams.get('arg') || '');
     } else if (!COMMANDS.has(id)) {
       return send(res, 400, { ok: false, error: `not allowed: ${id}` });
     }
