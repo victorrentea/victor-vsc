@@ -73,6 +73,35 @@ async function openNotes() {
   return docs;
 }
 
+// **Și fișierele recente** (2026-11-09, Victor: *"vreau să cauți și în recent, nu doar în cele
+// deschise. De multe ori îl găsesc în recent. Deci open recent poate să fie chiar mai mult decât
+// ce apare în listă"*). `_workbench.getRecentlyOpened` dă toată lista pe care VS Code o ține
+// (până la 500), nu doar cele ~20 din File › Open Recent. Se citesc de pe disc, fără cele deja
+// deschise, fără fișiere mari sau binare — și abia după ce lista e pe ecran, ca deschiderea să
+// nu aștepte după disc.
+const RECENT_MAX_BYTES = 2 * 1024 * 1024;
+
+async function recentFiles(skip) {
+  let recent;
+  try { recent = await vscode.commands.executeCommand('_workbench.getRecentlyOpened'); } catch (_) { return []; }
+  const entries = (recent && recent.files) || [];
+  const docs = [];
+  await Promise.all(entries.map(async (entry) => {
+    const uri = entry.fileUri;
+    if (!uri || skip.has(uri.toString())) return;
+    try {
+      const stat = await vscode.workspace.fs.stat(uri);
+      if (stat.type !== vscode.FileType.File || stat.size > RECENT_MAX_BYTES) return;
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      if (bytes.includes(0)) return; // binar
+      const text = Buffer.from(bytes).toString('utf8');
+      const name = uri.path.split('/').pop();
+      docs.push({ key: uri.toString(), label: `${name} (recent)`, uri, text });
+    } catch (_) { /* șters, mutat, fără drept de citire — sărim */ }
+  }));
+  return docs;
+}
+
 /** Linkurile dintr-o notiță, o dată fiecare, în ordinea apariției. */
 function urls(text) {
   const found = text.match(/https?:\/\/[^\s<>"')\]]+/g) || [];
@@ -94,11 +123,13 @@ async function reveal(uri, line, length) {
 
 async function open(initial = '') {
   const qp = vscode.window.createQuickPick();
-  qp.placeholder = 'Caută în notițele deschise (toate cuvintele, fără diacritice)…';
+  qp.placeholder = 'Search open notes and recent files (all words, accents ignored)…';
   qp.matchOnDescription = false;
   qp.matchOnDetail = false;
   qp.value = initial;
   const docs = await openNotes();
+  const openCount = docs.length;
+  let recentCount = null; // null = still reading them
   const byKey = new Map(docs.map((d) => [d.key, d]));
 
   const render = () => {
@@ -109,7 +140,7 @@ async function open(initial = '') {
       items.push({ label: r.label, kind: vscode.QuickPickItemKind.Separator });
       for (const h of r.hits) {
         items.push({
-          label: h.text.trim() || '(rând gol)',
+          label: h.text.trim() || '(empty line)',
           description: `${r.label}:${h.line + 1}`,
           detail: h.line === 0 ? undefined : firstLine(doc.text),
           alwaysShow: true,           // filtrăm noi; cel nativ ar căuta doar în label
@@ -122,7 +153,8 @@ async function open(initial = '') {
       }
     }
     qp.items = items;
-    qp.title = qp.value.trim() ? `🔎 ${results.length} notițe din ${docs.length}` : `🔎 ${docs.length} notițe deschise`;
+    const scope = `${openCount} open notes + ` + (recentCount === null ? 'reading recent files…' : `${recentCount} recent files`);
+    qp.title = qp.value.trim() ? `🔎 ${results.length} matches in ${scope}` : `🔎 ${scope}`;
   };
 
   qp.onDidChangeValue(render);
@@ -132,14 +164,23 @@ async function open(initial = '') {
     if (pick && pick.url) await vscode.env.openExternal(vscode.Uri.parse(pick.url));
     else if (pick && pick.uri) await reveal(pick.uri, pick.line, pick.length);
   });
-  qp.onDidHide(() => qp.dispose());
+  let closed = false;
+  qp.onDidHide(() => { closed = true; qp.dispose(); });
   render();
   qp.show();
+  qp.busy = true;
+  const recent = await recentFiles(new Set(byKey.keys()));
+  for (const d of recent) { docs.push(d); byKey.set(d.key, d); }
+  if (closed) return;
+  recentCount = recent.length;
+  qp.busy = false;
+  render();
 }
 
 /** Fără UI: aduce în față prima potrivire. Pentru agenți (`/command?id=victor-vsc.revealNote&arg=…`). */
 async function revealBest(query) {
-  const docs = await openNotes();
+  const open = await openNotes();
+  const docs = open.concat(await recentFiles(new Set(open.map((d) => d.key))));
   const [best] = search(docs, query || '');
   if (!best || !best.hits.length) return false;
   const doc = docs.find((d) => d.key === best.key);

@@ -161,13 +161,13 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (!box) {
       box = document.createElement('div');
       box.className = 'victor-notes';
-      box.title = 'Caută în notițele deschise (⌘⌥⇧F)';
+      box.title = 'Search open notes and recent files (⌘⌥⇧F)';
       box.setAttribute('role', 'search');
       const icon = document.createElement('span');
       icon.className = 'codicon codicon-search';
       const hint = document.createElement('span');
       hint.className = 'victor-notes-hint';
-      hint.textContent = 'Caută în notițe…';
+      hint.textContent = 'Search notes…';
       box.append(icon, hint);
       box.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
       box.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openNoteSearch(); });
