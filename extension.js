@@ -17,7 +17,6 @@ const updatePatch = require('./update-patch');
 const presentation = require('./presentation');
 const talkNotes = require('./talk-notes');
 const viewLog = require('./view-log');
-const reviewStatus = require('./review-status');
 const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
 const windowCycle = require('./window-cycle');
@@ -401,9 +400,6 @@ function activate(context) {
   // vscode-patch/workbench.js. Vezi git-lines.js.
   gitLines.register(context);
 
-  // „PR" în footer, verde cât un serve-review.py servește review-ul checkout-ului din
-  // fereastra asta (amber: servit, dar HEAD-ul e pe alt commit). Vezi review-status.js.
-  reviewStatus.register(context);
   quickDefinition.register(context);
   commentClose.register(context);
   // ⌃⌥Tab / ⌃⌥⇧Tab: fereastra VS Code următoare / precedentă, ca ⌘` / ⌘⇧`.
