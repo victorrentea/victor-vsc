@@ -681,3 +681,11 @@
   border-color: var(--vscode-commandCenter-activeBorder);
 }
 .monaco-workbench.fullscreen .victor-notes { display: none; }
+
+/* Image preview (nativ în workbench din 1.13x): un PNG transparent — tipic
+   *.drawio.png exportat fără fundal — stă pe alb, nu pe carourile închise ale
+   temei dark, unde textul negru din diagramă dispare. */
+.monaco-workbench .image-preview-editor .image-viewer img {
+  background-color: #fff !important;
+  background-image: none !important;
+}
