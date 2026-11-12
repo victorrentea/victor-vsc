@@ -3,7 +3,7 @@
   "publisher": "victorrentea",
   "displayName": "Victor VSC",
   "description": "IntelliJ-flavoured VS Code: expui icon theme, IntelliJ New UI colours, status-bar breadcrumb + problems + tools button, Markdown preview zoom, and a Claude terminal profile",
-  "version": "0.0.220",
+  "version": "0.0.221",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -291,7 +291,7 @@
           "gitDecoration.addedResourceForeground": "#0A7700",
           "gitDecoration.untrackedResourceForeground": "#993300",
           "gitDecoration.deletedResourceForeground": "#616161",
-          "gitDecoration.ignoredResourceForeground": "#727238",
+          "gitDecoration.ignoredResourceForeground": "#A0A0A0",
           "gitDecoration.renamedResourceForeground": "#007C7C",
           "gitDecoration.conflictingResourceForeground": "#FF0000",
           "gitDecoration.stageModifiedResourceForeground": "#0032A0",
@@ -338,7 +338,8 @@
           "symbolIcon.packageForeground": "#CED0D6",
           "symbolIcon.namespaceForeground": "#CED0D6",
           "symbolIcon.moduleForeground": "#CED0D6",
-          "sideBar.foreground": "#D0D2D8"
+          "sideBar.foreground": "#D0D2D8",
+          "gitDecoration.ignoredResourceForeground": "#6F737A"
         }
       },
       "workbench.fontAliasing": "antialiased",

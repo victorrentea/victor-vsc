@@ -63,6 +63,14 @@ se rupea exact la primul strămoș comun cu un warning. Badge-urile erau deja
 oprite (`explorer.decorations.badges: false`), deci decorația de Problems nu mai
 aducea nimic vizibil în afară de acest bug.
 
+## Fișierele gitignored: gri, nu portocaliu
+
+`gitDecoration.ignoredResourceForeground` e gri stins în ambele teme
+(`#6F737A` pe Islands Dark, `#A0A0A0` pe Islands Light): ce e ignorat de git
+(`target`, `.idea`, `.pytest_cache`…) trebuie să se retragă vizual, ca în
+IntelliJ. Culoarea din tema Islands Dark era portocalie și se confunda cu
+untracked — exact invers față de cât de important e fișierul.
+
 ## Culorile VCS
 
 Luate din `DefaultColorSchemesManager.xml` din intellij-community — sursa pe
