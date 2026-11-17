@@ -884,6 +884,55 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     fitCrumb();
   }
 
+  // Editorul gol: în locul celor 3 shortcut-uri din watermark, folderul ferestrei
+  // (relativ la ~/workspace, read-only) și „Open another folder", care deschide un folder
+  // în fereastră nouă. Textul și comanda vin de la watermark.js, prin intrarea ascunsă
+  // `wmfolder`: eticheta e textul ei, butonul o apasă. Fără intrare (extensia nu e
+  // încărcată) nu desenăm nimic și rămân shortcut-urile native (CSS-ul le ascunde doar
+  // lângă blocul nostru). Watermark-ul există câte unul pe grup și e doar ascuns/arătat
+  // de VS Code, deci îl punem o dată și îi actualizăm textul.
+  const WM_ITEM = '.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.wmfolder"]';
+
+  function ensureWatermarkFolder() {
+    const item = document.querySelector(WM_ITEM);
+    const text = item && (item.querySelector('a.statusbar-item-label') || item).textContent.trim();
+    for (const shortcuts of document.querySelectorAll('.editor-group-watermark .shortcuts')) {
+      const host = shortcuts.parentElement;
+      let wm = host.querySelector(':scope > .victor-wm');
+      if (!text) { wm?.remove(); continue; }
+      if (!wm) {
+        wm = document.createElement('div');
+        wm.className = 'victor-wm';
+        const folder = document.createElement('div');
+        folder.className = 'victor-wm-folder';
+        const icon = document.createElement('span');
+        icon.className = 'codicon codicon-folder-opened';
+        const name = document.createElement('span');
+        name.className = 'victor-wm-name';
+        folder.append(icon, name);
+        const btn = document.createElement('div');
+        btn.className = 'victor-wm-open';
+        btn.setAttribute('role', 'button');
+        btn.tabIndex = 0;
+        btn.title = 'Open a folder in a new window';
+        const bIcon = document.createElement('span');
+        bIcon.className = 'codicon codicon-empty-window';
+        const bText = document.createElement('span');
+        bText.textContent = 'Open another folder';
+        btn.append(bIcon, bText);
+        btn.addEventListener('mousedown', (e) => e.stopPropagation());
+        btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); pressStatusItem('wmfolder'); });
+        btn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pressStatusItem('wmfolder'); }
+        });
+        wm.append(folder, btn);
+        host.appendChild(wm);
+      }
+      const name = wm.querySelector('.victor-wm-name');
+      if (name.textContent !== text) { name.textContent = text; name.parentElement.title = text; }
+    }
+  }
+
   // Zoom la intrarea în Vic Presentation: ca la ⌘-scroll, pas cu pas, cât timp cea
   // mai lungă linie a fișierului încape pe lățimea editorului. Liniile vin de la
   // presentation.js în textul intrării ascunse `fit` (există doar cât e pornit
@@ -1022,6 +1071,7 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
       installPanelSidebarSync();
       ensureScmLineCounts();
       ensureCrumbFit();
+      ensureWatermarkFolder();
       watchPresentationFit();
       if (title === lastTitle && left && left.querySelector('.victor-branch')) return;
       lastTitle = title;

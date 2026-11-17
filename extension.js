@@ -21,6 +21,7 @@ const quickDefinition = require('./quick-definition');
 const commentClose = require('./comment-close');
 const windowCycle = require('./window-cycle');
 const noteSearch = require('./note-search');
+const watermark = require('./watermark');
 
 const SEP = '  ›  ';
 
@@ -406,6 +407,8 @@ function activate(context) {
   windowCycle.register(context);
   // 🔎 căsuța din title bar: caută în textul tuturor notițelor deschise (și untitled). Vezi note-search.js.
   noteSearch.register(context);
+  // Editorul gol: folderul ferestrei + „Open another folder" în locul shortcut-urilor. Vezi watermark.js.
+  watermark.register(context);
 
   // „Update with AI", în stânga butonului albastru de update: pornește update-ul
   // VS Code-ului și lasă un marker după care, la repornire, reaplică singur
