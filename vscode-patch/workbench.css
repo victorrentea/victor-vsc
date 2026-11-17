@@ -442,7 +442,10 @@
    Debugging), folderul ferestrei și „Open another folder" (workbench.js,
    ensureWatermarkFolder; textul și comanda vin din watermark.js). Shortcut-urile se
    ascund doar când blocul nostru e acolo: fără extensie rămâne watermark-ul nativ. */
-.editor-group-watermark .watermark-container:has(> .victor-wm) > .shortcuts {
+/* Și logo-ul (letterpress, golit oricum de letterpress-patch): ocupă un pătrat de până la
+   256px deasupra, care împingea blocul sub centrul editorului și tăia butonul. */
+.editor-group-watermark .watermark-container:has(> .victor-wm) > .shortcuts,
+.editor-group-watermark .watermark-container:has(> .victor-wm) > .letterpress {
   display: none !important;
 }
 .editor-group-watermark .victor-wm {
