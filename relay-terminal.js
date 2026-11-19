@@ -67,6 +67,13 @@ const CHAT = { chat: true, name: 'Copilot Chat' };
  *  context key itself. `null` = never reported (an unpatched workbench). */
 let chatFocused = null;
 
+/** Whether the keyboard is in a terminal of this window, reported the same way
+ *  (`termin` / `termout`, 2026-11-19). Walkie asks it before pressing Return
+ *  after a prompt pasted at the caret: since VS Code 1.146 Accessibility no
+ *  longer names the focused element, which is how it used to tell. `null` =
+ *  never reported. */
+let terminalFocused = null;
+
 function activate(context) {
   // Port 0: the OS picks a free one and we publish it. A fixed port would have
   // to be negotiated with every other VS Code window on the machine, and each
@@ -115,6 +122,14 @@ function activate(context) {
     item.show();
     context.subscriptions.push(item,
       vscode.commands.registerCommand(item.command, () => { chatFocused = value; }));
+  }
+  for (const [id, value] of [['termin', true], ['termout', false]]) {
+    const item = vscode.window.createStatusBarItem(id, vscode.StatusBarAlignment.Right, -2000008);
+    item.name = item.text = id;
+    item.command = `victor-vsc.relayTerminal${value ? 'In' : 'Out'}`;
+    item.show();
+    context.subscriptions.push(item,
+      vscode.commands.registerCommand(item.command, () => { terminalFocused = value; }));
   }
 
   context.subscriptions.push(
@@ -219,6 +234,8 @@ function handle(req, res) {
       // Whether the keyboard is in a chat, as workbench.js last reported it
       // (null: never — the patch is missing or has not run in this window).
       chatFocused,
+      // Whether the keyboard is in a terminal, reported the same way.
+      terminalFocused,
     });
   }
 

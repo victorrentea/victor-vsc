@@ -433,6 +433,8 @@
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.zoomout"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatin"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.chatout"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.termin"],
+.part.statusbar .statusbar-item[id="victorrentea.victor-vsc.termout"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.notesearch"],
 .part.statusbar .statusbar-item[id="victorrentea.victor-vsc.wmfolder"] {
   display: none;

@@ -1093,6 +1093,18 @@ const VICTOR_WATCH = false;   // apply.sh --watch pune true, pentru iterat pe CS
     if (pressStatusItem(now ? 'chatin' : 'chatout')) inChat = now;
   }, true);
 
+  // Walkie Talkie: e tastatura într-un terminal? (2026-11-19) Walkie întreba asta
+  // prin Accessibility (clasa `xterm-helper-textarea` a elementului focusat), dar
+  // din VS Code 1.146 arborele AX nu mai are element focusat (-25212), așa că un
+  // prompt dictat la caret într-un Claude Code din terminal era lipit fără Enter.
+  // Același truc ca la chat: intrările ascunse `termin` / `termout`.
+  let inTerminal = null;
+  document.addEventListener('focusin', (e) => {
+    const now = !!e.target?.classList?.contains('xterm-helper-textarea');
+    if (now === inTerminal) return;
+    if (pressStatusItem(now ? 'termin' : 'termout')) inTerminal = now;
+  }, true);
+
   // NU pune aici un MutationObserver pe document: workbench-ul mută DOM-ul de mii
   // de ori pe secundă când merg terminalele, iar callback-ul îneacă UI-ul.
   // Un tick la 2s e destul — title bar-ul nu se reconstruiește mai des de-atât.
