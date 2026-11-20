@@ -3,7 +3,7 @@ import { Fragment, Slice } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import DOMPurify from 'dompurify';
-import { SourceDoc, splitFrontmatter, toLf } from './fidelity.js';
+import { SourceDoc, softBreaksToSpaces, splitFrontmatter, toLf } from './fidelity.js';
 import { codeInnermost, extensions, patchSerializer } from './schema.js';
 import { attachToolbar, openLinkPopover, openMathPopover } from './toolbar.js';
 
@@ -192,7 +192,7 @@ const editor = new Editor({
     clipboardTextParser(text, context, plain) {
       if (plain || !looksLikeMarkdown(text)) return null;
       const json = editor.markdown.parse(toLf(text));
-      const nodes = (json.content || []).map(node => editor.schema.nodeFromJSON(node));
+      const nodes = softBreaksToSpaces(json.content || []).map(node => editor.schema.nodeFromJSON(node));
       if (!nodes.length) return null;
       const open = nodes.length === 1 && nodes[0].isTextblock ? 1 : 0;
       return new Slice(Fragment.from(nodes), open, open);

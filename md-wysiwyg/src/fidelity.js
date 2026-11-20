@@ -30,10 +30,33 @@ function rawNode(token) {
   };
 }
 
+/** Blocurile în care un rând nou din sursă chiar e rând nou. */
+const verbatim = new Set(['codeBlock', 'rawBlock', 'mathBlock']);
+
+/**
+ * Un singur `\n` într-un paragraf e un „soft break”: Markdown îl citește ca spațiu (paragraf
+ * rupt la 100 de coloane în sursă = un singur rând curgător, ca în preview-ul nativ). Marked îl
+ * lasă însă în textul nodului, iar ProseMirror stă pe `white-space: break-spaces`, deci l-ar
+ * desena ca rând nou. CSS-ul care l-ar strânge (`white-space-collapse: preserve-spaces`) nu
+ * există în Chromium, așa că se face spațiu din el aici. Rândurile rupte intenționat
+ * (două spații / `\\` la capăt) sunt noduri `hardBreak`, nu text, deci rămân.
+ * Fidelitatea nu suferă: un bloc neatins își pune înapoi sursa cu rândurile ei; doar un
+ * paragraf editat iese pe un singur rând.
+ */
+export function softBreaksToSpaces(nodes) {
+  return nodes.map(node => {
+    if (!node || verbatim.has(node.type)) return node;
+    if (node.type === 'text' && node.text?.includes('\n')) {
+      return { ...node, text: node.text.replace(/[ \t]*\n[ \t]*/g, ' ') };
+    }
+    return node.content ? { ...node, content: softBreaksToSpaces(node.content) } : node;
+  });
+}
+
 /** Nodurile unui token. Nu pierde niciodată un token: ce nu se înțelege devine bloc brut. */
 function nodesOf(manager, token) {
   if (token.type === 'html' || token.type === 'def') return [rawNode(token)];
-  const nodes = manager.parseTokens([token]).filter(Boolean);
+  const nodes = softBreaksToSpaces(manager.parseTokens([token]).filter(Boolean));
   return nodes.length ? nodes : [rawNode(token)];
 }
 
@@ -60,7 +83,7 @@ export function toChunks(manager, source) {
   } catch (_) {
     // Plasa de siguranță: o singură bucată, deci prima editare serializează tot.
     const doc = manager.parse(source);
-    return { lead: '', chunks: [{ raw: source, json: doc.content || [], token: null }], tail };
+    return { lead: '', chunks: [{ raw: source, json: softBreaksToSpaces(doc.content || []), token: null }], tail };
   } finally {
     manager.activeParseLexer = null;
   }
