@@ -387,7 +387,7 @@ function activate(context) {
   // fișier pe branșa curentă, cea din bara de stare — nu pe main.
   githubLink.register(context);
 
-  // Fișierul la care Victor se uită efectiv, raportat către Victor Addons —
+  // Fișierul la care Victor se uită efectiv, raportat către Victor Mac —
   // același protocol ca plugin-ul de IntelliJ, ca sala să vadă la fel din
   // ambele IDE-uri. Vezi open-file-reporter.js.
   openFileReporter.register(context);

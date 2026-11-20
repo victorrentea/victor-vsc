@@ -4,7 +4,7 @@ const http = require('http');
 const { repoRoot, remoteUrl, currentRef, relativeToRoot } = require('./git');
 
 // Port din plugin-ul de IntelliJ (live-coding, `openfile/OpenFileReporter.kt`):
-// raportează fișierul la care Victor se uită efectiv către Victor Addons, care
+// raportează fișierul la care Victor se uită efectiv către Victor Mac, care
 // îl împinge mai departe pe WebSocket la daemonul de sesiune. Aceleași reguli,
 // ca cele două IDE-uri să se comporte identic în timpul cursului:
 //   - raportăm doar după ce fișierul a stat DWELL_MS în fereastra focusată, ca

@@ -697,7 +697,7 @@
         "victorVsc.reportOpenFileToAddon": {
           "type": "boolean",
           "default": true,
-          "description": "Report the file you dwell on (5s, focused window) to Victor Addons, like the live-coding IntelliJ plugin does. Only ever posts to the configured localhost URL; goes quiet if nothing answers."
+          "description": "Report the file you dwell on (5s, focused window) to Victor Mac, like the live-coding IntelliJ plugin does. Only ever posts to the configured localhost URL; goes quiet if nothing answers."
         },
         "victorVsc.addonReportUrl": {
           "type": "string",
