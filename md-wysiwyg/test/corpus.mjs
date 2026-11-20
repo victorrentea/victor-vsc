@@ -6,7 +6,7 @@ import { open } from './harness.mjs';
 
 const limit = Number(process.argv[2] || 400);
 const home = homedir();
-const roots = ['victor-vsc', 'victor-skills', 'victor-skills-private', 'human-review', 'petclinic', 'walkie-talkie', 'agentic-wiki', 'assistant', 'travel-ski', 'victor-macos-addons', 'training-assistant', 'victorrentea.ro'];
+const roots = ['victor-vsc', 'victor-skills', 'victor-skills-private', 'human-review', 'petclinic', 'walkie-talkie', 'agentic-wiki', 'assistant', 'travel-ski', 'victor-mac', 'training-assistant', 'victorrentea.ro'];
 let files = [`${home}/.claude/CLAUDE.md`, `${home}/workspace/AGENTS.md`];
 for (const r of roots) {
   try {
